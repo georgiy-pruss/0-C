@@ -9,6 +9,7 @@ typedef unsigned int U;
 typedef unsigned long long L;
 #define K const
 #define O static /* own */
+#define OUT /* output parameter */
 
 #define __ {
 #define _  }
