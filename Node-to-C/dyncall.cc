@@ -38,10 +38,13 @@ int WINAPI MessageBox( _In_opt_ HWND hWnd, _In_opt_ LPCTSTR lpText, // __stdcall
 
 #define MAX_LIBS 100
 #define MAX_PROC 1000
-#define MAX_ARGS 11
-typedef struct Proc { void* addr; int h; int flags; int stk; char args[MAX_ARGS+1]; } Proc; // 32
+#define MAX_ARGS 8
+typedef struct Proc { void* addr; int h;
+  char _; char flags; char rettype; char nargs; char args[MAX_ARGS]; } Proc;
 struct { int libs_offs; int proc_offs; int libs_cnt; int proc_cnt;
   HMODULE libs[MAX_LIBS]; Proc prc[MAX_PROC]; } z = { 184938517, 392857372, 0, 0, {0} };
+#define FLAG_CDECL   1
+#define FLAG_FPRESET 2
 
 extern "C" {
 
@@ -71,10 +74,47 @@ int free_lib( int h )
     }
   return pc;
 }
-int load_proc( int h, const char* procname, const char* procargs ) // flags in procargs
+int _parse_args( char* flags, char* rettype, char* args,
+  const char* descr )
+{
+  *flags = 0;
+  int iarg = 0;
+  int rettp = 0; // boolean
+  char c; char t=0;
+  for( int i=0; c=descr[i]; ++i )
+  {
+    if( iarg>MAX_ARGS ) return iarg;
+    if( strchr("CWBHIL",c) ) { t = 0x80; c=tolower(c); }// unsigned
+    switch(c)
+    {
+      case '+': *flags |= FLAG_CDECL; break;
+      case '%': *flags |= FLAG_FPRESET; break;
+      case '*': t = 0x20; break;
+      case '>': t = 0x40; break;
+      case '=': rettp = 1; break;
+      case 'v': t|=0; if(rettp) *rettype=t; else args[iarg++]=t; t=0; break;
+      case 'c': t|=1; if(rettp) *rettype=t; else args[iarg++]=t; t=0; break;
+      case 'b': t|=1; if(rettp) *rettype=t; else args[iarg++]=t; t=0; break;
+      case 'w': t|=2; if(rettp) *rettype=t; else args[iarg++]=t; t=0; break;
+      case 'h': t|=2; if(rettp) *rettype=t; else args[iarg++]=t; t=0; break;
+      case 'i': t|=4; if(rettp) *rettype=t; else args[iarg++]=t; t=0; break;
+      case 'l': t|=8; if(rettp) *rettype=t; else args[iarg++]=t; t=0; break;
+      case 'd': case 'f': /* not implemented yet */ break;
+      case 's': /* == *c */
+      case 't': /* == *w */
+      case 'u': /* == *c */
+      case 'p': /* == *v */ break;
+    }
+  }
+  return iarg;
+}
+/* types: c C w W -- char uchar wchar_t unsigned wchar_t
+          b B h H i I l L -- int8 uint8 int16 uint16 int32 uint32 int64 uint64
+          f d -- float double (yet to do...)
+          s t u p S? T? U? -- *char *wchar_t *char-as-utf8 *void   */
+int load_proc( int h, const char* procname, const char* procdescr )
 {
   if(z.proc_cnt>=MAX_PROC) return 0;
-  if(strlen(procargs)>MAX_ARGS) return 0;
   if(h<z.libs_offs||z.libs_offs+MAX_LIBS<=h) return 0;
   int lib = h-z.libs_offs;
   printf("lp lib:%d\n",lib);
@@ -87,9 +127,9 @@ int load_proc( int h, const char* procname, const char* procargs ) // flags in p
     {
       z.prc[proc].addr = a;
       z.prc[proc].h = h;
-      z.prc[proc].flags = 0;
-      z.prc[proc].stk = 4*(int)strlen(procargs); // calculate stack size!!! TODO!
-      strcpy(z.prc[proc].args,procargs);
+      z.prc[proc].nargs = _parse_args( &z.prc[proc].flags, &z.prc[proc].rettype, z.prc[proc].args,
+          procdescr );
+      if( z.prc[proc].nargs > MAX_ARGS ) return 0;
       ++z.proc_cnt;
       return proc+z.proc_offs;
     }
@@ -119,13 +159,8 @@ F4(F4ipii,I,P,I,I); F4(F4ipip,I,P,I,P); F4(F4ippi,I,P,P,I); F4(F4ippp,I,P,P,P);
 F4(F4piii,P,I,I,I); F4(F4piip,P,I,I,P); F4(F4pipi,P,I,P,I); F4(F4pipp,P,I,P,P);
 F4(F4ppii,P,P,I,I); F4(F4ppip,P,P,I,P); F4(F4pppi,P,P,P,I); F4(F4pppp,P,P,P,P);
 
-/* types: c C w W -- char uchar wchar_t unsigned wchar_t
-          b B h H i I l L -- int8 uint8 int16 uint16 int32 uint32 int64 uint64
-          f d -- float double (yet to do...)
-          s t u p -- *char *wchar_t *char-as-utf8 *void   */
-
 typedef enum ArgType { VT,CT,UCT,WT,UWT,BT,UBT,HT,UHT,IT,UIT,LT,ULT,FT,DT,
-                     VP,CP,UCP,WP,UWP,BP,UBP,HP,UHP,IP,UIP,LP,ULP,FP,DP } ArgType;
+                       VP,CP,UCP,WP,UWP,BP,UBP,HP,UHP,IP,UIP,LP,ULP,FP,DP } ArgType;
 typedef struct Arg { ArgType t;
                      union { char c; short h; int i; long long l; void* p; }; } Arg;
 void call_proc( int proc, int nargs, const Arg args[] )
@@ -172,51 +207,10 @@ int main()
   printf("l:%d  ll:%d  p:%d\n",sizeof(long),sizeof(long long),sizeof(void*));
   int h = load_lib("user32.dll");
   printf("main h:%d\n",h);
-  int p = load_proc(h,"MessageBoxW","i**i");
+  int p = load_proc(h,"MessageBoxW","=i h *w *w I");
   printf("main p:%d\n",p);
 
   use_call_proc( p );
-
-  if(0)
-  {
-    //(*p)( 0, L"hello привет", L"title", 0 );
-    int p1 = 0; // handle
-    const wchar_t* p2 = L"hello привет";
-    const wchar_t* p3 = L"title заголовок";
-    int p4 = 0; // MB_OK
-
-    //char descr = proc_descr( p );
-    int args[32];
-    int na = 0;
-    args[na++] = p1;
-    args[na++] = ((int*)&p2)[0];
-    #ifdef W64
-      args[na++] = ((int*)&p2)[1];
-    #endif
-    args[na++] = ((int*)&p3)[0];
-    #ifdef W64
-      args[na++] = ((int*)&p3)[1];
-    #endif
-    args[na++] = p4;
-    typedef int (__stdcall *FN4)(int,int,int,int); // Win32
-    typedef int (__stdcall *FN6)(int,int,int,int,int,int); // Win64
-    typedef int (__stdcall *MSGBOX)(int,char*,char*,int);
-
-    printf("main standard msgbox...\n");
-    MSGBOX b = (MSGBOX)_proc_addr( p );
-    (*b)(p1,(char*)p2,(char*)p3,p4);
-
-    #ifdef W64
-      FN6 f = (FN6)_proc_addr( p );
-      printf("main a:%016x\ncalling...\n",(long long)f);
-      (*f)(args[0],args[1],args[2],args[3],args[4],args[5]);
-    #else
-      FN4 f = (FN4)_proc_addr( p );
-      printf("main a:%016x\ncalling...\n",(long long)f);
-      (*f)(args[0],args[1],args[2],args[3]);
-    #endif
-    printf("main back\n");
-  }
 
   int n = free_lib( h );
   printf("main n:%d\n",n);
