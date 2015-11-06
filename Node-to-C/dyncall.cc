@@ -6,12 +6,14 @@
 // cl /nologo /Tpdyncall.cc "C:\Program Files (x86)\Microsoft SDKs\Windows\v7.0A\Lib\user32.lib"
 // output: W32  HMODULE:2  l:4  ll:8  p:4  ... all ok
 
+// It's actually C99 code, but VS2013 doesn't support it, so VS2013 must compile it as C++
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <windows.h>
 
-#ifdef UNIX
+#ifdef UNIX // not implemented yet...
   #include <dlfcn.h>
   typedef void *HMODULE;
   typedef char *LPSTR;
@@ -46,7 +48,7 @@ struct { int libs_offs; int proc_offs; int libs_cnt; int proc_cnt;
 #define FLAG_CDECL   1
 #define FLAG_FPRESET 2
 
-extern "C" {
+extern "C" { // VS2013 has to use C++ because it doesn't support C99. This is C99 code.
 
 int load_lib( const char* libname )
 {
