@@ -97,12 +97,32 @@ int load_proc( int h, const char* procname, const char* procargs ) // flags in p
     }
   return 0; // can't be here actually
 }
-void* proc_addr( int p )
+void* _proc_addr( int p )
 {
   if(p<z.proc_offs||z.proc_offs+MAX_PROC<=p) return 0;
   int proc = p-z.proc_offs;
   return z.prc[proc].addr;
 }
+
+void call_proc( int p, const char* args )
+{
+  #define I int
+  #define P void* /* can be long long */
+  typedef I (__stdcall* F0)();
+  typedef I (__stdcall* F1i)(I);
+  typedef I (__stdcall* F1p)(P);
+  #define F2(n,a,b) typedef I (__stdcall* n)(a,b)
+  F2(F2ii,I,I); F2(F2ip,I,P); F2(F2pi,P,I); F2(F2pp,P,P);
+  #define F3(n,a,b,c) typedef I (__stdcall* n)(a,b,c)
+  F3(F3iii,I,I,I); F3(F3iip,I,I,P); F3(F3ipi,I,P,I); F3(F3ipp,I,P,P);
+  F3(F3pii,P,I,I); F3(F3pip,P,I,P); F3(F3ppi,P,P,I); F3(F3ppp,P,P,P);
+  #define F4(n,a,b,c,d) typedef I (__stdcall* n)(a,b,c,d)
+  F4(F4iiii,I,I,I,I); F4(F4iiip,I,I,I,P); F4(F4iipi,I,I,P,I); F4(F4iipp,I,I,P,P);
+  F4(F4ipii,I,P,I,I); F4(F4ipip,I,P,I,P); F4(F4ippi,I,P,P,I); F4(F4ippp,I,P,P,P);
+  F4(F4piii,P,I,I,I); F4(F4piip,P,I,I,P); F4(F4pipi,P,I,P,I); F4(F4pipp,P,I,P,P);
+  F4(F4ppii,P,P,I,I); F4(F4ppip,P,P,I,P); F4(F4pppi,P,P,P,I); F4(F4pppp,P,P,P,P);
+}
+
 
 #ifdef _M_AMD64
 #define W64
@@ -151,11 +171,11 @@ int main()
   (*b)(p1,(char*)p2,(char*)p3,p4);
 
   #ifdef W64
-    FN6 f = (FN6)proc_addr( p );
+    FN6 f = (FN6)_proc_addr( p );
     printf("a:%016x\ncalling...\n",(long long)f);
     (*f)(args[0],args[1],args[2],args[3],args[4],args[5]);
   #else
-    FN4 f = (FN4)proc_addr( p );
+    FN4 f = (FN4)_proc_addr( p );
     printf("a:%016x\ncalling...\n",(long long)f);
     (*f)(args[0],args[1],args[2],args[3]);
   #endif
