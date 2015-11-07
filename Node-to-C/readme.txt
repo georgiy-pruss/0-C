@@ -1,20 +1,23 @@
+... IN PROGRESS ...
+
 int load_lib( const char* libname ) => 0 or handler
-int load_proc( int h, const char* procname, const char* procargs ) => 0 or handler
+int load_proc( int h, const char* procname, const char* procdescr ) => 0 or handler
 int free_lib( int h ) => 0 or number of procedures removed
 <how to call -- to follow>
 
-procargs: "[opts][argspec]..."  blanks ignored
-opts: + cdecl % fpreset
+procargs: "[opts][argspec]..."  blanks (and other unrecognized chars) ignored
+opts: + cdecl, % fpreset
 argspec: * pointer, > pointer for output, *> in/out ptr, = return
   types: c C w W -- char uchar wchar_t unsigned wchar_t
          b B h H i I l L -- int8 uint8 int16 uint16 int32 uint32 int64 uint64
          f d -- float double (yet to do...)
-         v u -- void (for *v), utf8 (like char, but contents is unicode */
+         v u -- void (for *v), utf8 (like char, but contents is unicode)
+e.g. MessageBoxW: "=i H *w *w I"
 
 J: see file x15.c
 
 'filename procedure opts declaration' cd parameters
-opts = [>][+][%]  unbox; stdcall  +=cdecl; % fpreset
+opts = [>][+][%] unbox; stdcall  + cdecl; % fpreset
 parameters:
   c         1     C uc
   w         2
