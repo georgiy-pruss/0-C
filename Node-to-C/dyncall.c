@@ -11,6 +11,7 @@
 // output: W32  HMODULE:2  l:4  ll:8  p:4
 
 // For VS2010/VS2013 save this file in utf-16le -- it's native unicode for VS
+// convert-unicode.py dyncall.c dyncall.cc utf8 utf-16le
 // It's actually C99 code, but VS doesn't support it, so VS must compile it as C++
 
 #include <stdio.h>
