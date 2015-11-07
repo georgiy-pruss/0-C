@@ -117,7 +117,7 @@ int _parse_args( char* flags, char* rettype, char* args, const char* descr )
       case 'i': t|=TYPE_INT;  break; case 'l': t|=TYPE_LONG; break;
       case 'f': t|=TYPE_FLT;  break; case 'd': t|=TYPE_DBL;  break;
     }
-    if( t&TYPE_MASK ) { *nxt=(char)t; t=0; if( nxt!=rettype ) nxt=&args[++iarg]; }
+    if( t&TYPE_MASK ) { *nxt=(char)t; t=0; if( nxt!=rettype ) ++iarg; nxt=&args[iarg]; }
   }
   return iarg;
 }
