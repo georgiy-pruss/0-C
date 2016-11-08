@@ -19,6 +19,7 @@
 #include <time.h>
 #include <math.h>
 #include <windows.h>
+#define STREQ(s,t) (strcasecmp(s,t)==0) // may need to change for MSVC etc
 
 // Parameters
 COLORREF g_bgcolor = RGB(196,136,255); // bg color
@@ -37,8 +38,8 @@ void
 read_ini()
 {
   char fn[500];
-  size_t fnsz = GetModuleFileName(NULL,fn,sizeof(fn));
-  if( fnsz <= 0 || strcmp(fn+fnsz-4,".exe") != 0 ) return;
+  int fnsz = GetModuleFileName(NULL,fn,sizeof(fn));
+  if( fnsz <= 0 || !STREQ(fn+fnsz-4,".exe") ) return;
   strcpy(fn+fnsz-3,"ini");
   char s[100] = ""; DWORD rc; int x,y,r,g,b;
   rc = GetPrivateProfileString( "window", "init", "6,6", s, sizeof(s), fn);
@@ -56,13 +57,13 @@ read_ini()
   rc = GetPrivateProfileString( "window", "hhand", "6,0,0,0", s, sizeof(s), fn);
   if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_hhand_w = x; g_hhand_rgb = RGB(r,g,b); }
   rc = GetPrivateProfileString( "window", "seconds", "no", s, sizeof(s), fn);
-  if( rc>1 ) g_seconds = strcmp(s,"yes")==0;
+  if( rc>1 ) g_seconds = STREQ(s,"yes");
   rc = GetPrivateProfileString( "window", "title", "yes", s, sizeof(s), fn);
-  if( rc>1 ) g_upd_title = strcmp(s,"yes")==0;
+  if( rc>1 ) g_upd_title = STREQ(s,"yes");
   rc = GetPrivateProfileString( "window", "resizable", "no", s, sizeof(s), fn);
-  if( rc>1 ) g_resizable = strcmp(s,"yes")==0;
+  if( rc>1 ) g_resizable = STREQ(s,"yes");
   rc = GetPrivateProfileString( "window", "ontop", "no", s, sizeof(s), fn);
-  if( rc>1 ) g_ontop = strcmp(s,"yes")==0;
+  if( rc>1 ) g_ontop = STREQ(s,"yes");
   if( g_shand_w <= 0 ) g_shand_w = 1;
   if( g_mhand_w <= 0 ) g_mhand_w = 1;
   if( g_hhand_w <= 0 ) g_hhand_w = 1;
