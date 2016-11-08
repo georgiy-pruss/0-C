@@ -31,6 +31,7 @@ int g_hhand_w = 6; COLORREF g_hhand_rgb = RGB(0,0,0);
 BOOL g_seconds = FALSE;
 BOOL g_upd_title = FALSE;
 BOOL g_resizable = FALSE;
+BOOL g_ontop = FALSE;
 
 void
 read_ini()
@@ -60,6 +61,8 @@ read_ini()
   if( rc>1 ) g_upd_title = strcmp(s,"yes")==0;
   rc = GetPrivateProfileString( "window", "resizable", "no", s, sizeof(s), fn);
   if( rc>1 ) g_resizable = strcmp(s,"yes")==0;
+  rc = GetPrivateProfileString( "window", "ontop", "no", s, sizeof(s), fn);
+  if( rc>1 ) g_ontop = strcmp(s,"yes")==0;
   if( g_shand_w <= 0 ) g_shand_w = 1;
   if( g_mhand_w <= 0 ) g_mhand_w = 1;
   if( g_hhand_w <= 0 ) g_hhand_w = 1;
@@ -256,20 +259,20 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   if( !RegisterClassEx(&windowClass) ) return 0;
 
   read_ini();
-
+  DWORD extstyle = WS_EX_TOOLWINDOW | (g_ontop ? WS_EX_TOPMOST : 0);
   DWORD style = (g_resizable ? WS_OVERLAPPED | WS_SYSMENU | WS_THICKFRAME | WS_VISIBLE
                              : WS_POPUPWINDOW | WS_BORDER) | WS_CAPTION;
+
   // Class registerd, so now create window
-  HWND hwnd = CreateWindowEx( WS_EX_TOOLWINDOW, // extended style |WS_EX_TOPMOST
-    windowClass.lpszClassName,                  // class name
-    "Windows 10 Clock",                         // app name
-    style,
-    g_initX,g_initY, g_width,g_height, // initial position and size
+  HWND hwnd = CreateWindowEx( extstyle, // extended style
+    windowClass.lpszClassName,          // class name
+    "Windows 10 Clock",                 // app name
+    style,                              // window style
+    g_initX,g_initY, g_width,g_height,  // initial position and size
     NULL,         // handle to parent
     NULL,         // handle to menu
     hInstance,    // application instance
     NULL);        // no extra parameter's
-  // Check if window creation failed
   if( !hwnd )
   {
     MessageBox( NULL, "Could not create window!", "Error", MB_OK | MB_ICONEXCLAMATION);
