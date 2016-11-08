@@ -3,10 +3,10 @@
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO 3. round window
-// TODO 4. pop up calendar etc --> no, better stopwatch/timer
-// TODO 5. always on top
-// TODO 6. don't show application window in usual taskbar etc
+// TODO round window, although it's not so urgent, square is good too
+// TODO pop up calendar etc --> no, better stopwatch/timer
+// TODO always on top --> option, and it's no good, and I have PowerPro
+// TODO clear up evens:redraw situation; who calls what
 
 // Trim fat from windows
 #define WIN32_LEAN_AND_MEAN
@@ -63,10 +63,9 @@ const int ID_TIMER = 1;
 RECT g_rcClient;
 HBRUSH hbrBG;
 HPEN hsPen, hmPen, hhPen, htPen;
-HINSTANCE g_hinst;
 
 const char*
-calendar()
+calendar() // soon we'll have stopwatch instead
 {
   return "Mo Tu We Th Fr Sa Su\n       1  2  3  4  5  6\n 7  8  9 10 11 12 13\n"
          "14 15 16 17 18 19 20\n21 22 23 24 25 26 27\n28 29 30";
@@ -91,24 +90,23 @@ update_clock(HDC hdc,int halfw, int halfh)
   double angle_hour = 270.0 + (h*30 + m*0.5);
 
   int R = min(halfw,halfh);
-  int mlen = R*83/100;   // Length of minute hand (pixels?) 0.83
+  int mlen = R*84/100;   // Length of minute hand (pixels?) 0.84
   int secx = (int)( mlen * cosd(angle_sec) );
   int secy = (int)( mlen * sind(angle_sec) );
   int minx = (int)( mlen * cosd(angle_min) );
   int miny = (int)( mlen * sind(angle_min) );
-  int hourx = (int)( 0.72*mlen * cosd(angle_hour) );
-  int houry = (int)( 0.72*mlen * sind(angle_hour) );
+  int hourx = (int)( 0.73*mlen * cosd(angle_hour) );
+  int houry = (int)( 0.73*mlen * sind(angle_hour) );
 
   if( g_seconds )
-    SelectObject(hdc, hsPen),
-    MoveToEx(hdc, halfw, halfh, NULL),
-    LineTo(hdc, halfw + secx, halfh + secy);
+  {
+    SelectObject(hdc, hsPen);
+    MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy);
+  }
   SelectObject(hdc, hmPen);
-  MoveToEx(hdc, halfw, halfh, NULL);
-  LineTo(hdc, halfw + minx, halfh + miny); // lineWidth = 4
+  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + minx, halfh + miny);
   SelectObject(hdc, hhPen);
-  MoveToEx(hdc, halfw, halfh, NULL);
-  LineTo(hdc, halfw + hourx, halfh + houry);  // lineWidth = 6
+  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
 }
 
 void draw_clock(HDC hdc,int halfw, int halfh)
@@ -138,7 +136,7 @@ redraw(HWND hwnd,HDC hDC)
   if(hwnd) ReleaseDC(hwnd, hDC);
 }
 
-// Windows Procedure Event Handler
+// Main Window Event Handler
 LRESULT CALLBACK
 WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -171,7 +169,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case WM_SIZE: // will send WM_PAINT as well
     {
-      GetClientRect(hwnd, &g_rcClient);
+      GetClientRect(hwnd, &g_rcClient); // left = top = 0
       return 0;
     }
     case WM_PAINT: // Window needs update
@@ -185,7 +183,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case WM_LBUTTONDOWN:
     {
-      MessageBox(hwnd, calendar(), "Calendar", MB_OK);
+      MessageBox(hwnd, calendar(), "Calendar", MB_OK); // or rather stopwatch
       return 0;
     }
     case WM_RBUTTONDOWN:
@@ -207,27 +205,11 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   return DefWindowProc(hwnd,message,wParam,lParam);
 }
 
-/*
- * also http://www.codeproject.com/Articles/215690/Minimal-WinApi-Window
- *
-//  Get the rectangle
-CRect rect;
-GetWindowRect(&rect);
-int w = rect.Width();
-int h = rect.Height();
-CRgn rgn1;
-//  Create the top ellipse
-rgn1.CreateEllipticRgn(1, 1, w, h/2 + 30)
-//  Set the window region
-SetWindowRgn(static_cast<HRGN>(rgn1.GetSafeHandle()), TRUE);
-rgn1.Detach();
-*/
-
 // Main function - register window class, create window, start message loop
 int APIENTRY
 WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
-  WNDCLASSEX windowClass;  //window class
+  WNDCLASSEX windowClass;
   // Fill out the window class structure
   windowClass.cbSize = sizeof(WNDCLASSEX);
   windowClass.style = CS_HREDRAW | CS_VREDRAW;
@@ -238,21 +220,20 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   windowClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
   windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
   windowClass.hbrBackground = CreateSolidBrush(g_bgcolor); // see also WM_ERASEBKGND
-    // was (HBRUSH)GetStockObject(WHITE_BRUSH);
   windowClass.lpszMenuName = NULL;
   windowClass.lpszClassName = "w10clk";
   windowClass.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
   // Register window class
-  if( !RegisterClassEx(&windowClass) )
-    return 0;
-  g_hinst = hInstance;
+  if( !RegisterClassEx(&windowClass) ) return 0;
+
   read_ini();
+
   DWORD style = (g_resizable ? WS_OVERLAPPED | WS_SYSMENU | WS_THICKFRAME | WS_VISIBLE
                              : WS_POPUPWINDOW | WS_BORDER) | WS_CAPTION;
   // Class registerd, so now create window
-  HWND hwnd = CreateWindowEx( WS_EX_TOOLWINDOW,    // extended style |WS_EX_TOPMOST
-    windowClass.lpszClassName,                     // class name
-    "Windows 10 Clock",                            // app name
+  HWND hwnd = CreateWindowEx( WS_EX_TOOLWINDOW, // extended style |WS_EX_TOPMOST
+    windowClass.lpszClassName,                  // class name
+    "Windows 10 Clock",                         // app name
     style,
     g_initX,g_initY, g_width,g_height, // initial position and size
     NULL,         // handle to parent
@@ -265,14 +246,8 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     MessageBox( NULL, "Could not create window!", "Error", MB_OK | MB_ICONEXCLAMATION);
     return 1;
   }
-  /*
-  ShowWindow(hw, SW_HIDE);
-  SetWindowLongPtr(hw, GWL_EXSTYLE,GetWindowLongPtr(hw, GWL_EXSTYLE)| WS_EX_TOOLWINDOW);
-  ShowWindow(hw, SW_SHOW);  // main message loop
-  */
-  ShowWindow(hwnd, SW_SHOW);  // main message loop
-  // ? ShowWindow(hwnd, iCmdShow);
-  // ? UpdateWindow(hwnd);
+  ShowWindow(hwnd, SW_SHOW); // needed when WS_POPUPWINDOW
+  UpdateWindow(hwnd); // not really needed, left since 1990?
   MSG msg;
   while( GetMessage(&msg, NULL, 0, 0) > 0 )
   {
