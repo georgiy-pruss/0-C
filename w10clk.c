@@ -1,12 +1,16 @@
+// Windows 10 Clock - Copyright (C) Georgy Pruss 2016
 // compile with: gcc w10clk.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
 // (-std=c11 is default) if needed, -lcomdlg32 or -lcomctl32
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
 // TODO round window, although it's not so urgent, square is good too
-// TODO pop up calendar etc --> no, better stopwatch/timer
 // TODO always on top --> option, and it's no good, and I have PowerPro
 // TODO clear up evens:redraw situation; who calls what
+// TODO functions on keypress (stopwatch, timer, calendar, unixtime, etc)
+
+#define HELP_MSG "Right click - show/hide seconds hand\n\n"\
+"Configure the clock appearance in file w10clk.ini"
 
 // Trim fat from windows
 #define WIN32_LEAN_AND_MEAN
@@ -56,6 +60,10 @@ read_ini()
   if( rc>1 ) g_upd_title = strcmp(s,"yes")==0;
   rc = GetPrivateProfileString( "window", "resizable", "no", s, sizeof(s), fn);
   if( rc>1 ) g_resizable = strcmp(s,"yes")==0;
+  if( g_shand_w <= 0 ) g_shand_w = 1;
+  if( g_mhand_w <= 0 ) g_mhand_w = 1;
+  if( g_hhand_w <= 0 ) g_hhand_w = 1;
+  // ticks can be 0
 }
 
 // Const and global state vars
@@ -63,16 +71,51 @@ const int ID_TIMER = 1;
 RECT g_rcClient;
 HBRUSH hbrBG;
 HPEN hsPen, hmPen, hhPen, htPen;
+HPEN hsPen2, hmPen2, hhPen2, htPen2;
 
-const char*
-calendar() // soon we'll have stopwatch instead
+COLORREF mix_colors( COLORREF c1, COLORREF c2 )
 {
-  return "Mo Tu We Th Fr Sa Su\n       1  2  3  4  5  6\n 7  8  9 10 11 12 13\n"
-         "14 15 16 17 18 19 20\n21 22 23 24 25 26 27\n28 29 30";
+  int r = ((c1&0xFF)+(c2&0xFF))/2;
+  int g = (((c1&0xFF00)+(c2&0xFF00))/2) & 0xFF00;
+  int b = (((c1&0xFF0000)+(c2&0xFF0000))/2) & 0xFF0000;
+  return b|g|r;
+}
+
+void
+init_tools()
+{
+  hbrBG = CreateSolidBrush(g_bgcolor);
+  hsPen = CreatePen(PS_SOLID,max(g_shand_w-1,1),g_shand_rgb);
+  hmPen = CreatePen(PS_SOLID,max(g_mhand_w-1,1),g_mhand_rgb);
+  hhPen = CreatePen(PS_SOLID,max(g_hhand_w-1,1),g_hhand_rgb);
+  htPen = CreatePen(PS_SOLID,max(g_tick_w-1,1),g_tick_rgb);
+  hsPen2 = CreatePen(PS_SOLID,g_shand_w,mix_colors(g_bgcolor,g_shand_rgb));
+  hmPen2 = CreatePen(PS_SOLID,g_mhand_w,mix_colors(g_bgcolor,g_mhand_rgb));
+  hhPen2 = CreatePen(PS_SOLID,g_hhand_w,mix_colors(g_bgcolor,g_hhand_rgb));
+  htPen2 = CreatePen(PS_SOLID,g_tick_w,mix_colors(g_bgcolor,g_tick_rgb));
 }
 
 double sind(double x) { return sin(x*M_PI/180); }
 double cosd(double x) { return cos(x*M_PI/180); }
+
+void draw_clock(HDC hdc,int halfw, int halfh)
+{
+  if( g_tick_w == 0 ) return;
+  int R = min(halfw,halfh);
+  for(int i=0;i<12;++i)
+  {
+    int start_x = (int)( halfw+(0.88*R*cosd(30*i))+0.5 );
+    int start_y = (int)( halfh+(0.88*R*sind(30*i))+0.5 );
+    int end_x   = (int)( halfw+(0.96*R*cosd(30*i))+0.5 );
+    int end_y   = (int)( halfh+(0.96*R*sind(30*i))+0.5 );
+    SelectObject(hdc, htPen2);
+    MoveToEx(hdc,start_x,start_y,NULL);
+    LineTo(hdc,end_x,end_y);
+    SelectObject(hdc, htPen);
+    MoveToEx(hdc,start_x,start_y,NULL);
+    LineTo(hdc,end_x,end_y);
+  }
+}
 
 void
 update_clock(HDC hdc,int halfw, int halfh)
@@ -100,29 +143,19 @@ update_clock(HDC hdc,int halfw, int halfh)
 
   if( g_seconds )
   {
+    SelectObject(hdc, hsPen2);
+    MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy);
     SelectObject(hdc, hsPen);
     MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy);
   }
+  SelectObject(hdc, hmPen2);
+  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + minx, halfh + miny);
   SelectObject(hdc, hmPen);
   MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + minx, halfh + miny);
+  SelectObject(hdc, hhPen2);
+  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
   SelectObject(hdc, hhPen);
   MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
-}
-
-void draw_clock(HDC hdc,int halfw, int halfh)
-{
-  SelectObject(hdc, htPen);
-  int R = min(halfw,halfh);
-  //lineWidth = 2;
-  for(int i=0;i<12;++i)
-  {
-    int start_x = (int)( halfw+(0.88*R*cosd(30*i))+0.5 );
-    int start_y = (int)( halfh+(0.88*R*sind(30*i))+0.5 );
-    int end_x   = (int)( halfw+(0.96*R*cosd(30*i))+0.5 );
-    int end_y   = (int)( halfh+(0.96*R*sind(30*i))+0.5 );
-    MoveToEx(hdc,start_x,start_y,NULL);
-    LineTo(hdc,end_x,end_y);
-  }
 }
 
 void
@@ -146,11 +179,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     {
       if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 )
         MessageBox(hwnd, "Could not SetTimer()!", "Error", MB_OK | MB_ICONEXCLAMATION);
-      hbrBG = CreateSolidBrush(g_bgcolor);
-      hsPen = CreatePen(PS_SOLID,g_shand_w,g_shand_rgb);
-      hmPen = CreatePen(PS_SOLID,g_mhand_w,g_mhand_rgb);
-      hhPen = CreatePen(PS_SOLID,g_hhand_w,g_hhand_rgb);
-      htPen = CreatePen(PS_SOLID,g_tick_w,g_tick_rgb);
+      init_tools();
       return 0;
     }
     case WM_TIMER:
@@ -183,7 +212,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     }
     case WM_LBUTTONDOWN:
     {
-      MessageBox(hwnd, calendar(), "Calendar", MB_OK); // or rather stopwatch
+      MessageBox(hwnd, HELP_MSG, "Windows 10 Clock Help", MB_OK);
       return 0;
     }
     case WM_RBUTTONDOWN:
