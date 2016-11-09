@@ -1,13 +1,22 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
-// compile with: gcc w10clk.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
-// (-std=c11 is default) if needed, -lcomdlg32 or -lcomctl32
+// compile with cygwin64: gcc w10clk.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
+// (-std=c11 is default) in experiments also -lcomdlg32 or -lcomctl32
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
 // TODO round window, although it's not so urgent, square is good too
-// TODO always on top --> option, and it's no good, and I have PowerPro
-// TODO clear up evens:redraw situation; who calls what
-// TODO functions on keypress (stopwatch, timer, calendar, unixtime, etc)
+// TODO functions on keypress --
+// stopwatch: s - start, l - lap time, f - finish
+// timer: HHMMt - set timer, 0t - reset timer (HHMM can be M, MM, HMM, HHMM)
+// alarm: HHMMa - set alarm, 0a - reset alarm
+// calendar: d - show date data incl. week, year day number, tjd etc.
+// datecalc: NNNd/k/m - date in (or back if D/K/M) NNN days/weeks/months
+// datedist: YYYYMMDD= - calculate distance to date (and its weekday) calendar?
+// timezone: z - tz info, HHw,HHe - time in another timezone (west, east)
+// unixtime: u - show unixtime, n - show new time (mine :))
+// view: c - center window, [,],{,} - resize, spc - show/hide sec.hand
+// others: o - show color dialog, ?,h - help window, q,x - exit
+// TODO i18n, utf8?
 
 #define HELP_MSG "Right click - show/hide seconds hand\n\n"\
 "Configure the clock appearance in file w10clk.ini"
@@ -19,63 +28,59 @@
 #include <time.h>
 #include <math.h>
 #include <windows.h>
-#define STREQ(s,t) (strcasecmp(s,t)==0) // may need to change for MSVC etc
+#define STRIEQ(s,t) (strcasecmp(s,t)==0) // may need to change for MSVC etc
 
-// Parameters
-COLORREF g_bgcolor = RGB(196,136,255); // bg color
-int g_initX=6, g_initY=6;      // initial position
-int g_width=200, g_height=212; // initial size
-int g_tick_w = 4; COLORREF g_tick_rgb = RGB(64,64,64);
-int g_shand_w = 1; COLORREF g_shand_rgb = RGB(0,0,0);
-int g_mhand_w = 3; COLORREF g_mhand_rgb = RGB(0,0,0);
-int g_hhand_w = 6; COLORREF g_hhand_rgb = RGB(0,0,0);
-BOOL g_seconds = FALSE;
-BOOL g_upd_title = FALSE;
-BOOL g_resizable = FALSE;
-BOOL g_ontop = FALSE;
+// Parameters; all defaults are in read_int()
+COLORREF g_bgcolor;    // bg color
+int g_initX, g_initY;  // initial position
+int g_width, g_height; // initial size
+int g_tick_w;  COLORREF g_tick_rgb;  // width and color of ticks (0 - no ticks)
+int g_shand_w; COLORREF g_shand_rgb; // s,m,h hands
+int g_mhand_w; COLORREF g_mhand_rgb;
+int g_hhand_w; COLORREF g_hhand_rgb;
+char g_timefmt[100];   // strftime format of time in title
+BOOL g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
 void
-read_ini()
+read_ini() // all parameter names and default values are here!
 {
-  char fn[500];
-  int fnsz = GetModuleFileName(NULL,fn,sizeof(fn));
-  if( fnsz <= 0 || !STREQ(fn+fnsz-4,".exe") ) return;
-  strcpy(fn+fnsz-3,"ini");
+  char fnm[500];
+  int fnmsz = GetModuleFileName(NULL,fnm,sizeof(fnm));
+  if( fnmsz <= 0 || !STRIEQ(fnm+fnmsz-4,".exe") ) return;
+  strcpy(fnm+fnmsz-3,"ini");
   char s[100] = ""; DWORD rc; int x,y,r,g,b;
-  rc = GetPrivateProfileString( "window", "init", "6,6", s, sizeof(s), fn);
+  #define READINI(nm,def) rc = GetPrivateProfileString( "window", nm, def, s, sizeof(s), fnm)
+  READINI("init","5,0");
   if( rc>2 && sscanf( s,"%d,%d", &x,&y )==2 ) { g_initX = x; g_initY = y; }
-  rc = GetPrivateProfileString( "window", "size", "200,212", s, sizeof(s), fn);
+  READINI("size","200,222");
   if( rc>2 && sscanf( s,"%d,%d", &x,&y )==2 ) { g_width = x; g_height = y; }
-  rc = GetPrivateProfileString( "window", "bg", "196,136,255", s, sizeof(s), fn);
+  READINI("bg","60,0,120");
   if( rc>4 && sscanf( s,"%d,%d,%d", &r,&g,&b )==3 ) { g_bgcolor = RGB(r,g,b); }
-  rc = GetPrivateProfileString( "window", "ticks", "4,64,64,64", s, sizeof(s), fn);
+  READINI("ticks","3,210,210,210");
   if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_tick_w = x; g_tick_rgb = RGB(r,g,b); }
-  rc = GetPrivateProfileString( "window", "shand", "1,0,0,0", s, sizeof(s), fn);
+  READINI("shand","2,255,255,255");
   if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_shand_w = x; g_shand_rgb = RGB(r,g,b); }
-  rc = GetPrivateProfileString( "window", "mhand", "4,0,0,0", s, sizeof(s), fn);
+  READINI("mhand","3,255,255,255");
   if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_mhand_w = x; g_mhand_rgb = RGB(r,g,b); }
-  rc = GetPrivateProfileString( "window", "hhand", "6,0,0,0", s, sizeof(s), fn);
+  READINI("hhand","5,255,255,255");
   if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_hhand_w = x; g_hhand_rgb = RGB(r,g,b); }
-  rc = GetPrivateProfileString( "window", "seconds", "no", s, sizeof(s), fn);
-  if( rc>1 ) g_seconds = STREQ(s,"yes");
-  rc = GetPrivateProfileString( "window", "title", "yes", s, sizeof(s), fn);
-  if( rc>1 ) g_upd_title = STREQ(s,"yes");
-  rc = GetPrivateProfileString( "window", "resizable", "no", s, sizeof(s), fn);
-  if( rc>1 ) g_resizable = STREQ(s,"yes");
-  rc = GetPrivateProfileString( "window", "ontop", "no", s, sizeof(s), fn);
-  if( rc>1 ) g_ontop = STREQ(s,"yes");
+  READINI("seconds","no");          if( rc>1 ) g_seconds = STRIEQ(s,"yes");
+  READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
+  READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
+  READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
+  READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) { strcpy( g_timefmt, s ); }
   if( g_shand_w <= 0 ) g_shand_w = 1;
   if( g_mhand_w <= 0 ) g_mhand_w = 1;
   if( g_hhand_w <= 0 ) g_hhand_w = 1;
-  // ticks can be 0
+  // ticks' width can be 0 (meaning no ticks at all)
 }
 
-// Const and global state vars
+// Const (all upper-case) and global state vars (camel-style names)
 const int ID_TIMER = 1;
-RECT g_rcClient;
-HBRUSH hbrBG;
-HPEN hsPen, hmPen, hhPen, htPen;
-HPEN hsPen2, hmPen2, hhPen2, htPen2;
+RECT rcClient; // clock client area
+HBRUSH hbrBG;    // clock background
+HPEN hsPen, hmPen, hhPen, htPen;     // clock hands (1 pixel narrower than required)
+HPEN hsPen2, hmPen2, hhPen2, htPen2; // half-tone borders of clock hands
 
 COLORREF mix_colors( COLORREF c1, COLORREF c2 )
 {
@@ -106,7 +111,7 @@ void draw_clock(HDC hdc,int halfw, int halfh)
 {
   if( g_tick_w == 0 ) return;
   int R = min(halfw,halfh);
-  for(int i=0;i<12;++i)
+  for( int i=0; i<12; ++i )
   {
     int start_x = (int)( halfw+(0.88*R*cosd(30*i))+0.5 );
     int start_y = (int)( halfh+(0.88*R*sind(30*i))+0.5 );
@@ -122,11 +127,8 @@ void draw_clock(HDC hdc,int halfw, int halfh)
 }
 
 void
-update_clock(HDC hdc,int halfw, int halfh)
+update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr)
 {
-  time_t t = time(NULL);
-  struct tm* tmptr = localtime(&t);
-  if( !tmptr ) return;
   int s = tmptr->tm_sec;
   int m = tmptr->tm_min;
   int h = tmptr->tm_hour;
@@ -163,14 +165,27 @@ update_clock(HDC hdc,int halfw, int halfh)
 }
 
 void
-redraw(HWND hwnd,HDC hDC)
+update_title(HWND hwnd)
 {
-  if(hwnd) hDC = GetDC(hwnd);
-  SetBkMode(hDC, OPAQUE);
-  FillRect(hDC, &g_rcClient, hbrBG);
-  draw_clock( hDC, g_rcClient.right/2, g_rcClient.bottom/2 );
-  update_clock( hDC, g_rcClient.right/2, g_rcClient.bottom/2 );
-  if(hwnd) ReleaseDC(hwnd, hDC);
+  time_t t = time(NULL);
+  struct tm* tmptr = localtime(&t); if( !tmptr ) return;
+  char text[100];
+  strftime( text, sizeof(text), g_timefmt, tmptr );
+  SetWindowText(hwnd,text);
+}
+
+void
+redraw_window(HWND hwnd)
+{
+  time_t t = time(NULL);
+  struct tm* tmptr = localtime(&t); if( !tmptr ) return;
+  PAINTSTRUCT paintStruct;
+  HDC hDC = BeginPaint(hwnd,&paintStruct);
+    SetBkMode(hDC, OPAQUE);
+    FillRect(hDC, &rcClient, hbrBG); // need to clean old hands, sorry
+    draw_clock( hDC, rcClient.right/2, rcClient.bottom/2 );
+    update_clock( hDC, rcClient.right/2, rcClient.bottom/2, tmptr );
+  EndPaint(hwnd, &paintStruct);
 }
 
 // Main Window Event Handler
@@ -179,63 +194,38 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   switch( message )
   {
-    case WM_CREATE: // Window is being created
-    {
-      if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 )
-        MessageBox(hwnd, "Could not SetTimer()!", "Error", MB_OK | MB_ICONEXCLAMATION);
-      init_tools();
-      return 0;
-    }
-    case WM_TIMER:
-    {
-      time_t t = time(NULL);
-      struct tm* tmptr = localtime(&t);
-      if( !tmptr ) return 0;
-      if( g_upd_title )
-      {
-        char text[100];
-        strftime( text, sizeof(text), "%T %a %m/%d", tmptr );
-        SetWindowText(hwnd,text);
-      }
-      redraw(hwnd,0);
-      return 0;
-    }
-    case WM_SIZE: // will send WM_PAINT as well
-    {
-      GetClientRect(hwnd, &g_rcClient); // left = top = 0
-      return 0;
-    }
-    case WM_PAINT: // Window needs update
-    {
-      SendMessage( hwnd, WM_TIMER, ID_TIMER, 0 ); // to have updated time
-      PAINTSTRUCT paintStruct;
-      HDC hDC = BeginPaint(hwnd,&paintStruct);
-      redraw(0,hDC);
-      EndPaint(hwnd, &paintStruct);
-      return 0;
-    }
-    case WM_LBUTTONDOWN:
-    {
-      MessageBox(hwnd, HELP_MSG, "Windows 10 Clock Help", MB_OK);
-      return 0;
-    }
-    case WM_RBUTTONDOWN:
-    {
-      g_seconds = ! g_seconds;
-      return 0;
-    }
-    case WM_CLOSE: // Window is closing
-    {
-      KillTimer(hwnd, ID_TIMER);
-      DeleteObject(hsPen);
-      DeleteObject(hmPen); DeleteObject(hhPen); DeleteObject(htPen);
-      PostQuitMessage(0);
-      return 0;
-    }
-    default:
-      break;
+  case WM_CREATE: // Window is being created, good time for init tasks
+    if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 ) // tick every second
+      MessageBox(hwnd, "Could not set timer!", "Error", MB_OK | MB_ICONEXCLAMATION);
+    init_tools();
+    break;
+  case WM_SIZE: // WM_PAINT will be sent as well
+    GetClientRect(hwnd, &rcClient); // left = top = 0
+    break;
+  case WM_TIMER:
+    if( g_upd_title ) update_title(hwnd); // update caption every tick if required
+    if( g_seconds || time(NULL)%10==0 )   // but window - every 10 s if w/o sec.hand
+      InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
+    break;
+  case WM_PAINT: // Window needs update for whatever reason
+    redraw_window(hwnd);
+    break;
+  case WM_LBUTTONDOWN: // to be changed...
+    MessageBox(hwnd, HELP_MSG, "Windows 10 Clock Help", MB_OK);
+    break;
+  case WM_RBUTTONDOWN: // maybe menu with all fns?
+    g_seconds = ! g_seconds;
+    InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
+    break;
+  case WM_CLOSE: // Window is closing
+    KillTimer(hwnd, ID_TIMER);
+    DeleteObject(hsPen);
+    DeleteObject(hmPen), DeleteObject(hhPen), DeleteObject(htPen);
+    PostQuitMessage(0);
+  default:
+    return DefWindowProc(hwnd,message,wParam,lParam);
   }
-  return DefWindowProc(hwnd,message,wParam,lParam);
+  return 0;
 }
 
 // Main function - register window class, create window, start message loop
@@ -251,36 +241,37 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   windowClass.cbWndExtra = 0;
   windowClass.hInstance = hInstance;
   windowClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
+  windowClass.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
   windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
   windowClass.hbrBackground = CreateSolidBrush(g_bgcolor); // see also WM_ERASEBKGND
   windowClass.lpszMenuName = NULL;
   windowClass.lpszClassName = "w10clk";
-  windowClass.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
   // Register window class
   if( !RegisterClassEx(&windowClass) ) return 0;
 
-  read_ini();
-  DWORD extstyle = WS_EX_TOOLWINDOW | (g_ontop ? WS_EX_TOPMOST : 0);
-  DWORD style = (g_resizable ? WS_OVERLAPPED | WS_SYSMENU | WS_THICKFRAME | WS_VISIBLE
-                             : WS_POPUPWINDOW | WS_BORDER) | WS_CAPTION;
-
-  // Class registerd, so now create window
-  HWND hwnd = CreateWindowEx( extstyle, // extended style
-    windowClass.lpszClassName,          // class name
-    "Windows 10 Clock",                 // app name
-    style,                              // window style
-    g_initX,g_initY, g_width,g_height,  // initial position and size
-    NULL,         // handle to parent
-    NULL,         // handle to menu
-    hInstance,    // application instance
-    NULL);        // no extra parameter's
-  if( !hwnd )
+  read_ini(); // read all parameters from ini file
+  DWORD extstyle = g_ontop ? WS_EX_TOOLWINDOW | WS_EX_TOPMOST : WS_EX_TOOLWINDOW;
+  DWORD winstyle = WS_POPUPWINDOW | WS_BORDER | WS_CAPTION;
+  int w = g_width+6, h = g_height+29; // Add for border (really non-existing) and caption bar
+  if( g_resizable )
+  {
+    winstyle = WS_OVERLAPPED | WS_SYSMENU | WS_THICKFRAME | WS_VISIBLE | WS_CAPTION;
+    w += 10; h += 10; // no visible borders, but this correction is neccessary anyway
+  }
+  // Class is registered, parameters are set-up, so now's the time to create window
+  HWND hwnd = CreateWindowEx( extstyle,            // extended style
+    windowClass.lpszClassName, "Windows 10 Clock", // class name, program name
+    winstyle, g_initX,g_initY, w,h,     // window style, initial position and size
+    NULL, NULL, // handles to parent and menu
+    hInstance,  // application instance
+    NULL);      // no extra parameters
+  if( !hwnd )   // can it fail, really?
   {
     MessageBox( NULL, "Could not create window!", "Error", MB_OK | MB_ICONEXCLAMATION);
     return 1;
   }
   ShowWindow(hwnd, SW_SHOW); // needed when WS_POPUPWINDOW
-  UpdateWindow(hwnd); // not really needed, left since 1990?
+  UpdateWindow(hwnd); // maybe not really needed
   MSG msg;
   while( GetMessage(&msg, NULL, 0, 0) > 0 )
   {
@@ -288,5 +279,5 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     TranslateMessage(&msg);
     DispatchMessage(&msg);
   }
-  return msg.wParam;
+  return msg.wParam; // I hope it's zero
 }
