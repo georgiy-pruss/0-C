@@ -14,9 +14,12 @@
 // datedist: YYYYMMDD= - calculate distance to date (and its weekday) calendar?
 // timezone: z - tz info, HHw,HHe - time in another timezone (west, east)
 // unixtime: u - show unixtime, n - show new time (mine :))
-// view: c - center window, [,],{,} - resize, spc - show/hide sec.hand
+// view: c - center window, [,],{,} - resize, tab - show/hide sec.hand
+// calculator: NUM. +-*/%()= ...  <XXXX> - hex 2 dec, # - show in hex
 // others: o - show color dialog, ?,h - help window, q,x - exit
+// TODO convert units, temperature
 // TODO i18n, utf8?
+// TODO plugins :D
 
 #define HELP_MSG "Right click - show/hide seconds hand\n\n"\
 "Configure the clock appearance in file w10clk.ini"
@@ -241,7 +244,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   windowClass.cbWndExtra = 0;
   windowClass.hInstance = hInstance;
   windowClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
-  windowClass.hIconSm = LoadIcon(NULL, IDI_WINLOGO);
+  windowClass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
   windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
   windowClass.hbrBackground = CreateSolidBrush(g_bgcolor); // see also WM_ERASEBKGND
   windowClass.lpszMenuName = NULL;
