@@ -6,6 +6,7 @@
 #include <sys/timeb.h>
 #include <unistd.h>
 
+typedef unsigned long long ULL;
 typedef int bool;
 #define true 1
 #define false 0
@@ -50,25 +51,25 @@ process_char( int c, char* s, int m, int n ) // m - max length
       n = sprintf( s, "%d", x );
     }
   }
-  else if( c=='c' )
+  else if( c=='f' )
   {
     int x; int k=sscanf( s, "%d", &x );
     if( k==1 ) { x = (x-32)*5/9; n = sprintf( s, "%d", x ); }
   }
-  else if( c=='f' )
+  else if( c=='c' )
   {
     int x; int k=sscanf( s, "%d", &x );
     if( k==1 ) { x = x*9/5+32; n = sprintf( s, "%d", x ); }
   }
   else if( c=='h' )
   {
-    int x; int k=sscanf( s, "%X", &x );
-    if( k==1 ) { n = sprintf( s, "%d", x ); }
+    ULL x; int k=sscanf( s, "%llX", &x );
+    if( k==1 ) { n = sprintf( s, "%lld", x ); }
   }
   else if( c=='#' )
   {
-    int x; int k=sscanf( s, "%d", &x );
-    if( k==1 ) { n = sprintf( s, "%X", x ); }
+    ULL x; int k=sscanf( s, "%lld", &x );
+    if( k==1 ) { n = sprintf( s, "%llX", x ); }
   }
   else if( c=='s' )
   {
