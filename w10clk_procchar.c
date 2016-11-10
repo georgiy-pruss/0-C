@@ -53,13 +53,13 @@ process_char( int c, char* s, int m, int n ) // m - max length
   }
   else if( c=='f' )
   {
-    int x; int k=sscanf( s, "%d", &x );
-    if( k==1 ) { x = (x-32)*5/9; n = sprintf( s, "%d", x ); }
+    double x; int k=sscanf( s, "%lf", &x );
+    if( k==1 ) { x = (x-32.0)/1.8; n = sprintf( s, "%.1f", x ); }
   }
   else if( c=='c' )
   {
-    int x; int k=sscanf( s, "%d", &x );
-    if( k==1 ) { x = x*9/5+32; n = sprintf( s, "%d", x ); }
+    double x; int k=sscanf( s, "%lf", &x );
+    if( k==1 ) { x = x*1.8+32.0; n = sprintf( s, "%.1f", x ); }
   }
   else if( c=='h' )
   {
