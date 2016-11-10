@@ -5,19 +5,7 @@
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
 // TODO round window, although it's not so urgent, square is good too
-// TODO functions on keypress --
-// stopwatch: s - start, l - lap time, f - finish
-// timer: HHMMt - set timer, 0t - reset timer (HHMM can be M, MM, HMM, HHMM)
-// alarm: HHMMa - set alarm, 0a - reset alarm
-// calendar: d - show date data incl. week, year day number, tjd etc.
-// datecalc: NNNd/k/m - date in (or back if D/K/M) NNN days/weeks/months
-// datedist: YYYYMMDD= - calculate distance to date (and its weekday) calendar?
-// timezone: z - tz info, HHw,HHe - time in another timezone (west, east)
-// unixtime: u - show unixtime, n - show new time (mine :))
-// view: c - center window, [,],{,} - resize, tab - show/hide sec.hand
-// calculator: NUM. +-*/%()= ...  <XXXX> - hex 2 dec, # - show in hex
-// others: o - show color dialog, ?,h - help window, q,x - exit
-// TODO convert units, temperature
+// TODO functions on keypress -- see w10clk.txt
 // TODO i18n, utf8?
 // TODO plugins :D
 
@@ -31,6 +19,10 @@
 #include <time.h>
 #include <math.h>
 #include <windows.h>
+typedef int bool;
+#define true 1
+#define false 0
+extern int process_char( int c, char* s, int max_len, int n );
 #define STRIEQ(s,t) (strcasecmp(s,t)==0) // may need to change for MSVC etc
 
 // Parameters; all defaults are in read_int()
@@ -42,7 +34,7 @@ int g_shand_w; COLORREF g_shand_rgb; // s,m,h hands
 int g_mhand_w; COLORREF g_mhand_rgb;
 int g_hhand_w; COLORREF g_hhand_rgb;
 char g_timefmt[100];   // strftime format of time in title
-BOOL g_seconds,g_upd_title, g_resizable, g_ontop; // flags
+bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
 void
 read_ini() // all parameter names and default values are here!
@@ -105,6 +97,12 @@ init_tools()
   hmPen2 = CreatePen(PS_SOLID,g_mhand_w,mix_colors(g_bgcolor,g_mhand_rgb));
   hhPen2 = CreatePen(PS_SOLID,g_hhand_w,mix_colors(g_bgcolor,g_hhand_rgb));
   htPen2 = CreatePen(PS_SOLID,g_tick_w,mix_colors(g_bgcolor,g_tick_rgb));
+}
+
+void
+help_on_error_input()
+{
+  MessageBox(NULL, "See file vw10clk.txt for available options", "Windows 10 Clock", MB_OK );
 }
 
 double sind(double x) { return sin(x*M_PI/180); }
@@ -177,6 +175,9 @@ update_title(HWND hwnd)
   SetWindowText(hwnd,text);
 }
 
+char disp[100] = "";
+int ldisp = 0;
+
 void
 redraw_window(HWND hwnd)
 {
@@ -188,6 +189,7 @@ redraw_window(HWND hwnd)
     FillRect(hDC, &rcClient, hbrBG); // need to clean old hands, sorry
     draw_clock( hDC, rcClient.right/2, rcClient.bottom/2 );
     update_clock( hDC, rcClient.right/2, rcClient.bottom/2, tmptr );
+    if( ldisp>0 ) TextOut(hDC,rcClient.right/5,rcClient.bottom/2-20,disp,ldisp);
   EndPaint(hwnd, &paintStruct);
 }
 
@@ -213,11 +215,12 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
   case WM_PAINT: // Window needs update for whatever reason
     redraw_window(hwnd);
     break;
-  case WM_LBUTTONDOWN: // to be changed...
-    MessageBox(hwnd, HELP_MSG, "Windows 10 Clock Help", MB_OK);
-    break;
   case WM_RBUTTONDOWN: // maybe menu with all fns?
     g_seconds = ! g_seconds;
+    InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
+    break;
+  case WM_CHAR:
+    ldisp = process_char( (int)wParam, disp, sizeof(disp)-1, ldisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
   case WM_CLOSE: // Window is closing
