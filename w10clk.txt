@@ -1,0 +1,16 @@
+0123456789  enter number, also +-_/.: e.g. 2016.11.10_12:33:56 or +10000 3/11
+ABCDEF      hex digits (uppercase!)
+bksp        correct
+spc         clean
+
+d     y/m/d wd yd - current date
+u     current unix time (local)
+n     seconds (of day) now
+s     start stopwatch (actually just remember moment of start)
+e     elapsed since start (also break time, work time)
+b     break (don't count this time, start time of break)
+g     go on (end of break)
+Nh    convert hex to decimal (mind Z80 assembly -- 7FFFh :))
+N#    convert decimal to hex (keep it <2^63)
+
+... much more to come!
