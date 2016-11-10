@@ -73,7 +73,7 @@ read_ini() // all parameter names and default values are here!
   if( rc>9 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h)==4 ) { g_t_len = x; BND( g_t_len, 1,96 );
     g_sh_len = y; g_mh_len = w; g_hh_len = h;
     BND( g_sh_len, 1,99 ); BND( g_mh_len, 1,99 ); BND( g_hh_len, 1,99 ); }
-  READINI("disp",",0,120");
+  READINI("disp","20,40");
   if( rc>2 && sscanf( s,"%d,%d", &x,&y )==2 ) { BND(x,0,99); BND(y,0,99);
     g_disp_x = x; g_disp_y = y; }
   READINI("seconds","no");          if( rc>1 ) g_seconds = STRIEQ(s,"yes");
