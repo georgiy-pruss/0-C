@@ -10,7 +10,9 @@
 // TODO i18n, utf8?
 // TODO plugins :D
 
-#define HELP_MSG "Right click - show/hide seconds hand\n\n"\
+#define HELP_MSG "Idle keypress, see file w10clk.txt for available options\n\n"\
+"Left button click - nothing, just bring focus to window\n"\
+"Right button click - show/hide seconds hand\n\n"\
 "Configure the clock appearance in file w10clk.ini"
 
 // Trim fat from windows
@@ -34,6 +36,7 @@ int g_tick_w;  COLORREF g_tick_rgb;  // width and color of ticks (0 - no ticks)
 int g_shand_w; COLORREF g_shand_rgb; // s,m,h hands
 int g_mhand_w; COLORREF g_mhand_rgb;
 int g_hhand_w; COLORREF g_hhand_rgb;
+int g_t_len, g_sh_len, g_mh_len, g_hh_len;
 char g_timefmt[100];   // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
@@ -44,31 +47,36 @@ read_ini() // all parameter names and default values are here!
   int fnmsz = GetModuleFileName(NULL,fnm,sizeof(fnm));
   if( fnmsz <= 0 || !STRIEQ(fnm+fnmsz-4,".exe") ) return;
   strcpy(fnm+fnmsz-3,"ini");
-  char s[100] = ""; DWORD rc; int x,y,r,g,b;
+  char s[100] = ""; DWORD rc; int x,y,w,h,r,g,b;
   #define READINI(nm,def) rc = GetPrivateProfileString( "window", nm, def, s, sizeof(s), fnm)
-  READINI("init","5,0");
-  if( rc>2 && sscanf( s,"%d,%d", &x,&y )==2 ) { g_initX = x; g_initY = y; }
-  READINI("size","200,222");
-  if( rc>2 && sscanf( s,"%d,%d", &x,&y )==2 ) { g_width = x; g_height = y; }
+  #define BND(x,f,t) if(x<f)x=f;if(x>t)x=t
+  READINI("xywh","5,0,200,200");
+  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 ) { g_initX = x; g_initY = y;
+      g_width = w; g_height = h; BND( g_width, 8, 9999 ); BND( g_height, 8, 9999 ); }
   READINI("bg","60,0,120");
-  if( rc>4 && sscanf( s,"%d,%d,%d", &r,&g,&b )==3 ) { g_bgcolor = RGB(r,g,b); }
+  if( rc>4 && sscanf( s,"%d,%d,%d", &r,&g,&b )==3 ) { BND(r,0,255);BND(g,0,255);BND(b,0,255);
+    g_bgcolor = RGB(r,g,b); }
   READINI("ticks","3,210,210,210");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_tick_w = x; g_tick_rgb = RGB(r,g,b); }
+  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_tick_w = x; BND( g_tick_w, 0,50 );
+    BND(r,0,255);BND(g,0,255);BND(b,0,255); g_tick_rgb = RGB(r,g,b); }
   READINI("shand","2,255,255,255");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_shand_w = x; g_shand_rgb = RGB(r,g,b); }
+  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_shand_w = x; BND( g_shand_w, 1,50 );
+    BND(r,0,255);BND(g,0,255);BND(b,0,255); g_shand_rgb = RGB(r,g,b); }
   READINI("mhand","3,255,255,255");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_mhand_w = x; g_mhand_rgb = RGB(r,g,b); }
+  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_mhand_w = x; BND( g_mhand_w, 1,50 );
+    BND(r,0,255);BND(g,0,255);BND(b,0,255); g_mhand_rgb = RGB(r,g,b); }
   READINI("hhand","5,255,255,255");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_hhand_w = x; g_hhand_rgb = RGB(r,g,b); }
+  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_hhand_w = x; BND( g_hhand_w, 1,50 );
+    BND(r,0,255);BND(g,0,255);BND(b,0,255); g_hhand_rgb = RGB(r,g,b); }
   READINI("seconds","no");          if( rc>1 ) g_seconds = STRIEQ(s,"yes");
   READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
   READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) { strcpy( g_timefmt, s ); }
-  if( g_shand_w <= 0 ) g_shand_w = 1;
-  if( g_mhand_w <= 0 ) g_mhand_w = 1;
-  if( g_hhand_w <= 0 ) g_hhand_w = 1;
-  // ticks' width can be 0 (meaning no ticks at all)
+  READINI("lengths","8,84,84,62");
+  if( rc>9 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h)==4 ) { g_t_len = x; BND( g_t_len, 1,96 );
+    g_sh_len = y; g_mh_len = w; g_hh_len = h;
+    BND( g_sh_len, 1,99 ); BND( g_mh_len, 1,99 ); BND( g_hh_len, 1,99 ); }
 }
 
 // Const (all upper-case) and global state vars (camel-style names)
@@ -103,7 +111,7 @@ init_tools()
 void
 help_on_error_input()
 {
-  MessageBox(NULL, "See file vw10clk.txt for available options", "Windows 10 Clock", MB_OK );
+  MessageBox(NULL, HELP_MSG, "Windows 10 Clock", MB_OK );
 }
 
 double sind(double x) { return sin(x*M_PI/180); }
@@ -112,13 +120,13 @@ double cosd(double x) { return cos(x*M_PI/180); }
 void draw_clock(HDC hdc,int halfw, int halfh)
 {
   if( g_tick_w == 0 ) return;
-  int R = min(halfw,halfh);
+  int R = min(halfw,halfh); // radius
   for( int i=0; i<12; ++i )
   {
-    int start_x = (int)( halfw+(0.88*R*cosd(30*i))+0.5 );
-    int start_y = (int)( halfh+(0.88*R*sind(30*i))+0.5 );
-    int end_x   = (int)( halfw+(0.96*R*cosd(30*i))+0.5 );
-    int end_y   = (int)( halfh+(0.96*R*sind(30*i))+0.5 );
+    int start_x = halfw + (int)( R * (96-g_t_len) / 100.0 * cosd(30*i) + 0.5 );
+    int start_y = halfh + (int)( R * (96-g_t_len) / 100.0 * sind(30*i) + 0.5 );
+    int end_x   = halfw + (int)( R * 0.96                 * cosd(30*i) + 0.5 );
+    int end_y   = halfh + (int)( R * 0.96                 * sind(30*i) + 0.5 );
     SelectObject(hdc, htPen2);
     MoveToEx(hdc,start_x,start_y,NULL);
     LineTo(hdc,end_x,end_y);
@@ -140,14 +148,13 @@ update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr)
   double angle_min = 270.0 + (m*6.0 + s*0.1);
   double angle_hour = 270.0 + (h*30 + m*0.5);
 
-  int R = min(halfw,halfh);
-  int mlen = R*84/100;   // Length of minute hand (pixels?) 0.84
-  int secx = (int)( mlen * cosd(angle_sec) );
-  int secy = (int)( mlen * sind(angle_sec) );
-  int minx = (int)( mlen * cosd(angle_min) );
-  int miny = (int)( mlen * sind(angle_min) );
-  int hourx = (int)( 0.73*mlen * cosd(angle_hour) );
-  int houry = (int)( 0.73*mlen * sind(angle_hour) );
+  int R = min(halfw,halfh); // radius
+  int secx  = (int)( R * g_sh_len / 100.0 * cosd(angle_sec) + 0.5 );
+  int secy  = (int)( R * g_sh_len / 100.0 * sind(angle_sec) + 0.5 );
+  int minx  = (int)( R * g_mh_len / 100.0 * cosd(angle_min) + 0.5 );
+  int miny  = (int)( R * g_mh_len / 100.0 * sind(angle_min) + 0.5 );
+  int hourx = (int)( R * g_hh_len / 100.0 * cosd(angle_hour)+ 0.5 );
+  int houry = (int)( R * g_hh_len / 100.0 * sind(angle_hour)+ 0.5 );
 
   if( g_seconds )
   {
