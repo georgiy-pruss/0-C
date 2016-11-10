@@ -29,15 +29,16 @@ typedef int bool;
 extern int process_char( int c, char* s, int max_len, int n ); // w10clk_procchar.c
 
 // Parameters; all defaults are in read_int()
-COLORREF g_bgcolor;    // bg color
-int g_initX, g_initY;  // initial position
-int g_width, g_height; // initial size
+COLORREF g_bgcolor;     // bg color
+int g_init_x, g_init_y; // initial position
+int g_width,  g_height; // initial size
 int g_tick_w;  COLORREF g_tick_rgb;  // width and color of ticks (0 - no ticks)
 int g_shand_w; COLORREF g_shand_rgb; // s,m,h hands
 int g_mhand_w; COLORREF g_mhand_rgb;
 int g_hhand_w; COLORREF g_hhand_rgb;
 int g_t_len, g_sh_len, g_mh_len, g_hh_len;
-char g_timefmt[100];   // strftime format of time in title
+int g_disp_x, g_disp_y; // display position, percents
+char g_timefmt[100];    // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
 void
@@ -51,7 +52,7 @@ read_ini() // all parameter names and default values are here!
   #define READINI(nm,def) rc = GetPrivateProfileString( "window", nm, def, s, sizeof(s), fnm)
   #define BND(x,f,t) if(x<f)x=f;if(x>t)x=t
   READINI("xywh","5,0,200,200");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 ) { g_initX = x; g_initY = y;
+  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 ) { g_init_x = x; g_init_y = y;
       g_width = w; g_height = h; BND( g_width, 8, 9999 ); BND( g_height, 8, 9999 ); }
   READINI("bg","60,0,120");
   if( rc>4 && sscanf( s,"%d,%d,%d", &r,&g,&b )==3 ) { BND(r,0,255);BND(g,0,255);BND(b,0,255);
@@ -68,15 +69,18 @@ read_ini() // all parameter names and default values are here!
   READINI("hhand","5,255,255,255");
   if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_hhand_w = x; BND( g_hhand_w, 1,50 );
     BND(r,0,255);BND(g,0,255);BND(b,0,255); g_hhand_rgb = RGB(r,g,b); }
+  READINI("lengths","8,84,84,62");
+  if( rc>9 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h)==4 ) { g_t_len = x; BND( g_t_len, 1,96 );
+    g_sh_len = y; g_mh_len = w; g_hh_len = h;
+    BND( g_sh_len, 1,99 ); BND( g_mh_len, 1,99 ); BND( g_hh_len, 1,99 ); }
+  READINI("disp",",0,120");
+  if( rc>2 && sscanf( s,"%d,%d", &x,&y )==2 ) { BND(x,0,99); BND(y,0,99);
+    g_disp_x = x; g_disp_y = y; }
   READINI("seconds","no");          if( rc>1 ) g_seconds = STRIEQ(s,"yes");
   READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
   READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) { strcpy( g_timefmt, s ); }
-  READINI("lengths","8,84,84,62");
-  if( rc>9 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h)==4 ) { g_t_len = x; BND( g_t_len, 1,96 );
-    g_sh_len = y; g_mh_len = w; g_hh_len = h;
-    BND( g_sh_len, 1,99 ); BND( g_mh_len, 1,99 ); BND( g_hh_len, 1,99 ); }
 }
 
 // Const (all upper-case) and global state vars (camel-style names)
@@ -197,7 +201,7 @@ redraw_window(HWND hwnd)
     FillRect(hDC, &rcClient, hbrBG); // need to clean old hands, sorry
     draw_clock( hDC, rcClient.right/2, rcClient.bottom/2 );
     update_clock( hDC, rcClient.right/2, rcClient.bottom/2, tmptr );
-    if( ldisp>0 ) TextOut(hDC,rcClient.right/5,rcClient.bottom/2-20,disp,ldisp);
+    if( ldisp>0 ) TextOut(hDC,rcClient.right*g_disp_x/100,rcClient.bottom*g_disp_y/100,disp,ldisp);
   EndPaint(hwnd, &paintStruct);
 }
 
@@ -275,7 +279,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   // Class is registered, parameters are set-up, so now's the time to create window
   HWND hwnd = CreateWindowEx( extstyle,            // extended style
     windowClass.lpszClassName, "Windows 10 Clock", // class name, program name
-    winstyle, g_initX,g_initY, w,h,     // window style, initial position and size
+    winstyle, g_init_x,g_init_y, w,h,     // window style, initial position and size
     NULL, NULL, // handles to parent and menu
     hInstance,  // application instance
     NULL);      // no extra parameters
