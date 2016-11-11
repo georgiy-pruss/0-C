@@ -1,4 +1,4 @@
-// See w10clk.c
+// Part of w10clk
 
 #include <stdio.h>
 #include <string.h>
@@ -12,6 +12,10 @@ typedef int bool;
 #define false 0
 extern bool g_seconds;
 extern void help_on_error_input();
+
+extern int ymd2dn( int year, int month, int day );
+extern void dn2ymd( int dn, /* OUT */ struct tm* t );
+extern int dn2wd( int dn );
 
 int
 process_char( int c, char* s, int m, int n ) // m - max length
@@ -37,41 +41,86 @@ process_char( int c, char* s, int m, int n ) // m - max length
   {
     g_seconds = ! g_seconds;
   }
-  else if( c=='u' || c=='d' || c=='n' )
+  else if( c=='u' || c=='d' || c=='n' || c=='z' )
   {
     t = time(NULL);
     tmptr = localtime(&t); // assume it can't be NULL
-    if( c=='u' )
-      n = strftime( s, m, "%s", tmptr );
-    else if( c=='d' )
-      n = strftime( s, m, "%Y/%m/%d %a", tmptr );
+    if( n==0 )
+    {
+      if( c=='u' )
+        n = strftime( s, m, "%s", tmptr );
+      else if( c=='d' )
+      {
+        n = strftime( s, m, "%Y/%m/%d %a #%j", tmptr );
+        n += sprintf( s+n, " %d", ymd2dn( tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday ) );
+      }
+      else if( c=='z' )
+        n = strftime( s, m, "%z", tmptr );
+      else // 'n'
+        n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec );
+    }
     else
     {
-      int x = tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec;
-      n = sprintf( s, "%d", x );
+      if( c=='u' ) // NNNNNNNNNu
+      {
+        ULL x; int k = sscanf( s, "%llu", &x );
+        if( k==1 && x<0x100000000ull )
+        {
+          time_t t1 = (time_t)x;
+          tmptr = localtime(&t1);
+          n = strftime( s, m, "%Y/%m/%d %H:%M:%S %a", tmptr );
+        }
+      }
+      else if( c=='d' ) // NNNNNNd or YYYY/MM/DDd
+      {
+        if( strchr( s, '/' ) ) // YYYY/MM/DD
+        {
+          int y,m,d; int k = sscanf( s, "%d/%d/%d", &y, &m, &d );
+          if( k==3 && 0<y && y<3000 && 1<=m && m<=12 && 1<=d && d<=31 )
+          {
+            int dn = ymd2dn( y, m, d );
+            tmptr->tm_wday = dn2wd( dn );
+            n = sprintf( s, "%d", dn );
+            n += strftime( s+n, m-n, " %a", tmptr ); // append wd
+          }
+        }
+        else // NNNNN
+        {
+          int x; int k = sscanf( s, "%d", &x );
+          if( k==1 )
+          {
+            dn2ymd( x, tmptr );
+            n = strftime( s, m, "%Y/%m/%d %a", tmptr );
+          }
+        }
+      }
+      else if( c=='z' )
+        n = strftime( s, m, "%z", tmptr );
+      else // 'n'
+        n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec );
     }
   }
-  else if( c=='f' )
+  else if( c=='f' ) // F --> C
   {
     double x; int k=sscanf( s, "%lf", &x );
     if( k==1 ) { x = (x-32.0)/1.8; n = sprintf( s, "%.1f", x ); }
   }
-  else if( c=='c' )
+  else if( c=='c' ) // C --> F
   {
     double x; int k=sscanf( s, "%lf", &x );
     if( k==1 ) { x = x*1.8+32.0; n = sprintf( s, "%.1f", x ); }
   }
-  else if( c=='h' )
+  else if( c=='h' ) // XXXXh --> decimal
   {
     ULL x; int k=sscanf( s, "%llX", &x );
     if( k==1 ) { n = sprintf( s, "%lld", x ); }
   }
-  else if( c=='#' )
+  else if( c=='#' ) // decimal --> XXXX (hexadecimal)
   {
-    ULL x; int k=sscanf( s, "%lld", &x );
+    ULL x; int k=sscanf( s, "%llu", &x );
     if( k==1 ) { n = sprintf( s, "%llX", x ); }
   }
-  else if( c=='s' )
+  else if( c=='s' ) // start stopwatch
   {
     struct timeb tb; ftime(&tb);
     t_start = tb.time; t_start_ms = (int)tb.millitm;
@@ -79,7 +128,7 @@ process_char( int c, char* s, int m, int n ) // m - max length
     t_idle = 0; t_idle_ms = 0;
     n = sprintf( s, "%s", "started" );
   }
-  else if( c=='e' )
+  else if( c=='e' ) // elapsed (can be finish)
   {
     if( t_start == 0 ) n = sprintf( s, "%s", "not started" );
     else
@@ -96,7 +145,7 @@ process_char( int c, char* s, int m, int n ) // m - max length
       }
     }
   }
-  else if( c=='b' )
+  else if( c=='b' ) // break, start idle time
   {
     if( t_start == 0 ) n = sprintf( s, "%s", "not started" );
     else if( t_break_start == 0 )
@@ -107,7 +156,7 @@ process_char( int c, char* s, int m, int n ) // m - max length
     }
     else n = sprintf( s, "%s", "alrady break" );
   }
-  else if( c=='g' )
+  else if( c=='g' ) // go on, stop break, return to action time
   {
     if( t_start == 0 ) n = sprintf( s, "%s", "not started" );
     if( t_break_start != 0 )
@@ -122,7 +171,7 @@ process_char( int c, char* s, int m, int n ) // m - max length
     }
     else n = sprintf( s, "%s", "not on break" );
   }
-  else
+  else // unrecognized keypress
   {
     help_on_error_input();
   }
