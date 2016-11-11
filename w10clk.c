@@ -1,14 +1,16 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
 // compile with cygwin64 (-std=c11 is default):
-// gcc w10clk.c w10clk_procchar.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe && w10clk.exe
+// gcc -O2 w10clk.c w10clk_procchar.c w10clk_tjd.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
 // for experiments: -lcomdlg32 or -lcomctl32
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
+// TODO ^C copy ^V paste
+// TODO negative unixtime to y/m/d (now it's 0..2^32-1 ~ 2016/02/07 Sun)
+// TODO date/time calculations, timezone conversions, expressions, what else?..
+// TODO show help (w10clk.txt); show color selection window
+// TODO argument of program as ini file etc.
 // TODO round window, although it's not so urgent, square is good too
-// TODO functions on keypress -- see w10clk.txt
-// TODO i18n, utf8?
-// TODO plugins :D
 
 #define HELP_MSG "Idle keypress, see file w10clk.txt for available options\n\n"\
 "Left button click - nothing, just bring focus to window\n"\
