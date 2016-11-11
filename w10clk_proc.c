@@ -7,29 +7,31 @@
 #include <unistd.h>
 
 typedef unsigned long long ULL;
+typedef unsigned int uint;
 typedef int bool;
-#define true 1
 #define false 0
+#define true 1
 extern bool g_seconds;
 extern void help_on_error_input();
 
-extern int ymd2dn( int year, int month, int day );
-extern void dn2ymd( int dn, /* OUT */ struct tm* t );
-extern int dn2wd( int dn );
+extern uint ymd2n( uint y, uint m, uint d );
+extern void n2ymd( uint n, /* OUT */ uint* y, uint* m, uint* d );
+extern uint n2wd( uint n );
+
+char WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
 int
-process_char( int c, char* s, int m, int n ) // m - max length
+process_char( int c, char* s, int mn, int n ) // mn - max length
 {
-  time_t t;
-  struct tm* tmptr;
+  time_t t; struct tm* tmptr;  uint y,m,d, w, x;
   static time_t t_start;       static int t_start_ms;
   static int    t_idle;        static int t_idle_ms;
   static time_t t_break_start; static int t_break_start_ms;
   if( '0'<=c && c<='9' || 'A'<=c && c<='F' || strchr( "+-/._:", c ) )
   {
-    s[n]=(char)c; if(n<m) ++n; s[n]=0;
+    s[n]=(char)c; if(n<mn) ++n; s[n]=0;
   }
-  else if( c==' ' )
+  else if( c==32 || c==27 ) // space escape
   {
     n=0; s[n]=0;
   }
@@ -48,54 +50,48 @@ process_char( int c, char* s, int m, int n ) // m - max length
     if( n==0 )
     {
       if( c=='u' )
-        n = strftime( s, m, "%s", tmptr );
+        n = strftime( s, mn, "%s", tmptr );
       else if( c=='d' )
-      {
-        n = strftime( s, m, "%Y/%m/%d %a #%j", tmptr );
-        n += sprintf( s+n, " %d", ymd2dn( tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday ) );
-      }
+        n = strftime( s, mn, "%Y/%m/%d %a #%j", tmptr );
       else if( c=='z' )
-        n = strftime( s, m, "%z", tmptr );
+        n = strftime( s, mn, "%z", tmptr );
       else // 'n'
         n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec );
     }
     else
     {
-      if( c=='u' ) // NNNNNNNNNu
+      if( c=='u' ) // NNNNNNNu
       {
-        ULL x; int k = sscanf( s, "%llu", &x );
-        if( k==1 && x<0x100000000ull )
+        ULL xx; int k = sscanf( s, "%llu", &xx );
+        if( k==1 && xx<0x100000000ull )
         {
-          time_t t1 = (time_t)x;
+          time_t t1 = (time_t)xx;
           tmptr = localtime(&t1);
-          n = strftime( s, m, "%Y/%m/%d %H:%M:%S %a", tmptr );
+          n = strftime( s, mn, "%Y/%m/%d %H:%M:%S %a", tmptr );
         }
       }
       else if( c=='d' ) // NNNNNNd or YYYY/MM/DDd
       {
         if( strchr( s, '/' ) ) // YYYY/MM/DD
         {
-          int y,m,d; int k = sscanf( s, "%d/%d/%d", &y, &m, &d );
-          if( k==3 && 0<y && y<3000 && 1<=m && m<=12 && 1<=d && d<=31 )
+          int k = sscanf( s, "%u/%u/%u", &y, &m, &d );
+          if( k==3 && 0<y && y<=10000 && 1<=m && m<=12 && 1<=d && d<=31 )
           {
-            int dn = ymd2dn( y, m, d );
-            tmptr->tm_wday = dn2wd( dn );
-            n = sprintf( s, "%d", dn );
-            n += strftime( s+n, m-n, " %a", tmptr ); // append wd
+            uint x = ymd2n( y, m, d );
+            n = sprintf( s, "%d %s", x, WD[n2wd(x)] );
           }
         }
         else // NNNNN
         {
-          int x; int k = sscanf( s, "%d", &x );
-          if( k==1 )
+          if( sscanf( s, "%u", &x )==1 && x>0 ) // don't do it for 0
           {
-            dn2ymd( x, tmptr );
-            n = strftime( s, m, "%Y/%m/%d %a", tmptr );
+            n2ymd( x, &y,&m,&d );
+            n = sprintf( s, "%d/%d/%d %s", y,m,d, WD[n2wd(x)] );
           }
         }
       }
       else if( c=='z' )
-        n = strftime( s, m, "%z", tmptr );
+        n = strftime( s, mn, "%z", tmptr );
       else // 'n'
         n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec );
     }
