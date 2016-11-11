@@ -1,19 +1,30 @@
-0123456789  enter number, also +-/_.: e.g. 2016.11.10_12:33:56 or +10000 or 3/11
-ABCDEF      hex digits (uppercase!)
-bksp        correct
-spc         clean
+0123456789. enter number, e.g. 42 or 3.1415
++-          can be used for numbers with sign, e.g. +10 (sometimes it's not 10)
+ABCDEF      hex digits (uppercase!) for hexadecimal numbers, e.g. 7FFF
+:/_         for entering time, dates e.g. 3/11 or 2:00 or 2016/11/10_23:59:59
+bksp        correct input
+spc         clear display
 
-d     y/m/d wd yd - current date
-u     current unix time (local)
-n     seconds (of day) now
-s     start stopwatch (actually just remember moment of start)
-e     elapsed since start (also break time, work time)
-b     break (don't count this time, start time of break)
-g     go on (end of break)
-Nh    convert hex to decimal (mind Z80 assembly -- 7FFFh :))
-N#    convert decimal to hex (hex/dec conversion is unsigned <2^64)
-Nc    convert Celsius to Farenheit
-Nf    convert Farenheit to Celsius
+d      get current date as y/m/d wd #yd (wd - weekday Mon..Sun, yd - year day)
+Dd     convert YYYY/MM/DD to tjd wd, e.g. 2016/11/13 --> 17705 Fri
+Nd     convert tjd as plain number to y/m/d wd (google: TJD Truncated Julian Day)
+u      current unix time (for local time)
+Nu     unix time to y/m/d_h:m:s wd (with current tz) (1970/01/01..2106/02/07)
+n      seconds (of day) now, 0 to 86400
+z      current time zone as +HHMM or -HHMM, e.g. +0200
+
+Nh     convert hex to decimal (mind Z80 assembly -- 7FFFh :))
+N#     convert decimal to hex (hex/dec conversion is unsigned <2^64)
+Nc     convert Celsius to Farenheit
+Nf     convert Farenheit to Celsius
+
+s      start stopwatch (actually just remember moment of start)
+e      elapsed since start (or end, finish), also shows break time, work time
+b      break (don't count this time, start time of break)
+g      go on (end of break)
+
+
+
 
 
 ... much more to come!
