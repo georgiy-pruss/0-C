@@ -1,6 +1,6 @@
 // Part of w10clk
 
-// gcc -O2 -DSEPARATE_TEST w10clk_ymd.c -o test.exe && test.exe
+// gcc -O2 -DTESTALL w10clk_ymd.c -o test.exe && test.exe
 
 #include <stdio.h>
 #include <string.h>
@@ -13,8 +13,8 @@
 // Inter gravissimas dated 24 February 1582, specified: "Julian Thursday,
 // 4 October 1582, being followed by Gregorian Friday, 15 October 1582"
 // That is, from 1/1/1 to 1582/10/4 the Julian calendar is used (days 1..), and
-// from 1582/10/15 for at last a few thousand years the Gregorian calendar is used.
-// CED 730122 = Julian Day Number 2451545 (difference is 1721423). And TJD+718578
+// from 1582/10/15 for at least a few thousand years the Gregorian calendar is used.
+// CED 678578 = Modified Julian Day 0 (difference is 678578). And TJD+718578
 
 typedef unsigned int uint;
 
@@ -56,12 +56,12 @@ n2ymd( uint dn, /* OUT */ uint* yy, uint* mm, uint* dd )
   *yy = year; *mm = month; *dd = day;
 }
 
-#ifdef SEPARATE_TEST
+#ifdef TESTALL
 int
 main()
 {
-  uint y,m,d,ced,cc,xy,xm,xd;
-  ced = 1;
+  uint y,m,d,ced,cc,xy,xm,xd,w;
+  ced = 1;  w = 6; // it all starts with Saturday
   for( y=1; y<=4000; ++y )
     for( m=1; m<=12; ++m )
       for( d=1; d<=31; ++d )
@@ -80,7 +80,8 @@ main()
         n2ymd( cc, &xy,&xm,&xd );
         if( xy != y || xm != m || xd != d )
           printf( "Error rev.conv.: %d/%d/%d --> %d --> %d/%d/%d\n", y,m,d, cc, xy,xm,xd );
-        ++ced;
+        if( n2wd( cc ) != w ) printf( "Error in n2wd: %d --> %d != %d\n", cc, n2wd( cc ), w );
+        ++ced; w = (w+1) % 7;
       }
   printf( "ymd->ced->ymd ended: %d/%d/%d --> %d\n", xy, xm, xd, cc );
   // ymd->ced->ymd started: 1/1/1 --> 1
@@ -98,7 +99,7 @@ main()
     {
       if( !(xy == y && xm == m && xd == d+1 || // next day
             xy == y && xm == m+1 && xd == 1 || // next month
-            xy == y+1 && xm == 1 && xd == 1 ||  // next year
+            xy == y+1 && xm == 1 && xd == 1 || // next year
             xy == y && xm == m && y==1582 && m==10 && d==4 && xd==15) )
         printf( "Error: not next day: %d/%d/%d --> %d --> %d/%d/%d\n",
             y,m,d, ced, xy, xm, xd );
@@ -119,8 +120,8 @@ main()
     printf( "error: %d --> %d/%d/%d != %d/%d/%d\n", n, xy,xm,xd, y,m,d ); \
     if( n2wd(n)!=wd ) printf( "%d/%d/%d - %d --> %d != %d\n", y,m,d,n,n2wd(n),wd )
   TEST(    1, 1, 1, 1, 6 ); // 6
-  TEST( 1582,10, 4, 718578-140841, 4 ); // 4 end of Gregorian calendar
-  TEST( 1582,10,15, 718578-140840, 5 ); // 5 start of Julian calendar
+  TEST( 1582,10, 4, 718578-140841, 4 ); // 4 end of Julian calendar
+  TEST( 1582,10,15, 718578-140840, 5 ); // 5 start of Gregorian calendar
   TEST( 1694, 8, 9, 718578 -99999, 1 );
   TEST( 1878, 9, 5, 718578 -32768, 4 );
   TEST( 1965, 8, 5, 718578  -1023, 4 );
@@ -143,16 +144,18 @@ main()
   TEST( 1582,10,15, 577738, 5 );
   TEST( 1700, 1, 1, 620550, 5 );
   TEST( 1800, 1, 1, 657074, 3 );
+  TEST( 1858,11,17, 678578, 3 ); // MJD 0 = JD 2400000.5
   TEST( 1900, 1, 1, 693598, 1 );
   TEST( 1901, 1, 1, 693963, 2 );
   TEST( 1917, 7,13, 700000, 5 );
+  TEST( 1946,12,26, 710758, 4 ); // MJD 32180 = JD 2432180.5
   TEST( 1965, 8, 5, 717555, 4 );
   TEST( 1966,10,24, 718000, 1 );
-  TEST( 1968, 5,24, 718578, 5 );
+  TEST( 1968, 5,24, 718578, 5 ); // TJD 0
   TEST( 1969, 7,20, 719000, 0 );
   TEST( 1970, 1, 1, 719165, 4 );
   TEST( 1972, 4,15, 720000, 6 );
-  TEST( 2000, 1, 1, 730122, 6 );
+  TEST( 2000, 1, 1, 730122, 6 ); // MJD 51544 = JD 2451544.5
   TEST( 2001, 1, 1, 730488, 1 );
   TEST( 2013, 1, 1, 734871, 2 );
   TEST( 2016,11,11, 736281, 5 );
