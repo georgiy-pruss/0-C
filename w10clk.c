@@ -5,21 +5,21 @@
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO ^C copy ^V paste
-// TODO negative unixtime to y/m/d (now it's 0..2^32-1 ~ 2016/02/07 Sun)
 // TODO date/time calculations, timezone conversions, expressions, what else?..
 // TODO show help (w10clk.txt); show color selection window
 // TODO argument of program as ini file etc.
 // TODO round window, although it's not so urgent, square is good too
 
-#define HELP_MSG "Idle keypress, see file w10clk.txt for available options\n\n"\
-"Left button click - nothing, just bring focus to window\n"\
-"Right button click - show/hide seconds hand\n\n"\
-"Configure the clock appearance in file w10clk.ini"
+#define PROGRAM_NAME "Windows 10 Clock"
+#define HELP_MSG "Idle keypress, see file w10clk.txt for available options\n\n" \
+"Left button click - nothing, just bring focus to window\n" \
+"Right button click - show/hide seconds hand\n\n" \
+"Configure the clock appearance in file w10clk.ini\n\n" \
+"Version 1.1 * Copyright (C) Georgiy Pruss 2016"
 
 // Trim fat from windows
 #define WIN32_LEAN_AND_MEAN
-#pragma comment(linker, "/subsystem:windows") // for MSVC only
+#pragma comment(linker, "/subsystem:windows") // for MSVC?
 #include <stdio.h>
 #include <time.h>
 #include <math.h>
@@ -92,7 +92,8 @@ HBRUSH hbrBG;    // clock background
 HPEN hsPen, hmPen, hhPen, htPen;     // clock hands (1 pixel narrower than required)
 HPEN hsPen2, hmPen2, hhPen2, htPen2; // half-tone borders of clock hands
 
-COLORREF mix_colors( COLORREF c1, COLORREF c2 )
+COLORREF
+mix_colors( COLORREF c1, COLORREF c2 )
 {
   int r = ((c1&0xFF)+(c2&0xFF))/2;
   int g = (((c1&0xFF00)+(c2&0xFF00))/2) & 0xFF00;
@@ -117,7 +118,7 @@ init_tools()
 void
 help_on_error_input()
 {
-  MessageBox(NULL, HELP_MSG, "Windows 10 Clock", MB_OK );
+  MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OK );
 }
 
 double sind(double x) { return sin(x*M_PI/180); }
@@ -180,8 +181,9 @@ update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr)
 }
 
 void
-update_title(HWND hwnd)
+update_title(HWND hwnd, const char* title)
 {
+  if( title ) { SetWindowText(hwnd,title); return; }
   time_t t = time(NULL);
   struct tm* tmptr = localtime(&t); if( !tmptr ) return;
   char text[100];
@@ -207,6 +209,35 @@ redraw_window(HWND hwnd)
   EndPaint(hwnd, &paintStruct);
 }
 
+void
+paste_from_clipboard(HWND hwnd)
+{
+  if( !OpenClipboard(hwnd) ) return;
+  HGLOBAL hglb = GetClipboardData(CF_TEXT);
+  if( !hglb ) return;
+  LPSTR lpstr = GlobalLock(hglb);
+  GlobalUnlock(hglb);
+  CloseClipboard();
+  char* s; char* d=disp; ldisp=0; uint cnt=0; // one blank for many chars<=32
+  for( s=lpstr; *s && ldisp<sizeof(disp)-1; ++s )
+    if( *s>32 ) { *d=*s; ++d; ++ldisp; cnt=0; } // just copy
+    else if( cnt==0 ) { *d=' '; ++d; ++ldisp; cnt=1; } // set blank for first
+  *d = '\0';
+}
+
+void
+copy_to_clipboard(HWND hwnd)
+{
+  if( !OpenClipboard(hwnd) ) return;
+  if( !EmptyClipboard() ) return;
+  HGLOBAL hGlob = GlobalAlloc(GMEM_FIXED, sizeof(disp));
+  strcpy( (char*)hGlob, disp );
+  if( !SetClipboardData( CF_TEXT, hGlob ) )
+    CloseClipboard(), GlobalFree(hGlob); // free allocated string on error
+  else
+    CloseClipboard();
+}
+
 // Main Window Event Handler
 LRESULT CALLBACK
 WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -222,7 +253,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     GetClientRect(hwnd, &rcClient); // left = top = 0
     break;
   case WM_TIMER:
-    if( g_upd_title ) update_title(hwnd); // update caption every tick if required
+    if( g_upd_title ) update_title(hwnd,NULL); // update caption every tick
     if( g_seconds || time(NULL)%10==0 )   // but window - every 10 s if w/o sec.hand
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
@@ -234,7 +265,15 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
   case WM_CHAR:
-    ldisp = process_char( (int)wParam, disp, sizeof(disp)-1, ldisp );
+    if( wParam==22 ) // ctrl+v
+      paste_from_clipboard(hwnd);
+    else if( wParam==3 ) // ctrl+c
+      copy_to_clipboard(hwnd);
+    else if( wParam==20 ) // ctrl+t
+      {g_upd_title = ! g_upd_title;
+      if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME);}
+    else
+      ldisp = process_char( (int)wParam, disp, sizeof(disp)-1, ldisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
   case WM_CLOSE: // Window is closing
@@ -279,9 +318,9 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     w += 10; h += 10; // no visible borders, but this correction is neccessary anyway
   }
   // Class is registered, parameters are set-up, so now's the time to create window
-  HWND hwnd = CreateWindowEx( extstyle,            // extended style
-    windowClass.lpszClassName, "Windows 10 Clock", // class name, program name
-    winstyle, g_init_x,g_init_y, w,h,     // window style, initial position and size
+  HWND hwnd = CreateWindowEx( extstyle,      // extended style
+    windowClass.lpszClassName, PROGRAM_NAME, // class name, program name
+    winstyle, g_init_x,g_init_y, w,h,        // window style, initial position and size
     NULL, NULL, // handles to parent and menu
     hInstance,  // application instance
     NULL);      // no extra parameters
