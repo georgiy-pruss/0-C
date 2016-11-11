@@ -1,6 +1,6 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
 // compile with cygwin64 (-std=c11 is default):
-// gcc -O2 w10clk.c w10clk_procchar.c w10clk_tjd.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
+// gcc -O2 w10clk.c w10clk_proc.c w10clk_ymd.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
 // for experiments: -lcomdlg32 or -lcomctl32
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
@@ -25,8 +25,8 @@
 #include <math.h>
 #include <windows.h>
 typedef int bool;
-#define true 1
 #define false 0
+#define true 1
 #define STRIEQ(s,t) (strcasecmp(s,t)==0) // may need to change for MSVC etc
 extern int process_char( int c, char* s, int max_len, int n ); // w10clk_procchar.c
 
