@@ -25,12 +25,13 @@ g      go on (end of break)
 
 _______________
 
-CED    Common Era Day number -- number of day since 1/1/1 AD, that it that was
-       day 1, etc, using Julian calendar (year divisable by 4 are all leap),
-       till 1582/10/4 (CED 577737), when the counting switches to Gregorian
-       calendar and day 1582/10/15 (CED 577738) follows. This enumeration was
-       choosen to eliminate negative numbers and to have somewhat natural scheme.
-       CED 730122 = Julian Day Number 2451545 (difference is 1721423)
+CED    Common Era Day number -- number of a day since January 1st, 1 AD, i.e.
+       that was day 1, then January 2nd was day 2 and so on, using Julian
+       calendar (year divisable by 4 are all leap), till 1582/10/4 (CED 577737),
+       when the counting scheme switches to Gregorian calendar and day 1582/10/15
+       (CED 577738) follows. Such enumeration was chosen to eliminate negative
+       numbers and to have somewhat natural scheme.
+       CED 730122 = Julian Day Number 2451545 (the difference is 1721423)
 
 
 
