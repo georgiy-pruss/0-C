@@ -23,6 +23,12 @@ e      elapsed since start (or end, finish), also shows break time, work time
 b      break (don't count this time, start time of break)
 g      go on (end of break)
 
+^C     copy display to clipboard
+^V     paste clipboard into display
+
+^T     toggle showing time in window caption bar aka title (option 'intitle')
+tab    toggle showing seconds hand, same as right button (option 'seconds')
+
 _______________
 
 CED    Common Era Day number -- number of a day since January 1st, 1 AD, i.e.
