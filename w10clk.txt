@@ -1,7 +1,10 @@
 0123456789. enter number, e.g. 42 or 3.1415
 +-          can be used for numbers with sign, e.g. +10 (sometimes it's not 10)
-ABCDEF      hex digits (uppercase!) for hexadecimal numbers, e.g. 7FFF
-:/_         for entering time, dates e.g. 3/11 or 2:00 or 2016/11/10_23:59:59
+ABCDEF      hex digits (uppercase!) for hexadecimal numbers, e.g. 7FFF (but only before h)
+:/_         enter time, dates e.g. 3/11 or 2:00 or 2016/11/10_23:59:59
++-*/()      enter math. expression
+=           calculate expression
+
 bksp        correct input
 spc         clear display
 
@@ -38,7 +41,3 @@ CED    Common Era Day number -- number of a day since January 1st, 1 AD, i.e.
        (CED 577738) follows. Such enumeration was chosen to eliminate negative
        numbers and to have somewhat natural scheme.
        CED 730122 = Julian Day Number 2451545 (the difference is 1721423)
-
-
-
-... much more to come!
