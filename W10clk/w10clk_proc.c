@@ -13,7 +13,8 @@ typedef int bool;
 #define true 1
 extern bool g_seconds;
 extern void help_on_error_input();
-extern int calculate( char* src, double* res ); // ret. 0 if ok
+extern void show_help();
+extern uint calculate( char* src, double* res ); // ret. 0 if ok
 
 extern uint ymd2n( uint y, uint m, uint d );
 extern void n2ymd( uint n, /* OUT */ uint* y, uint* m, uint* d );
@@ -28,7 +29,7 @@ process_char( int c, char* s, int mn, int n ) // mn - max length
   static time_t t_start;       static int t_start_ms;
   static int    t_idle;        static int t_idle_ms;
   static time_t t_break_start; static int t_break_start_ms;
-  if( '0'<=c && c<='9' || 'A'<=c && c<='F' || strchr( "+-*/._:()", c ) )
+  if( '0'<=c && c<='9' || 'A'<=c && c<='F' || strchr( "+-*/%^o._:()#", c ) )
   {
     s[n]=(char)c; if(n<mn) ++n; s[n]=0;
   }
@@ -44,7 +45,7 @@ process_char( int c, char* s, int mn, int n ) // mn - max length
   {
     g_seconds = ! g_seconds;
   }
-  else if( c=='u' || c=='d' || c=='n' || c=='z' )
+  else if( c=='u' || c=='d' || c=='t' || c=='z' || c=='y' )
   {
     t = time(NULL);
     tmptr = localtime(&t); // assume it can't be NULL
@@ -53,10 +54,12 @@ process_char( int c, char* s, int mn, int n ) // mn - max length
       if( c=='u' )
         n = strftime( s, mn, "%s", tmptr );
       else if( c=='d' )
-        n = strftime( s, mn, "%Y/%m/%d %a #%j", tmptr );
+        n = strftime( s, mn, "%Y/%m/%d %a", tmptr );
+      else if( c=='y' )
+        n = strftime( s, mn, "%j", tmptr );
       else if( c=='z' )
         n = strftime( s, mn, "%z", tmptr );
-      else // 'n'
+      else // 't'
         n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec );
     }
     else
@@ -91,9 +94,11 @@ process_char( int c, char* s, int mn, int n ) // mn - max length
           }
         }
       }
+      else if( c=='y' )
+        n = strftime( s, mn, "%j", tmptr );
       else if( c=='z' )
         n = strftime( s, mn, "%z", tmptr );
-      else // 'n'
+      else // 't'
         n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec );
     }
   }
@@ -107,19 +112,19 @@ process_char( int c, char* s, int mn, int n ) // mn - max length
     double x; int k=sscanf( s, "%lf", &x );
     if( k==1 ) { x = x*1.8+32.0; n = sprintf( s, "%.1f", x ); }
   }
-  else if( c=='h' ) // XXXXh --> decimal
+  else if( c=='h' ) // help | decimal --> XXXX (hexadecimal)
   {
-    ULL x; int k=sscanf( s, "%llX", &x );
-    if( k==1 ) n = sprintf( s, "%lld", x );
+    if( n==0 )
+      show_help();
+    else
+    {
+      ULL x; int k=sscanf( s, "%llu", &x );
+      if( k==1 ) n = sprintf( s, "#%llX", x );
+    }
   }
-  else if( c=='#' ) // decimal --> XXXX (hexadecimal)
+  else if( c=='=' || c==13 ) // = or enter -- calculate expression
   {
-    ULL x; int k=sscanf( s, "%llu", &x );
-    if( k==1 ) n = sprintf( s, "%llX", x );
-  }
-  else if( c=='=' ) // calculate expression
-  {
-    double res; if( calculate( s, &res ) == 0 ) n = sprintf( s, "%g", res );
+    double res; if( calculate( s, &res ) == 0 ) n = sprintf( s, "%.15g", res );
   }
   else if( c=='s' ) // start stopwatch
   {

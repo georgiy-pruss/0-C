@@ -1,8 +1,10 @@
 <html>
+<head>
+  <style>h2 {font-size: 130%;}</style>
+</head>
 <body>
+<h2>Input</h2>
 <pre>
-<b>Input</b>
-
 0-9.   enter number, e.g. 42 or 3.1415
 +-     can be used for numbers with sign, e.g. +10 (sometimes it's not the same as 10)
 :/_    enter time, dates, e.g. 3/11 or 2:00 or 2016/11/10_23:59:59
@@ -27,12 +29,13 @@ o      ox  multiply by pi          xoy  circle function (hello APL ;-))
 bksp   correct input
 spc    clear display
 esc    clear display
-
-<b>Actions</b>
-
+</pre>
+<h2>Actions</h2>
+<pre>
 =      calculate expression
 enter  calculate expression
-h      show number in hexadcimal
+h      show help
+Nh     show number in hexadcimal system
 
 d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
 Dd     convert YYYY/MM/DD to n wd, e.g. 2016/11/13 --> 736283 Fri (See CED below)
@@ -77,77 +80,57 @@ TODO
 .
 .
 .
+</pre>
+
 <!--
-
-
 a      show alarm
 +a -a  turn on/off
 HHMMa  set alarm; can be also HHMM WWWWWWWa for weekdays 0-6; file w10clk.mp3
-
        [T]
        alarm=HHMM
-
-
 Nz     current time in tz UTC+N: H HH HHMM (:)
 +Nz    current time in tz UTC+N
 -Nz    current time in tz UTC-N
 NAMEz  current time in named TZ (uppercase!)
-
        [T]
        tz=NAME1 TZ1 NAME2 TZ2
-
 reminders:
-
        [T]
        rem1=HHMM msg
        rem2=HHMM msg
        ...
-
 dates:
-
        [D]
        d1=M/D msg
        d2=M/D msg
        ...
-
 Nd     wd diff - given day: D DD MDD MMDD YYMMDD YYYYMMDD
 YMDd   N wd diff
 +Nd    y/m/d wd - N days ahead
 -Nd    y/m/d wd - N days ago
-
 YMDHMSu
 +-DHMSu
 +Nu    advance n seconds
 -Nu    decuct n seconds
-
 Nt     h:m:s for given seconds
 DHMSt  d*85400+h*3600+m*60+s
 +Nt    y/m/d h:m:s ahead
 -Nt    y/m/d h:m:s ago
-
-
-
 VAR:e  set variable
 |&amp;~&lt;&gt;  64-bit unsigned integers (or and xor (also not) shl shr)
-
 ;     push as 1st argument
 :     exchange 1st argument and display
 ! @   save value; restore value
-
 l     lap time (time since start or last lap time)
-
 n     new calendar date
-
 c     show color dialog
 ?,h   help window, q,x - exit
 []{}  resize window   c-center    with N: by N pixels; also for all moves below
 ctrls move window left/right/up/down/leftmost/rightmost/top/bottom
-
 // timer: HHMMt - set timer, 0t - reset timer (HHMM can be M, MM, HMM, HHMM)
 // datecalc: NNNd/k/m - date in (or back if D/K/M) NNN days/weeks/months
 // datedist: YYYYMMDD= - calculate distance to date (and its weekday) calendar?
 // timezone: z - tz info, HHw,HHe - time in another timezone (west, east)
 -->
-</pre>
 </body>
 </html>

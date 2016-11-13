@@ -15,7 +15,7 @@
 "Left button click - nothing, just bring focus to window\n" \
 "Right button click - show/hide seconds hand\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
-"Version 1.2 * Copyright (C) Georgiy Pruss 2016"
+"Version 1.3 * Copyright (C) Georgiy Pruss 2016"
 
 // Trim fat from windows
 #define WIN32_LEAN_AND_MEAN
@@ -24,6 +24,7 @@
 #include <time.h>
 #include <math.h>
 #include <windows.h>
+#include <shellapi.h>
 typedef int bool;
 #define false 0
 #define true 1
@@ -113,6 +114,12 @@ init_tools()
   hmPen2 = CreatePen(PS_SOLID,g_mhand_w,mix_colors(g_bgcolor,g_mhand_rgb));
   hhPen2 = CreatePen(PS_SOLID,g_hhand_w,mix_colors(g_bgcolor,g_hhand_rgb));
   htPen2 = CreatePen(PS_SOLID,g_tick_w,mix_colors(g_bgcolor,g_tick_rgb));
+}
+
+void
+show_help()
+{
+  ShellExecute(NULL, "open", "file:///D:/Geo/Downloads/win/w10clk.htm", NULL, NULL, SW_SHOWNORMAL);
 }
 
 void
@@ -270,7 +277,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     else if( wParam==3 ) // ctrl+c
       copy_to_clipboard(hwnd);
     else if( wParam==20 ) // ctrl+t
-      {g_upd_title = ! g_upd_title;
+      { g_upd_title = ! g_upd_title;
       if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME);}
     else
       ldisp = process_char( (int)wParam, disp, sizeof(disp)-1, ldisp );
