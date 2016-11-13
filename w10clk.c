@@ -1,11 +1,11 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
 // compile with cygwin64 (-std=c11 is default):
-// gcc -O2 w10clk.c w10clk_proc.c w10clk_ymd.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
+// gcc -O2 w10clk*.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
 // for experiments: -lcomdlg32 or -lcomctl32
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO date/time calculations, timezone conversions, expressions, what else?..
+// TODO date/time calculations, timezone conversions, more math.ops., what else?..
 // TODO show help (w10clk.txt); show color selection window
 // TODO argument of program as ini file etc.
 // TODO round window, although it's not so urgent, square is good too
