@@ -1,6 +1,8 @@
 <html>
 <head>
-  <style>h2 {font-size: 130%;}</style>
+<style>h2 {font-size:130%;}
+.R {color:blue;}
+pre {margin-left:2em;}</style>
 </head>
 <body>
 <h2>Input</h2>
@@ -35,19 +37,19 @@ esc    clear display
 =      calculate expression
 enter  calculate expression
 h      show help
-Nh     show number in hexadcimal system
+<span class=R>N</span>h     show number in hexadcimal system
 
 d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
-Dd     convert YYYY/MM/DD to n wd, e.g. 2016/11/13 --> 736283 Fri (See CED below)
-Nd     convert CED as plain number to y/m/d wd, e.g. 730122 --> 2000/1/1
+<span class=R>D</span>d     convert YYYY/MM/DD to n wd, e.g. 2016/11/13 --> 736283 Fri (See CED below)
+<span class=R>N</span>d     convert CED as plain number to y/m/d wd, e.g. 730122 --> 2000/1/1
 u      current unix time (for local time)
-Nu     unix time to y/m/d_h:m:s wd (with current tz) (1970/01/01..2106/02/07)
+<span class=R>N</span>u     unix time to y/m/d_h:m:s wd (with current tz) (1970/01/01..2106/02/07)
 t      seconds (of day) now, 0 to 86400
 y      current year day number (1..366)
 z      current time zone as +HHMM or -HHMM, e.g. +0200
 
-Nc     convert Celsius to Farenheit
-Nf     convert Farenheit to Celsius
+<span class=R>N</span>c     convert Celsius to Farenheit
+<span class=R>N</span>f     convert Farenheit to Celsius
 
 s      start stopwatch (actually just remember moment of start)
 e      elapsed since start (or end, finish), also shows break time, work time
