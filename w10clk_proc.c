@@ -13,6 +13,7 @@ typedef int bool;
 #define true 1
 extern bool g_seconds;
 extern void help_on_error_input();
+extern int calculate( char* src, double* res ); // ret. 0 if ok
 
 extern uint ymd2n( uint y, uint m, uint d );
 extern void n2ymd( uint n, /* OUT */ uint* y, uint* m, uint* d );
@@ -27,7 +28,7 @@ process_char( int c, char* s, int mn, int n ) // mn - max length
   static time_t t_start;       static int t_start_ms;
   static int    t_idle;        static int t_idle_ms;
   static time_t t_break_start; static int t_break_start_ms;
-  if( '0'<=c && c<='9' || 'A'<=c && c<='F' || strchr( "+-/._:", c ) )
+  if( '0'<=c && c<='9' || 'A'<=c && c<='F' || strchr( "+-*/._:()", c ) )
   {
     s[n]=(char)c; if(n<mn) ++n; s[n]=0;
   }
@@ -109,12 +110,16 @@ process_char( int c, char* s, int mn, int n ) // mn - max length
   else if( c=='h' ) // XXXXh --> decimal
   {
     ULL x; int k=sscanf( s, "%llX", &x );
-    if( k==1 ) { n = sprintf( s, "%lld", x ); }
+    if( k==1 ) n = sprintf( s, "%lld", x );
   }
   else if( c=='#' ) // decimal --> XXXX (hexadecimal)
   {
     ULL x; int k=sscanf( s, "%llu", &x );
-    if( k==1 ) { n = sprintf( s, "%llX", x ); }
+    if( k==1 ) n = sprintf( s, "%llX", x );
+  }
+  else if( c=='=' ) // calculate expression
+  {
+    double res; if( calculate( s, &res ) == 0 ) n = sprintf( s, "%g", res );
   }
   else if( c=='s' ) // start stopwatch
   {
