@@ -26,6 +26,7 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <shellapi.h>
+#include "../_.h"
 typedef int bool;
 #define false 0
 #define true 1
@@ -48,8 +49,7 @@ bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 char pgmFileName[500]; // last 4 chars can be .ini, .exe, .htm etc
 
 void
-read_ini() // all parameter names and default values are here!
-{
+read_ini() __ // all parameter names and default values are here!
   int fnmsz = GetModuleFileName(NULL,pgmFileName,sizeof(pgmFileName));
   if( fnmsz <= 0 || !STRIEQ(pgmFileName+fnmsz-4,".exe") ) return;
   strcpy(pgmFileName+fnmsz-3,"ini");
@@ -85,8 +85,7 @@ read_ini() // all parameter names and default values are here!
   READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
-  READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) { strcpy( g_timefmt, s ); }
-}
+  READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) { strcpy( g_timefmt, s ); } _
 
 // Const (all upper-case) and global state vars (camel-style names)
 const int ID_TIMER = 1;
@@ -96,17 +95,14 @@ HPEN hsPen, hmPen, hhPen, htPen;     // clock hands (1 pixel narrower than requi
 HPEN hsPen2, hmPen2, hhPen2, htPen2; // half-tone borders of clock hands
 
 COLORREF
-mix_colors( COLORREF c1, COLORREF c2 )
-{
+mix_colors( COLORREF c1, COLORREF c2 ) __
   int r = ((c1&0xFF)+(c2&0xFF))/2;
   int g = (((c1&0xFF00)+(c2&0xFF00))/2) & 0xFF00;
   int b = (((c1&0xFF0000)+(c2&0xFF0000))/2) & 0xFF0000;
-  return b|g|r;
-}
+  return b|g|r; _
 
 void
-init_tools()
-{
+init_tools() __
   hbrBG = CreateSolidBrush(g_bgcolor);
   hsPen = CreatePen(PS_SOLID,max(g_shand_w-1,1),g_shand_rgb);
   hmPen = CreatePen(PS_SOLID,max(g_mhand_w-1,1),g_mhand_rgb);
@@ -115,40 +111,31 @@ init_tools()
   hsPen2 = CreatePen(PS_SOLID,g_shand_w,mix_colors(g_bgcolor,g_shand_rgb));
   hmPen2 = CreatePen(PS_SOLID,g_mhand_w,mix_colors(g_bgcolor,g_mhand_rgb));
   hhPen2 = CreatePen(PS_SOLID,g_hhand_w,mix_colors(g_bgcolor,g_hhand_rgb));
-  htPen2 = CreatePen(PS_SOLID,g_tick_w,mix_colors(g_bgcolor,g_tick_rgb));
-}
+  htPen2 = CreatePen(PS_SOLID,g_tick_w,mix_colors(g_bgcolor,g_tick_rgb)); _
 
 void
-help_on_error_input()
-{
-  MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OK );
-}
+help_on_error_input() { MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OK ); }
 
 double sind(double x) { return sin(x*M_PI/180); }
 double cosd(double x) { return cos(x*M_PI/180); }
 
-void draw_clock(HDC hdc,int halfw, int halfh)
-{
+void draw_clock(HDC hdc,int halfw, int halfh) __
   if( g_tick_w == 0 ) return;
-  int R = min(halfw,halfh); // radius
-  for( int i=0; i<12; ++i )
-  {
-    int start_x = halfw + (int)( R * (96-g_t_len) / 100.0 * cosd(30*i) + 0.5 );
-    int start_y = halfh + (int)( R * (96-g_t_len) / 100.0 * sind(30*i) + 0.5 );
-    int end_x   = halfw + (int)( R * 0.96                 * cosd(30*i) + 0.5 );
-    int end_y   = halfh + (int)( R * 0.96                 * sind(30*i) + 0.5 );
+  int r = min(halfw,halfh); // radius
+  for( int i=0; i<12; ++i ) __
+    int start_x = halfw + (int)( r * (96-g_t_len) / 100.0 * cosd(30*i) + 0.5 );
+    int start_y = halfh + (int)( r * (96-g_t_len) / 100.0 * sind(30*i) + 0.5 );
+    int end_x   = halfw + (int)( r * 0.96                 * cosd(30*i) + 0.5 );
+    int end_y   = halfh + (int)( r * 0.96                 * sind(30*i) + 0.5 );
     SelectObject(hdc, htPen2);
     MoveToEx(hdc,start_x,start_y,NULL);
     LineTo(hdc,end_x,end_y);
     SelectObject(hdc, htPen);
     MoveToEx(hdc,start_x,start_y,NULL);
-    LineTo(hdc,end_x,end_y);
-  }
-}
+    LineTo(hdc,end_x,end_y); _ _
 
 void
-update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr)
-{
+update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr) __
   int s = tmptr->tm_sec;
   int m = tmptr->tm_min;
   int h = tmptr->tm_hour;
@@ -158,21 +145,19 @@ update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr)
   double angle_min = 270.0 + (m*6.0 + s*0.1);
   double angle_hour = 270.0 + (h*30 + m*0.5);
 
-  int R = min(halfw,halfh); // radius
-  int secx  = (int)( R * g_sh_len / 100.0 * cosd(angle_sec) + 0.5 );
-  int secy  = (int)( R * g_sh_len / 100.0 * sind(angle_sec) + 0.5 );
-  int minx  = (int)( R * g_mh_len / 100.0 * cosd(angle_min) + 0.5 );
-  int miny  = (int)( R * g_mh_len / 100.0 * sind(angle_min) + 0.5 );
-  int hourx = (int)( R * g_hh_len / 100.0 * cosd(angle_hour)+ 0.5 );
-  int houry = (int)( R * g_hh_len / 100.0 * sind(angle_hour)+ 0.5 );
+  int r = min(halfw,halfh); // radius
+  int secx  = (int)( r * g_sh_len / 100.0 * cosd(angle_sec) + 0.5 );
+  int secy  = (int)( r * g_sh_len / 100.0 * sind(angle_sec) + 0.5 );
+  int minx  = (int)( r * g_mh_len / 100.0 * cosd(angle_min) + 0.5 );
+  int miny  = (int)( r * g_mh_len / 100.0 * sind(angle_min) + 0.5 );
+  int hourx = (int)( r * g_hh_len / 100.0 * cosd(angle_hour)+ 0.5 );
+  int houry = (int)( r * g_hh_len / 100.0 * sind(angle_hour)+ 0.5 );
 
-  if( g_seconds )
-  {
+  if( g_seconds ) __
     SelectObject(hdc, hsPen2);
     MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy);
     SelectObject(hdc, hsPen);
-    MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy);
-  }
+    MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy); _
   SelectObject(hdc, hmPen2);
   MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + minx, halfh + miny);
   SelectObject(hdc, hmPen);
@@ -180,26 +165,22 @@ update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr)
   SelectObject(hdc, hhPen2);
   MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
   SelectObject(hdc, hhPen);
-  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
-}
+  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry); _
 
 void
-update_title(HWND hwnd, const char* title)
-{
+update_title(HWND hwnd, const char* title) __
   if( title ) { SetWindowText(hwnd,title); return; }
   time_t t = time(NULL);
   struct tm* tmptr = localtime(&t); if( !tmptr ) return;
   char text[100];
   strftime( text, sizeof(text), g_timefmt, tmptr );
-  SetWindowText(hwnd,text);
-}
+  SetWindowText(hwnd,text); _
 
 char disp[100] = "";
 int ldisp = 0;
 
 void
-redraw_window(HWND hwnd)
-{
+redraw_window(HWND hwnd) __
   time_t t = time(NULL);
   struct tm* tmptr = localtime(&t); if( !tmptr ) return;
   PAINTSTRUCT paintStruct;
@@ -209,12 +190,10 @@ redraw_window(HWND hwnd)
     draw_clock( hDC, rcClient.right/2, rcClient.bottom/2 );
     update_clock( hDC, rcClient.right/2, rcClient.bottom/2, tmptr );
     if( ldisp>0 ) TextOut(hDC,rcClient.right*g_disp_x/100,rcClient.bottom*g_disp_y/100,disp,ldisp);
-  EndPaint(hwnd, &paintStruct);
-}
+  EndPaint(hwnd, &paintStruct); _
 
 void
-paste_from_clipboard(HWND hwnd)
-{
+paste_from_clipboard(HWND hwnd) __
   if( !OpenClipboard(hwnd) ) return;
   HGLOBAL hglb = GetClipboardData(CF_TEXT);
   if( !hglb ) return;
@@ -225,12 +204,10 @@ paste_from_clipboard(HWND hwnd)
   for( s=lpstr; *s && ldisp<sizeof(disp)-1; ++s )
     if( *s>32 ) { *d=*s; ++d; ++ldisp; cnt=0; } // just copy
     else if( cnt==0 ) { *d=' '; ++d; ++ldisp; cnt=1; } // set blank for first
-  *d = '\0';
-}
+  *d = '\0'; _
 
 void
-copy_to_clipboard(HWND hwnd)
-{
+copy_to_clipboard(HWND hwnd) __
   if( !OpenClipboard(hwnd) ) return;
   if( !EmptyClipboard() ) return;
   HGLOBAL hGlob = GlobalAlloc(GMEM_FIXED, sizeof(disp));
@@ -238,15 +215,12 @@ copy_to_clipboard(HWND hwnd)
   if( !SetClipboardData( CF_TEXT, hGlob ) )
     CloseClipboard(), GlobalFree(hGlob); // free allocated string on error
   else
-    CloseClipboard();
-}
+    CloseClipboard(); _
 
 // Main Window Event Handler
 LRESULT CALLBACK
-WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-  switch( message )
-  {
+WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
+  switch( message ) __
   case WM_CREATE: // Window is being created, good time for init tasks
     if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 ) // tick every second
       MessageBox(hwnd, "Could not set timer!", "Error", MB_OK | MB_ICONEXCLAMATION);
@@ -274,14 +248,12 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       copy_to_clipboard(hwnd);
     else if( wParam==20 && ldisp==0 ) // ctrl+t
       { g_upd_title = ! g_upd_title; if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME); }
-    else if( wParam=='h' && ldisp==0 )
-      { char h[300] = "file:///";
-        strcat( h, pgmFileName ); strcpy( h+strlen(h)-3, "htm" );
-        for( char* p=h; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
-        MessageBox(hwnd,h,"help",MB_OK);
-        ShellExecute(NULL, "open", h, NULL, NULL, SW_SHOWNORMAL); }
-    else if( wParam=='c' && (ldisp==0 || ldisp>0 && disp[0]=='#') )
-    {
+    else if( wParam=='h' && ldisp==0 ) __
+      char h[300] = "file:///";
+      strcat( h, pgmFileName ); strcpy( h+strlen(h)-3, "htm" );
+      for( char* p=h; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
+      ShellExecute(NULL, "open", h, NULL, NULL, SW_SHOWNORMAL); _
+    else if( wParam=='c' && (ldisp==0 || ldisp>0 && disp[0]=='#') ) __
       CHOOSECOLOR cc;
       static COLORREF acrCustClr[16]; // array of custom colors
       ZeroMemory(&cc, sizeof(cc));
@@ -292,8 +264,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
       if( ldisp>0 && disp[0]=='#' ) {uint rgb; sscanf( disp+1, "%X", &rgb ); cc.rgbResult = rgb; }
       cc.Flags = CC_FULLOPEN | CC_RGBINIT;
       if( ChooseColor(&cc)==TRUE )
-        ldisp = sprintf( disp, "#%X", cc.rgbResult );
-    }
+        ldisp = sprintf( disp, "#%X", cc.rgbResult ); _
     else
       ldisp = process_char( (int)wParam, disp, sizeof(disp)-1, ldisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
@@ -304,15 +275,12 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     DeleteObject(hmPen), DeleteObject(hhPen), DeleteObject(htPen);
     PostQuitMessage(0);
   default:
-    return DefWindowProc(hwnd,message,wParam,lParam);
-  }
-  return 0;
-}
+    return DefWindowProc(hwnd,message,wParam,lParam); _
+  return 0; _
 
 // Main function - register window class, create window, start message loop
 int APIENTRY
-WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
-{
+WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) __
   WNDCLASSEX windowClass;
   // Fill out the window class structure
   windowClass.cbSize = sizeof(WNDCLASSEX);
@@ -334,31 +302,25 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   DWORD extstyle = g_ontop ? WS_EX_TOOLWINDOW | WS_EX_TOPMOST : WS_EX_TOOLWINDOW;
   DWORD winstyle = WS_POPUPWINDOW | WS_BORDER | WS_CAPTION;
   int w = g_width+6, h = g_height+29; // Add for border (really non-existing) and caption bar
-  if( g_resizable )
-  {
+  if( g_resizable ) __
     winstyle = WS_OVERLAPPED | WS_SYSMENU | WS_THICKFRAME | WS_VISIBLE | WS_CAPTION;
-    w += 10; h += 10; // no visible borders, but this correction is neccessary anyway
-  }
+    w += 10; h += 10; _ // no visible borders, but this correction is neccessary anyway
   // Class is registered, parameters are set-up, so now's the time to create window
   HWND hwnd = CreateWindowEx( extstyle,      // extended style
     windowClass.lpszClassName, PROGRAM_NAME, // class name, program name
     winstyle, g_init_x,g_init_y, w,h,        // window style, initial position and size
-    NULL, NULL, // handles to parent and menu
-    hInstance,  // application instance
-    NULL);      // no extra parameters
-  if( !hwnd )   // can it fail, really?
-  {
+    NULL, NULL,  // handles to parent and menu
+    hInstance,   // application instance
+    NULL);       // no extra parameters
+  if( !hwnd ) __ // can it fail, really?
     MessageBox( NULL, "Could not create window!", "Error", MB_OK | MB_ICONEXCLAMATION);
-    return 1;
-  }
+    return 1; _
   ShowWindow(hwnd, SW_SHOW); // needed when WS_POPUPWINDOW
   UpdateWindow(hwnd); // maybe not really needed
   MSG msg;
-  while( GetMessage(&msg, NULL, 0, 0) > 0 )
-  {
+  while( GetMessage(&msg, NULL, 0, 0) > 0 ) __
     // Translate and dispatch to event queue
     TranslateMessage(&msg);
-    DispatchMessage(&msg);
-  }
-  return msg.wParam; // I hope it's zero
-}
+    DispatchMessage(&msg); _
+  return msg.wParam; _ // I hope it's zero
+

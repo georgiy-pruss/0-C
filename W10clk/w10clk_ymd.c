@@ -7,6 +7,7 @@
 #include <time.h>
 #include <sys/timeb.h>
 #include <unistd.h>
+#include "../_.h"
 
 // Common Era Days. January 1, 1 AD is day 1. For simplicity, no negative days.
 // As from https://en.wikipedia.org/wiki/Gregorian_calendar ... papal bull
@@ -19,53 +20,45 @@
 typedef unsigned int uint;
 
 uint
-ymd2n( uint year, uint month, uint day )
-{
+ymd2n( uint year, uint month, uint day ) __
   // Convert date to CED number.
   // Year >= 1. Result is >0, or 0 if there's some error.
   if( year==0 || month==0 || day==0 ) return 0;
   if( month > 12 ) { year = year + month/12; month = month%12; }
   if( month < 3 ) { year -= 1; month += 12; }
   int b = year*10000 + month*100 + day > 15821014 ? 2 - year/100 + year/400 : 0;
-  return 1461*year/4 + 306001*(month + 1)/10000 + day + b - 428;
-}
+  return 1461*year/4 + 306001*(month + 1)/10000 + day + b - 428; _
 
 uint
 n2wd( uint dn ) { return (dn+5) % 7; }
 
 void
-n2ymd( uint dn, /* OUT */ uint* yy, uint* mm, uint* dd )
-{
+n2ymd( uint dn, /* OUT */ uint* yy, uint* mm, uint* dd ) __
   // Convert TJD day number to tuple year, month, day and weekday"
   // Probably needs some correction for dates before 1.1.1
   int jdi = dn + 1721422;
   int b;
   if( jdi < 2299160 ) // (1582, 10, 15)
     b = jdi + 1525;
-  else
-  {
+  else __
     int alpha = (4*jdi - 7468861) / 146097;
-    b = jdi + 1526 + alpha - alpha/4;
-  }
+    b = jdi + 1526 + alpha - alpha/4; _
   int c = (20*b - 2442) / 7305;
   int d = 1461*c/4;
   int e = 10000*(b - d)/306001;
   int day = b - d - 306001*e/10000;
   int month = e - (e < 14 ? 1 : 13);
   int year = c - (month > 2 ? 4716 : 4715);
-  *yy = year; *mm = month; *dd = day;
-}
+  *yy = year; *mm = month; *dd = day; _
 
 #ifdef TESTALL
 int
-main()
-{
+main() __
   uint y,m,d,ced,cc,xy,xm,xd,w;
   ced = 1;  w = 6; // it all starts with Saturday
   for( y=1; y<=4000; ++y )
     for( m=1; m<=12; ++m )
-      for( d=1; d<=31; ++d )
-      {
+      for( d=1; d<=31; ++d ) __
         // skip non-existing days
         if( d>30 && (m==4 || m==6 || m==9 || m==11) ) continue;
         int l = (y<=1582) ? (y%4==0) : ((y%4==0) && (y%100!=0 || y%400==0));
@@ -81,34 +74,27 @@ main()
         if( xy != y || xm != m || xd != d )
           printf( "Error rev.conv.: %d/%d/%d --> %d --> %d/%d/%d\n", y,m,d, cc, xy,xm,xd );
         if( n2wd( cc ) != w ) printf( "Error in n2wd: %d --> %d != %d\n", cc, n2wd( cc ), w );
-        ++ced; w = (w+1) % 7;
-      }
+        ++ced; w = (w+1) % 7; _
   printf( "ymd->ced->ymd ended: %d/%d/%d --> %d\n", xy, xm, xd, cc );
   // ymd->ced->ymd started: 1/1/1 --> 1
   // ymd->ced->ymd ended: 4000/12/31 --> 1460972
-  for( ced=1; ced<=1500000; ++ced )
-  {
+  for( ced=1; ced<=1500000; ++ced ) __
     n2ymd( ced, &xy,&xm,&xd );
-    if( ced==1 )
-    {
+    if( ced==1 ) __
       if( xy!=1 || xm!=1 || xd!=1 )
         printf( "Wrong day 1: %d %d %d\n", xy, xm, xd );
-      printf( "ced->ymd->ced started: %d --> %d/%d/%d\n", ced, xy,xm,xd );
-    }
-    else
-    {
+      printf( "ced->ymd->ced started: %d --> %d/%d/%d\n", ced, xy,xm,xd ); _
+    else __
       if( !(xy == y && xm == m && xd == d+1 || // next day
             xy == y && xm == m+1 && xd == 1 || // next month
             xy == y+1 && xm == 1 && xd == 1 || // next year
             xy == y && xm == m && y==1582 && m==10 && d==4 && xd==15) )
         printf( "Error: not next day: %d/%d/%d --> %d --> %d/%d/%d\n",
-            y,m,d, ced, xy, xm, xd );
-    }
+            y,m,d, ced, xy, xm, xd ); _
     cc = ymd2n( xy,xm,xd );
     if( cc != ced )
       printf( "Error rev.conv.: %d --> %d/%d/%d --> %d\n", ced, xy,xm,xd, cc );
-    y = xy; m = xm; d = xd; // save the day to serve as previous day in next loop
-  }
+    y = xy; m = xm; d = xd; _ // save the day to serve as previous day in next loop
   printf( "ced->ymd->ced ended: %d --> %d/%d/%d\n", cc, xy,xm,xd );
   // ced->ymd->ced started: 1 --> 1/1/1
   // ced->ymd->ced ended: 1500000 --> 4107/11/9
@@ -173,6 +159,5 @@ main()
   PCED( 577737 ); // 1582/10/4
   PCED( 577738 ); // 1582/10/15
   */
-  return 0;
-}
+  return 0; _
 #endif
