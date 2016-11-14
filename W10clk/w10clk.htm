@@ -40,8 +40,8 @@ h      show help (when display is clear)
 <span class=R>N</span>h     show number (integer part) in hexadcimal system
 
 d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
-<span class=R>D</span>d     convert YYYY/MM/DD to n wd, e.g. 2016/11/13 --&gt; 736283 Fri (See CED below)
-<span class=R>N</span>d     convert CED as plain number to y/m/d wd, e.g. 730122 --&gt; 2000/1/1
+<span class=R>D</span>d     convert YYYY/MM/DD to n wd diff, e.g. 2016/11/13 --&gt; 736283 Sun (See <a href="#ced">CED</a> below)
+<span class=R>N</span>d     convert CED as plain number to y/m/d wd diff, e.g. 730122 --&gt; 2000/1/1
 u      current unix time (for local time)
 <span class=R>N</span>u     unix time to y/m/d_h:m:s wd (with current tz) (1970/01/01..2106/02/07)
 t      seconds (of day) now, 0 to 86400
@@ -66,7 +66,7 @@ c      show color dialog (just to have it easily accessible) colors are #BBGGRR!
 
 
 _______________
-
+<a name="ced"></a>
 CED    Common Era Day number -- number of a day since January 1st, 1 AD, i.e.
        that was day number 1, then January 2nd was day 2 and so on, using Julian
        calendar (year divisable by 4 are all leap), up till 1582/10/4 (CED 577737),

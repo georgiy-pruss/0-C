@@ -39,7 +39,8 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
   else if( c=='u' || c=='d' || c=='t' || c=='z' || c=='y' ) __
     t = time(NULL);
     tmptr = localtime(&t); // assume it can't be NULL
-    if( n==0 ) __
+    uint today = ymd2n( tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday );
+    if( n==0 ) __ // current time in many forms
       if( c=='u' )
         n = strftime( s, mn, "%s", tmptr );
       else if( c=='d' )
@@ -58,15 +59,23 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
           tmptr = localtime(&t1);
           n = strftime( s, mn, "%Y/%m/%d %H:%M:%S %a", tmptr ); _ _
       else if( c=='d' ) __ // NNNNNNd or YYYY/MM/DDd
-        if( strchr( s, '/' ) ) __ // YYYY/MM/DD
+        char diff[20] = "";
+        if( strchr( s, '/' ) ) __ // YYYY/MM/DD or MM/DD
           int k = sscanf( s, "%u/%u/%u", &y, &m, &d );
-          if( k==3 && 0<y && y<=10000 && 1<=m && m<=12 && 1<=d && d<=31 ) __
-            uint x = ymd2n( y, m, d );
-            n = sprintf( s, "%d %s", x, WD[n2wd(x)] ); _ _
+          uint x;
+          if( k==3 && 0<y && y<=10000 && 1<=m && m<=12 && 1<=d && d<=31 )
+            x = ymd2n( y, m, d );
+          else if( k==2 && 1<=y && y<=12 && 1<=m && m<=31 ) // y is m, m is d
+            x = ymd2n( tmptr->tm_year+1900, y, m );
+          else
+            return n;
+          if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
+          n = sprintf( s, "%d %s%s", x, WD[n2wd(x)], diff ); _
         else __ // NNNNN
           if( sscanf( s, "%u", &x )==1 && x>0 ) __ // don't do it for 0
             n2ymd( x, &y,&m,&d );
-            n = sprintf( s, "%d/%d/%d %s", y,m,d, WD[n2wd(x)] ); _ _ _
+            if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
+            n = sprintf( s, "%d/%d/%d %s%s", y,m,d, WD[n2wd(x)], diff ); _ _ _
       else if( c=='y' )
         n = strftime( s, mn, "%j", tmptr );
       else if( c=='z' )
