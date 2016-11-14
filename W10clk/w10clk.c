@@ -27,11 +27,12 @@
 #include <commdlg.h>
 #include <shellapi.h>
 #include "../_.h"
+typedef unsigned int uint;
 typedef int bool;
 #define false 0
 #define true 1
 #define STRIEQ(s,t) (strcasecmp(s,t)==0) // may need to change for MSVC etc
-extern int process_char( int c, char* s, int max_len, int n ); // w10clk_procchar.c
+extern uint process_char( uint c, char* s, uint max_len, uint n ); // w10clk_procchar.c
 
 // Parameters; all defaults are in read_int()
 COLORREF g_bgcolor;     // bg color
@@ -185,7 +186,7 @@ update_title(HWND hwnd, const char* title) __
   SetWindowText(hwnd,text); _
 
 char disp[100] = "";
-int ldisp = 0;
+uint ndisp = 0;
 
 void
 redraw_window(HWND hwnd) __
@@ -197,7 +198,7 @@ redraw_window(HWND hwnd) __
     FillRect(hDC, &rcClient, hbrBG); // need to clean old hands, sorry
     draw_clock( hDC, rcClient.right/2, rcClient.bottom/2 );
     update_clock( hDC, rcClient.right/2, rcClient.bottom/2, tmptr );
-    if( ldisp>0 ) TextOut(hDC,rcClient.right*g_disp_x/100,rcClient.bottom*g_disp_y/100,disp,ldisp);
+    if( ndisp!=0 ) TextOut(hDC,rcClient.right*g_disp_x/100,rcClient.bottom*g_disp_y/100,disp,ndisp);
   EndPaint(hwnd, &paintStruct); _
 
 void
@@ -208,10 +209,10 @@ paste_from_clipboard(HWND hwnd) __
   LPSTR lpstr = GlobalLock(hglb);
   GlobalUnlock(hglb);
   CloseClipboard();
-  char* s; char* d=disp; ldisp=0; uint cnt=0; // one blank for many chars<=32
-  for( s=lpstr; *s && ldisp<sizeof(disp)-1; ++s )
-    if( *s>32 ) { *d=*s; ++d; ++ldisp; cnt=0; } // just copy
-    else if( cnt==0 ) { *d=' '; ++d; ++ldisp; cnt=1; } // set blank for first
+  char* s; char* d=disp; ndisp=0; uint cnt=0; // one blank for many chars<=32
+  for( s=lpstr; *s && ndisp<sizeof(disp)-1; ++s )
+    if( *s>32 ) { *d=*s; ++d; ++ndisp; cnt=0; } // just copy
+    else if( cnt==0 ) { *d=' '; ++d; ++ndisp; cnt=1; } // set blank for first
   *d = '\0'; _
 
 void
@@ -250,32 +251,31 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
   case WM_KEYDOWN:
-    //sprintf(disp,"%d",wParam);MessageBox(hwnd,disp,"key",MB_OK);
     if( wParam==VK_F1 ) show_help_file();
     break;
   case WM_CHAR:
-    if( wParam==22 && ldisp==0 ) // ctrl+v
+    if( wParam==22 ) // ctrl+v
       paste_from_clipboard(hwnd);
-    else if( wParam==3 && ldisp==0 ) // ctrl+c
+    else if( wParam==3 && ndisp!=0 ) // ctrl+c
       copy_to_clipboard(hwnd);
-    else if( wParam==20 && ldisp==0 ) // ctrl+t
+    else if( wParam==20 ) // ctrl+t
       { g_upd_title = ! g_upd_title; if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME); }
-    else if( wParam=='?' || wParam=='h' && ldisp==0 )
+    else if( wParam=='?' || wParam=='h' && ndisp==0 )
       show_help_file();
-    else if( wParam=='c' && (ldisp==0 || ldisp>0 && disp[0]=='#') ) __
+    else if( wParam=='c' && (ndisp==0 || ndisp!=0 && disp[0]=='#') ) __
       CHOOSECOLOR cc;
       static COLORREF acrCustClr[16]; // array of custom colors
       ZeroMemory(&cc, sizeof(cc));
       cc.lStructSize = sizeof(cc);
       cc.hwndOwner = hwnd;
-      cc.lpCustColors = (LPDWORD) acrCustClr;
+      cc.lpCustColors = (LPDWORD)acrCustClr;
       cc.rgbResult = (COLORREF)0;
-      if( ldisp>0 && disp[0]=='#' ) {uint rgb; sscanf( disp+1, "%X", &rgb ); cc.rgbResult = rgb; }
+      if( ndisp!=0 && disp[0]=='#' ) { uint rgb; sscanf( disp+1, "%X", &rgb ); cc.rgbResult = rgb; }
       cc.Flags = CC_FULLOPEN | CC_RGBINIT;
       if( ChooseColor(&cc)==TRUE )
-        ldisp = sprintf( disp, "#%X", cc.rgbResult ); _
+        ndisp = sprintf( disp, "#%X", cc.rgbResult ); _
     else
-      ldisp = process_char( (int)wParam, disp, sizeof(disp)-1, ldisp );
+      ndisp = process_char( (uint)wParam, disp, sizeof(disp)-1, ndisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
   case WM_CLOSE: // Window is closing
