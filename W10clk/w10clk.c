@@ -11,7 +11,7 @@
 // TODO round window, although it's not so urgent, square is good too
 
 #define PROGRAM_NAME "Windows 10 Clock"
-#define HELP_MSG "Unrecognized key. Press 'h' for help.\n\n" \
+#define HELP_MSG "Unrecognized key. Press h or ? or F1 for help.\n\n" \
 "Left button click - nothing, just bring focus to window\n" \
 "Right button click - show/hide seconds hand\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
@@ -115,6 +115,14 @@ init_tools() __
 
 void
 help_on_error_input() { MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OK ); }
+
+static void
+show_help_file() __
+  uint n=strlen(pgmFileName);
+  if( n<=4 || pgmFileName[n-4]!='.' ) return;
+  char h[300] = "file:///"; strcat( h, pgmFileName ); strcpy( h+strlen(h)-3, "htm" );
+  for( char* p=h; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
+  ShellExecute(NULL, "open", h, NULL, NULL, SW_SHOWNORMAL); _
 
 double sind(double x) { return sin(x*M_PI/180); }
 double cosd(double x) { return cos(x*M_PI/180); }
@@ -241,6 +249,10 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     g_seconds = ! g_seconds;
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
+  case WM_KEYDOWN:
+    //sprintf(disp,"%d",wParam);MessageBox(hwnd,disp,"key",MB_OK);
+    if( wParam==VK_F1 ) show_help_file();
+    break;
   case WM_CHAR:
     if( wParam==22 && ldisp==0 ) // ctrl+v
       paste_from_clipboard(hwnd);
@@ -248,11 +260,8 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       copy_to_clipboard(hwnd);
     else if( wParam==20 && ldisp==0 ) // ctrl+t
       { g_upd_title = ! g_upd_title; if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME); }
-    else if( wParam=='h' && ldisp==0 ) __
-      char h[300] = "file:///";
-      strcat( h, pgmFileName ); strcpy( h+strlen(h)-3, "htm" );
-      for( char* p=h; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
-      ShellExecute(NULL, "open", h, NULL, NULL, SW_SHOWNORMAL); _
+    else if( wParam=='?' || wParam=='h' && ldisp==0 )
+      show_help_file();
     else if( wParam=='c' && (ldisp==0 || ldisp>0 && disp[0]=='#') ) __
       CHOOSECOLOR cc;
       static COLORREF acrCustClr[16]; // array of custom colors

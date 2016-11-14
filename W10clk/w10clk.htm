@@ -34,8 +34,10 @@ esc    clear display
 <pre>
 =      calculate expression
 enter  calculate expression
-h      show help
-<span class=R>N</span>h     show number in hexadcimal system
+f1     show help
+?      show help
+h      show help (when display is clear)
+<span class=R>N</span>h     show number (integer part) in hexadcimal system
 
 d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
 <span class=R>D</span>d     convert YYYY/MM/DD to n wd, e.g. 2016/11/13 --&gt; 736283 Fri (See CED below)
@@ -99,6 +101,7 @@ NAMEz  current time in named TZ (uppercase!)
        tz=NAME1 TZ1 NAME2 TZ2
 reminders:
        [T]
+       rem=HHMM msg
        rem1=HHMM msg
        rem2=HHMM msg
        ...
