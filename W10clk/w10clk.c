@@ -5,17 +5,17 @@
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO date/time calculations, timezone conversions, more math.ops., what else?..
+// TODO date/time calculations, timezone conversions, what else?..
 // TODO show help (w10clk.txt); show color selection window
 // TODO argument of program as ini file etc.
 // TODO round window, although it's not so urgent, square is good too
 
 #define PROGRAM_NAME "Windows 10 Clock"
-#define HELP_MSG "Idle keypress, see file w10clk.txt for available options\n\n" \
+#define HELP_MSG "Unrecognized key. Press 'h' for help.\n\n" \
 "Left button click - nothing, just bring focus to window\n" \
 "Right button click - show/hide seconds hand\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
-"Version 1.3 * Copyright (C) Georgiy Pruss 2016"
+"Version 1.4 * Copyright (C) Georgiy Pruss 2016"
 
 // Trim fat from windows
 #define WIN32_LEAN_AND_MEAN
@@ -24,6 +24,7 @@
 #include <time.h>
 #include <math.h>
 #include <windows.h>
+#include <commdlg.h>
 #include <shellapi.h>
 typedef int bool;
 #define false 0
@@ -44,15 +45,16 @@ int g_disp_x, g_disp_y; // display position, percents
 char g_timefmt[100];    // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
+char pgmFileName[500]; // last 4 chars can be .ini, .exe, .htm etc
+
 void
 read_ini() // all parameter names and default values are here!
 {
-  char fnm[500];
-  int fnmsz = GetModuleFileName(NULL,fnm,sizeof(fnm));
-  if( fnmsz <= 0 || !STRIEQ(fnm+fnmsz-4,".exe") ) return;
-  strcpy(fnm+fnmsz-3,"ini");
+  int fnmsz = GetModuleFileName(NULL,pgmFileName,sizeof(pgmFileName));
+  if( fnmsz <= 0 || !STRIEQ(pgmFileName+fnmsz-4,".exe") ) return;
+  strcpy(pgmFileName+fnmsz-3,"ini");
   char s[100] = ""; DWORD rc; int x,y,w,h,r,g,b;
-  #define READINI(nm,def) rc = GetPrivateProfileString( "window", nm, def, s, sizeof(s), fnm)
+  #define READINI(nm,def) rc = GetPrivateProfileString( "window", nm, def, s, sizeof(s), pgmFileName)
   #define BND(x,f,t) if(x<f)x=f;if(x>t)x=t
   READINI("xywh","5,0,200,200");
   if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 ) { g_init_x = x; g_init_y = y;
@@ -114,12 +116,6 @@ init_tools()
   hmPen2 = CreatePen(PS_SOLID,g_mhand_w,mix_colors(g_bgcolor,g_mhand_rgb));
   hhPen2 = CreatePen(PS_SOLID,g_hhand_w,mix_colors(g_bgcolor,g_hhand_rgb));
   htPen2 = CreatePen(PS_SOLID,g_tick_w,mix_colors(g_bgcolor,g_tick_rgb));
-}
-
-void
-show_help()
-{
-  ShellExecute(NULL, "open", "file:///D:/Geo/Downloads/win/w10clk.htm", NULL, NULL, SW_SHOWNORMAL);
 }
 
 void
@@ -272,13 +268,32 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
   case WM_CHAR:
-    if( wParam==22 ) // ctrl+v
+    if( wParam==22 && ldisp==0 ) // ctrl+v
       paste_from_clipboard(hwnd);
-    else if( wParam==3 ) // ctrl+c
+    else if( wParam==3 && ldisp==0 ) // ctrl+c
       copy_to_clipboard(hwnd);
-    else if( wParam==20 ) // ctrl+t
-      { g_upd_title = ! g_upd_title;
-      if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME);}
+    else if( wParam==20 && ldisp==0 ) // ctrl+t
+      { g_upd_title = ! g_upd_title; if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME); }
+    else if( wParam=='h' && ldisp==0 )
+      { char h[300] = "file:///";
+        strcat( h, pgmFileName ); strcpy( h+strlen(h)-3, "htm" );
+        for( char* p=h; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
+        MessageBox(hwnd,h,"help",MB_OK);
+        ShellExecute(NULL, "open", h, NULL, NULL, SW_SHOWNORMAL); }
+    else if( wParam=='c' && (ldisp==0 || ldisp>0 && disp[0]=='#') )
+    {
+      CHOOSECOLOR cc;
+      static COLORREF acrCustClr[16]; // array of custom colors
+      ZeroMemory(&cc, sizeof(cc));
+      cc.lStructSize = sizeof(cc);
+      cc.hwndOwner = hwnd;
+      cc.lpCustColors = (LPDWORD) acrCustClr;
+      cc.rgbResult = (COLORREF)0;
+      if( ldisp>0 && disp[0]=='#' ) {uint rgb; sscanf( disp+1, "%X", &rgb ); cc.rgbResult = rgb; }
+      cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+      if( ChooseColor(&cc)==TRUE )
+        ldisp = sprintf( disp, "#%X", cc.rgbResult );
+    }
     else
       ldisp = process_char( (int)wParam, disp, sizeof(disp)-1, ldisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);

@@ -13,7 +13,6 @@ typedef int bool;
 #define true 1
 extern bool g_seconds;
 extern void help_on_error_input();
-extern void show_help();
 extern uint calculate( char* src, double* res ); // ret. 0 if ok
 
 extern uint ymd2n( uint y, uint m, uint d );
@@ -114,13 +113,8 @@ process_char( int c, char* s, int mn, int n ) // mn - max length
   }
   else if( c=='h' ) // help | decimal --> XXXX (hexadecimal)
   {
-    if( n==0 )
-      show_help();
-    else
-    {
-      ULL x; int k=sscanf( s, "%llu", &x );
-      if( k==1 ) n = sprintf( s, "#%llX", x );
-    }
+    ULL x; int k=sscanf( s, "%llu", &x );
+    if( k==1 ) n = sprintf( s, "#%llX", x );
   }
   else if( c=='=' || c==13 ) // = or enter -- calculate expression
   {

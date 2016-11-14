@@ -1,8 +1,7 @@
 <html>
 <head>
-<style>h2 {font-size:130%;}
-.R {color:blue;}
-pre {margin-left:2em;}</style>
+<style>h2 {font-size:130%;margin-left:20px;} .R {color:blue;}
+pre {margin-left:30px;}</style>
 </head>
 <body>
 <h2>Input</h2>
@@ -40,8 +39,8 @@ h      show help
 <span class=R>N</span>h     show number in hexadcimal system
 
 d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
-<span class=R>D</span>d     convert YYYY/MM/DD to n wd, e.g. 2016/11/13 --> 736283 Fri (See CED below)
-<span class=R>N</span>d     convert CED as plain number to y/m/d wd, e.g. 730122 --> 2000/1/1
+<span class=R>D</span>d     convert YYYY/MM/DD to n wd, e.g. 2016/11/13 --&gt; 736283 Fri (See CED below)
+<span class=R>N</span>d     convert CED as plain number to y/m/d wd, e.g. 730122 --&gt; 2000/1/1
 u      current unix time (for local time)
 <span class=R>N</span>u     unix time to y/m/d_h:m:s wd (with current tz) (1970/01/01..2106/02/07)
 t      seconds (of day) now, 0 to 86400
@@ -61,6 +60,9 @@ ctrl+V paste clipboard into display
 
 ctrl+T toggle showing time in window caption bar aka title (option 'intitle')
 tab    toggle showing seconds hand, same as right button (option 'seconds')
+
+c      show color dialog (just to have it easily accessible) colors are #BBGGRR!!!
+
 
 _______________
 
@@ -125,7 +127,6 @@ VAR:e  set variable
 ! @   save value; restore value
 l     lap time (time since start or last lap time)
 n     new calendar date
-c     show color dialog
 ?,h   help window, q,x - exit
 []{}  resize window   c-center    with N: by N pixels; also for all moves below
 ctrls move window left/right/up/down/leftmost/rightmost/top/bottom
