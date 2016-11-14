@@ -22,8 +22,8 @@ extern uint n2wd( uint n );
 
 char WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
-int
-process_char( int c, char* s, int mn, int n ) __ // mn - max length
+uint
+process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
   time_t t; struct tm* tmptr;  uint y,m,d, w, x;
   static time_t t_start;       static int t_start_ms;
   static int    t_idle;        static int t_idle_ms;
