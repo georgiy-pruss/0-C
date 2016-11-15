@@ -1,0 +1,2 @@
+// windres w10clk_res.rc w10clk_res.o
+1 ICON "w10clk.ico"

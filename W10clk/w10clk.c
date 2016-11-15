@@ -1,7 +1,6 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
 // compile with cygwin64 (-std=c11 is default):
-// gcc -O2 w10clk*.c -lgdi32 -Wl,--subsystem,windows -o w10clk.exe
-// for experiments: -lcomdlg32 or -lcomctl32
+// gcc -O2 w10clk*.c w10clk_res.o -lgdi32 -lcomdlg32 -Wl,--subsystem,windows -o w10clk.exe
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
