@@ -34,11 +34,11 @@ e      elapsed since start, also can show break time and work time
 b      break (don't count the following period, start the break)
 g      go on (continue working or whatever, end of break)
 
-ctrl+C copy contents of display to clipboard
-ctrl+V paste clipboard into display
+^c     copy contents of display to clipboard
+^v     paste clipboard into display; the same as the right mouse button
 
-ctrl+T toggle showing time in window caption bar aka title (option 'intitle')
-tab    toggle showing seconds hand, same as right button action (option 'seconds')
+^t     toggle showing time in window caption bar aka title (option 'intitle')
+^s     toggle showing seconds hand
 
 c      show color dialog (just to have it easily accessible), colors are #BBGGRR!!!
 
@@ -78,39 +78,41 @@ esc    clear display
 <hr>
 <pre>
 <a name="ced"></a>
-<b>CED</b>    Common Era Day number -- number of a day since January 1st, 1 AD, i.e.
-       that was day number 1, then January 2nd was day 2 and so on, using Julian
-       calendar (year divisable by 4 are all leap), up till 1582/10/4 (CED 577737),
-       when the counting scheme switches to Gregorian calendar and day 1582/10/15
-       (CED 577738) follows. Such enumeration was chosen to eliminate negative
+<b>CED</b>    Common Era Day number -- number of a day, counting since January 1st, 1 AD,
+       that was day number 1, then January 2nd was day #2 and so on, using the Julian
+       calendar (years divisable by 4 are all leap), up till 1582/10/4 (CED 577737),
+       when the counting scheme switched to the Gregorian calendar and day 1582/10/15
+       (CED 577738) followed. Such enumeration was chosen to eliminate negative
        numbers and to have somewhat natural scheme.
-       CED 730122 = Julian Day Number 2451545 (the difference is 1721423)
+       CED 730122 = Julian Day Number (JDN) 2451545 (the difference is 1721423)
 
 </pre>
 <h2>Screensaver</h2>
 <p>
-You can also set up it as a screensaver. Copy the executable to some other file
+You can also set up the program as a screensaver. Copy the executable to some other file
 with extension .scr, e.g. w10clkss.scr. Copy or create config file for it, it
-must be named then w10clkss.ini. Probably it should be not resizable, no time in
-title, better black, etc. For example:</p>
+must be named after the scr file, in our case &mdash; w10clkss.ini. For example:</p>
 <pre>[window]
-xywh=10,10,1900,1060
-bg=0,0,0
-ticks=12,40,40,40
+xywh=10,10,1900,1060 ; doesn't matter actually, it will be fullscreen
+bg=0,0,0             ; good choice
+ticks=12,40,40,40    ; make ticks and hands thick
 shand=7,40,40,40
 mhand=11,44,42,44
 hhand=22,44,42,44
+seconds=no
 intitle=yes
 resizable=no
 ontop=yes</pre>
 <p>
 Then right-click on the scr file and choose Install. It will also start at once.
 Press 'q' to stop it. It has no usual config dialog, like other screensavers, all
-the setup is done in ini file. Anyway, it'll serve as a screensaver. To exit it,
-press 'q', no other way works. Moreover, it functions with all its features &mdash;
-date/time, stopwatch, calculations, etc.
+the setup is done in the ini file. Sorry for that, maybe some time I'll fix it...
+Anyway, it'll serve as a screensaver. To exit it, press 'q', no other ways work.
+Moreover, the screensaver clock functions with all its features &mdash;
+date, time, stopwatch, calculations, etc.
 </p>
-
+<hr>
+<span style='font-size:90%'>Copyright &copy; Georgiy Pruss 2016</span>
 <!--
 TODO:
 

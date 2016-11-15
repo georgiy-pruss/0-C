@@ -9,9 +9,7 @@
 // TODO draw circle. round window, although it's not so urgent, square is good too
 
 #define PROGRAM_NAME "Windows 10 Clock"
-#define HELP_MSG "Unrecognized key. Press h or ? or F1 for help.\n\n" \
-"Left button click - nothing, just bring focus to window\n" \
-"Right button click - show/hide seconds hand\n\n" \
+#define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
 "Version 1.5 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
@@ -248,9 +246,8 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
   case WM_PAINT: // Window needs update for whatever reason
     redraw_window(hwnd);
     break;
-  case WM_RBUTTONDOWN: // maybe menu with all fns?
-    g_seconds = ! g_seconds;
-    InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
+  case WM_RBUTTONDOWN: // paste
+    paste_from_clipboard(hwnd);
     break;
   case WM_KEYDOWN:
     if( wParam==VK_F1 ) show_help_file();
@@ -264,8 +261,11 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       paste_from_clipboard(hwnd);
     else if( wParam==3 && ndisp!=0 ) // ctrl+c
       copy_to_clipboard(hwnd);
-    else if( wParam==20 ) // ctrl+t
-      { g_upd_title = ! g_upd_title; if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME); }
+    else if( wParam==20 ) __ // ctrl+t
+      g_upd_title = ! g_upd_title; if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME); _
+    else if( wParam==19 ) __ // ctrl+s
+      g_seconds = ! g_seconds;
+      InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _
     else if( wParam=='?' || wParam=='h' && ndisp==0 )
       show_help_file();
     else if( wParam=='c' && (ndisp==0 || ndisp!=0 && disp[0]=='#') ) __
