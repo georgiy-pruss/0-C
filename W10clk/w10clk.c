@@ -165,19 +165,20 @@ update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr) __
   int hourx = (int)( r * g_hh_len / 100.0 * cosd(angle_hour)+ 0.5 );
   int houry = (int)( r * g_hh_len / 100.0 * sind(angle_hour)+ 0.5 );
 
-  if( g_seconds ) __
-    SelectObject(hdc, hsPen2);
-    MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy);
-    SelectObject(hdc, hsPen);
-    MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy); _
+  // right order - hour, minute, second hand on top
+  SelectObject(hdc, hhPen2);
+  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
+  SelectObject(hdc, hhPen);
+  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
   SelectObject(hdc, hmPen2);
   MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + minx, halfh + miny);
   SelectObject(hdc, hmPen);
   MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + minx, halfh + miny);
-  SelectObject(hdc, hhPen2);
-  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
-  SelectObject(hdc, hhPen);
-  MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry); _
+  if( g_seconds ) __
+    SelectObject(hdc, hsPen2);
+    MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy);
+    SelectObject(hdc, hsPen);
+    MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy); _ _
 
 void
 update_title(HWND hwnd, const char* title) __
