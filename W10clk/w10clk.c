@@ -5,17 +5,17 @@
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO date/time calculations, timezone conversions, what else?..
-// TODO show help (w10clk.txt); show color selection window
-// TODO argument of program as ini file etc.
-// TODO round window, although it's not so urgent, square is good too
+// TODO reorder colors
+// TODO t - time calculations, z - timezone conversions, u - unix time
+// TODO draw circle. round window, although it's not so urgent, square is good too
 
 #define PROGRAM_NAME "Windows 10 Clock"
 #define HELP_MSG "Unrecognized key. Press h or ? or F1 for help.\n\n" \
 "Left button click - nothing, just bring focus to window\n" \
 "Right button click - show/hide seconds hand\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
-"Version 1.4 * Copyright (C) Georgiy Pruss 2016"
+"Version 1.5 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"[Press Cancel to not receive this message again]"
 
 // Trim fat from windows
 #define WIN32_LEAN_AND_MEAN
@@ -48,12 +48,15 @@ char g_timefmt[100];    // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
 char pgmFileName[500]; // last 4 chars can be .ini, .exe, .htm etc
+enum PgmKing { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
 
 void
 read_ini() __ // all parameter names and default values are here!
-  int fnmsz = GetModuleFileName(NULL,pgmFileName,sizeof(pgmFileName));
-  if( fnmsz <= 0 || !STRIEQ(pgmFileName+fnmsz-4,".exe") ) return;
-  strcpy(pgmFileName+fnmsz-3,"ini");
+  int n = GetModuleFileName(NULL,pgmFileName,sizeof(pgmFileName)); if( n <= 0 ) return;
+  if( STRIEQ(pgmFileName+n-4,".exe") ) pgmKind=K_EXE;
+  else if( STRIEQ(pgmFileName+n-4,".scr") ) pgmKind=K_SCR;
+  if( pgmKind==K_ERR ) return;
+  strcpy(pgmFileName+n-3,"ini");
   char s[100] = ""; DWORD rc; int x,y,w,h,r,g,b;
   #define READINI(nm,def) rc = GetPrivateProfileString( "window", nm, def, s, sizeof(s), pgmFileName)
   #define BND(x,f,t) if(x<f)x=f;if(x>t)x=t
@@ -114,8 +117,8 @@ init_tools() __
   hhPen2 = CreatePen(PS_SOLID,g_hhand_w,mix_colors(g_bgcolor,g_hhand_rgb));
   htPen2 = CreatePen(PS_SOLID,g_tick_w,mix_colors(g_bgcolor,g_tick_rgb)); _
 
-void
-help_on_error_input() { MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OK ); }
+bool
+help_on_error_input() { return MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OKCANCEL )==IDOK; }
 
 static void
 show_help_file() __
@@ -252,6 +255,10 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     break;
   case WM_KEYDOWN:
     if( wParam==VK_F1 ) show_help_file();
+    else if( wParam==VK_DELETE ) __
+      if( ndisp!=0 ) __
+        memmove( disp, disp+1, ndisp-- ); // including '\0'
+        InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _ _
     break;
   case WM_CHAR:
     if( wParam==22 ) // ctrl+v
@@ -274,9 +281,14 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       cc.Flags = CC_FULLOPEN | CC_RGBINIT;
       if( ChooseColor(&cc)==TRUE )
         ndisp = sprintf( disp, "#%X", cc.rgbResult ); _
+    else if( wParam=='q' ) // quit
+      PostMessage(hwnd,WM_CLOSE,0,0);
     else
       ndisp = process_char( (uint)wParam, disp, sizeof(disp)-1, ndisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
+    break;
+  case WM_DESTROY:
+    KillTimer(hwnd, ID_TIMER);
     break;
   case WM_CLOSE: // Window is closing
     KillTimer(hwnd, ID_TIMER);
@@ -293,7 +305,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   WNDCLASSEX windowClass;
   // Fill out the window class structure
   windowClass.cbSize = sizeof(WNDCLASSEX);
-  windowClass.style = CS_HREDRAW | CS_VREDRAW;
+  windowClass.style = CS_HREDRAW | CS_VREDRAW | (pgmKind==K_SCR ? CS_SAVEBITS : 0);
   windowClass.lpfnWndProc = WndProc;
   windowClass.cbClsExtra = 0;
   windowClass.cbWndExtra = 0;
@@ -302,11 +314,13 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   windowClass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
   windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
   windowClass.hbrBackground = CreateSolidBrush(g_bgcolor); // see also WM_ERASEBKGND
+  if( pgmKind==K_SCR ) windowClass.hbrBackground = GetStockObject(BLACK_BRUSH);
   windowClass.lpszMenuName = NULL;
   windowClass.lpszClassName = "w10clk";
+  if( pgmKind==K_SCR ) windowClass.lpszClassName = "WindowsScreenSaverClass";
   // Register window class
-  if( !RegisterClassEx(&windowClass) ) return 0;
-
+  if( !RegisterClassEx(&windowClass) )
+    return 0;
   read_ini(); // read all parameters from ini file
   DWORD extstyle = g_ontop ? WS_EX_TOOLWINDOW | WS_EX_TOPMOST : WS_EX_TOOLWINDOW;
   DWORD winstyle = WS_POPUPWINDOW | WS_BORDER | WS_CAPTION;
@@ -314,6 +328,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   if( g_resizable ) __
     winstyle = WS_OVERLAPPED | WS_SYSMENU | WS_THICKFRAME | WS_VISIBLE | WS_CAPTION;
     w += 10; h += 10; _ // no visible borders, but this correction is neccessary anyway
+  if( pgmKind==K_SCR ) winstyle = WS_VISIBLE | WS_BORDER; // enough!
   // Class is registered, parameters are set-up, so now's the time to create window
   HWND hwnd = CreateWindowEx( extstyle,      // extended style
     windowClass.lpszClassName, PROGRAM_NAME, // class name, program name
@@ -324,7 +339,8 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   if( !hwnd ) __ // can it fail, really?
     MessageBox( NULL, "Could not create window!", "Error", MB_OK | MB_ICONEXCLAMATION);
     return 1; _
-  ShowWindow(hwnd, SW_SHOW); // needed when WS_POPUPWINDOW
+  if( pgmKind==K_SCR ) SetWindowLong(hwnd, GWL_STYLE, 0);
+  ShowWindow(hwnd, pgmKind==K_SCR ? SW_SHOWMAXIMIZED : SW_SHOW);
   UpdateWindow(hwnd); // maybe not really needed
   MSG msg;
   while( GetMessage(&msg, NULL, 0, 0) > 0 ) __

@@ -3,6 +3,48 @@
 <style>h2 {font-size:130%;} .R {color:blue;} body {margin-left:2em;}</style>
 </head>
 <body>
+<h2>Actions</h2>
+<pre>
+f1     show help
+?      show help
+h      show help (when display is clear)
+
+<span class=R>N</span>h     show number (integer part) in hexadcimal system
+
+d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
+<span class=R>N</span>d     convert <a href="#ced">CED</a> as plain number to y/m/d wd diff, e.g. 730122 --&gt; 2000/1/1 Sat
+<span class=R>&plusmn;N</span>d    add or substract days from the current day, giving date in the future or past
+<span class=R>MD</span>d    convert m/d to n wd [diff], meaning the current year
+<span class=R>YMD</span>d   convert y/m/d to n wd [diff], e.g. 2016/11/13 --&gt; 736283 Sun
+
+u      current unix time (for local time)
+<span class=R>N</span>u     unix time to y/m/d_h:m:s wd (with the current tz!), in range 1970/1/1 to 2106/2/7
+
+t      seconds (of day) now, 0 to 86400 (the even 86400 can be the very rare case of leap second)
+
+y      current year day number (1..366)
+
+z      current time zone as +HHMM or -HHMM, e.g. +0200
+
+<span class=R>N</span>c     convert &deg;Celsius to &deg;Farenheit
+<span class=R>N</span>f     convert &deg;Farenheit to &deg;Celsius
+
+s      start stopwatch (actually just remember the moment of start)
+e      elapsed since start, also can show break time and work time
+b      break (don't count the following period, start the break)
+g      go on (continue working or whatever, end of break)
+
+ctrl+C copy contents of display to clipboard
+ctrl+V paste clipboard into display
+
+ctrl+T toggle showing time in window caption bar aka title (option 'intitle')
+tab    toggle showing seconds hand, same as right button action (option 'seconds')
+
+c      show color dialog (just to have it easily accessible), colors are #BBGGRR!!!
+
+=      calculate expression (see below how to enter them)
+enter  calculate expression
+</pre>
 <h2>Input</h2>
 <pre>
 0-9.   enter number, e.g. 42 or 3.1415
@@ -24,50 +66,19 @@ o      ox  multiply by pi          xoy  circle function (hello APL ;-))
            2ox cos    -2ox acos    20ox cosd    -20ox acosd
            3ox tan    -3ox atan    30ox tand    -30ox atand
 
-()     group order of evaluation with ()
+()     just usual grouping order of evaluation with ()
 
-bksp   correct input
+bksp   correct input (delete the character at the end of display)
+del    correct input (delete the character at the beginning)
+
 spc    clear display
 esc    clear display
 </pre>
-<h2>Actions</h2>
+
+<hr>
 <pre>
-=      calculate expression
-enter  calculate expression
-f1     show help
-?      show help
-h      show help (when display is clear)
-<span class=R>N</span>h     show number (integer part) in hexadcimal system
-
-d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
-<span class=R>D</span>d     convert YYYY/MM/DD to n wd diff, e.g. 2016/11/13 --&gt; 736283 Sun (See <a href="#ced">CED</a> below)
-<span class=R>N</span>d     convert CED as plain number to y/m/d wd diff, e.g. 730122 --&gt; 2000/1/1
-u      current unix time (for local time)
-<span class=R>N</span>u     unix time to y/m/d_h:m:s wd (with current tz) (1970/01/01..2106/02/07)
-t      seconds (of day) now, 0 to 86400
-y      current year day number (1..366)
-z      current time zone as +HHMM or -HHMM, e.g. +0200
-
-<span class=R>N</span>c     convert Celsius to Farenheit
-<span class=R>N</span>f     convert Farenheit to Celsius
-
-s      start stopwatch (actually just remember moment of start)
-e      elapsed since start (or end, finish), also shows break time, work time
-b      break (don't count this time, start time of break)
-g      go on (end of break)
-
-ctrl+C copy display to clipboard
-ctrl+V paste clipboard into display
-
-ctrl+T toggle showing time in window caption bar aka title (option 'intitle')
-tab    toggle showing seconds hand, same as right button (option 'seconds')
-
-c      show color dialog (just to have it easily accessible) colors are #BBGGRR!!!
-
-
-_______________
 <a name="ced"></a>
-CED    Common Era Day number -- number of a day since January 1st, 1 AD, i.e.
+<b>CED</b>    Common Era Day number -- number of a day since January 1st, 1 AD, i.e.
        that was day number 1, then January 2nd was day 2 and so on, using Julian
        calendar (year divisable by 4 are all leap), up till 1582/10/4 (CED 577737),
        when the counting scheme switches to Gregorian calendar and day 1582/10/15
@@ -75,30 +86,50 @@ CED    Common Era Day number -- number of a day since January 1st, 1 AD, i.e.
        numbers and to have somewhat natural scheme.
        CED 730122 = Julian Day Number 2451545 (the difference is 1721423)
 
-
-.
-.
-.
-.
-TODO
-.
-.
-.
-.
 </pre>
+<h2>Screensaver</h2>
+<p>
+You can also set up it as a screensaver. Copy the executable to some other file
+with extension .scr, e.g. w10clkss.scr. Copy or create config file for it, it
+must be named then w10clkss.ini. Probably it should be not resizable, no time in
+title, better black, etc. For example:</p>
+<pre>[window]
+xywh=10,10,1900,1060
+bg=0,0,0
+ticks=12,40,40,40
+shand=7,40,40,40
+mhand=11,44,42,44
+hhand=22,44,42,44
+intitle=yes
+resizable=no
+ontop=yes</pre>
+<p>
+Then right-click on the scr file and choose Install. It will also start at once.
+Press 'q' to stop it. It has no usual config dialog, like other screensavers, all
+the setup is done in ini file. Anyway, it'll serve as a screensaver. To exit it,
+press 'q', no other way works. Moreover, it functions with all its features &mdash;
+date/time, stopwatch, calculations, etc.
+</p>
 
 <!--
+TODO:
+
+V:expr assign to variable; v - use variable (not saved between sessions!)
+       e.g. P:o1, then R:30; then 2*P*R hm, maybe add there ';' - e1;e2;e3
+
 a      show alarm
 +a -a  turn on/off
 HHMMa  set alarm; can be also HHMM WWWWWWWa for weekdays 0-6; file w10clk.mp3
        [T]
        alarm=HHMM
+
 Nz     current time in tz UTC+N: H HH HHMM (:)
 +Nz    current time in tz UTC+N
 -Nz    current time in tz UTC-N
 NAMEz  current time in named TZ (uppercase!)
        [T]
        tz=NAME1 TZ1 NAME2 TZ2
+
 reminders:
        [T]
        rem=HHMM msg
@@ -110,31 +141,27 @@ dates:
        d1=M/D msg
        d2=M/D msg
        ...
-Nd     wd diff - given day: D DD MDD MMDD YYMMDD YYYYMMDD
-YMDd   N wd diff
-+Nd    y/m/d wd - N days ahead
--Nd    y/m/d wd - N days ago
+
 YMDHMSu
 +-DHMSu
 +Nu    advance n seconds
 -Nu    decuct n seconds
+
 Nt     h:m:s for given seconds
 DHMSt  d*85400+h*3600+m*60+s
 +Nt    y/m/d h:m:s ahead
 -Nt    y/m/d h:m:s ago
-VAR:e  set variable
+
 |&amp;~&lt;&gt;  64-bit unsigned integers (or and xor (also not) shl shr)
-;     push as 1st argument
-:     exchange 1st argument and display
+<     push as 1st argument
+x     exchange 1st argument and display
 ! @   save value; restore value
+;     sequence of exprs
 l     lap time (time since start or last lap time)
-n     new calendar date
-?,h   help window, q,x - exit
+
 []{}  resize window   c-center    with N: by N pixels; also for all moves below
 ctrls move window left/right/up/down/leftmost/rightmost/top/bottom
 // timer: HHMMt - set timer, 0t - reset timer (HHMM can be M, MM, HMM, HHMM)
-// datecalc: NNNd/k/m - date in (or back if D/K/M) NNN days/weeks/months
-// datedist: YYYYMMDD= - calculate distance to date (and its weekday) calendar?
 // timezone: z - tz info, HHw,HHe - time in another timezone (west, east)
 -->
 </body>
