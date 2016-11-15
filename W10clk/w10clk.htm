@@ -40,7 +40,8 @@ g      go on (continue working or whatever, end of break)
 ^t     toggle showing time in window caption bar aka title (option 'intitle')
 ^s     toggle showing seconds hand
 
-c      show color dialog (just to have it easily accessible), colors are #BBGGRR!!!
+c      show color dialog (just to have it easily accessible), if display is #..., then
+       that rgb color is used; also on OK the color is pasted back in display
 
 =      calculate expression (see below how to enter them)
 enter  calculate expression
@@ -93,14 +94,13 @@ You can also set up the program as a screensaver. Copy the executable to some ot
 with extension .scr, e.g. w10clkss.scr. Copy or create config file for it, it
 must be named after the scr file, in our case &mdash; w10clkss.ini. For example:</p>
 <pre>[window]
-xywh=10,10,1900,1060 ; doesn't matter actually, it will be fullscreen
-bg=0,0,0             ; good choice
-ticks=12,40,40,40    ; make ticks and hands thick
-shand=7,40,40,40
-mhand=11,44,42,44
-hhand=22,44,42,44
-seconds=no
-intitle=yes
+xywh=0,0,100,100    ; doesn't matter actually, it will be fullscreen
+bg=0,0,0            ; good choice
+ticks=12,80,80,80   ; make ticks and hands thick
+shand=6,80,80,80
+mhand=12,80,80,80
+hhand=24,80,80,80
+lengths=8,84,84,58
 resizable=no
 ontop=yes</pre>
 <p>

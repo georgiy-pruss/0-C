@@ -4,7 +4,6 @@
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO reorder colors
 // TODO t - time calculations, z - timezone conversions, u - unix time
 // TODO draw circle. round window, although it's not so urgent, square is good too
 
@@ -101,6 +100,10 @@ mix_colors( COLORREF c1, COLORREF c2 ) __
   int g = (((c1&0xFF00)+(c2&0xFF00))/2) & 0xFF00;
   int b = (((c1&0xFF0000)+(c2&0xFF0000))/2) & 0xFF0000;
   return b|g|r; _
+
+COLORREF
+swap_colors( COLORREF c ) __
+  return ((c&0xFF)<<16) | (c&0xFF00) | ((c&0xFF0000)>>16); _
 
 void
 init_tools() __
@@ -271,15 +274,14 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     else if( wParam=='c' && (ndisp==0 || ndisp!=0 && disp[0]=='#') ) __
       CHOOSECOLOR cc;
       static COLORREF acrCustClr[16]; // array of custom colors
-      ZeroMemory(&cc, sizeof(cc));
-      cc.lStructSize = sizeof(cc);
-      cc.hwndOwner = hwnd;
-      cc.lpCustColors = (LPDWORD)acrCustClr;
-      cc.rgbResult = (COLORREF)0;
-      if( ndisp!=0 && disp[0]=='#' ) { uint rgb; sscanf( disp+1, "%X", &rgb ); cc.rgbResult = rgb; }
-      cc.Flags = CC_FULLOPEN | CC_RGBINIT;
+      ZeroMemory(&cc, sizeof(cc)); cc.lStructSize = sizeof(cc);
+      cc.hwndOwner = hwnd; cc.lpCustColors = (LPDWORD)acrCustClr;
+      cc.Flags = CC_FULLOPEN | CC_RGBINIT; cc.rgbResult = (COLORREF)0;
+      if( ndisp!=0 && disp[0]=='#' ) __
+        uint rgb; sscanf( disp+1, "%X", &rgb );
+        cc.rgbResult = swap_colors(rgb); _
       if( ChooseColor(&cc)==TRUE )
-        ndisp = sprintf( disp, "#%X", cc.rgbResult ); _
+        ndisp = sprintf( disp, "#%X", (uint)swap_colors(cc.rgbResult) ); _
     else if( wParam=='q' ) // quit
       PostMessage(hwnd,WM_CLOSE,0,0);
     else
