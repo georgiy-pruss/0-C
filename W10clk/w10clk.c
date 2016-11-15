@@ -10,7 +10,7 @@
 #define PROGRAM_NAME "Windows 10 Clock"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
-"Version 1.5 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.6 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 // Trim fat from windows
@@ -44,7 +44,7 @@ char g_timefmt[100];    // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
 char pgmFileName[500]; // last 4 chars can be .ini, .exe, .htm etc
-enum PgmKing { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
+enum ProgramKind { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
 
 void
 read_ini() __ // all parameter names and default values are here!
@@ -205,19 +205,21 @@ redraw_window(HWND hwnd) __
     if( ndisp!=0 ) TextOut(hDC,rcClient.right*g_disp_x/100,rcClient.bottom*g_disp_y/100,disp,ndisp);
   EndPaint(hwnd, &paintStruct); _
 
-void
-paste_from_clipboard(HWND hwnd) __
-  if( !OpenClipboard(hwnd) ) return;
+bool
+paste_from_clipboard(HWND hwnd, bool append) __
+  if( !OpenClipboard(hwnd) ) return false;
   HGLOBAL hglb = GetClipboardData(CF_TEXT);
-  if( !hglb ) return;
+  if( !hglb ) return false;
   LPSTR lpstr = GlobalLock(hglb);
   GlobalUnlock(hglb);
   CloseClipboard();
-  char* s; char* d=disp; ndisp=0; uint cnt=0; // one blank for many chars<=32
+  char* s; char* d=disp; uint cnt=0; // one blank for many chars<=32
+  if( ! append ) ndisp=0; else d += ndisp;
   for( s=lpstr; *s && ndisp<sizeof(disp)-1; ++s )
     if( *s>32 ) { *d=*s; ++d; ++ndisp; cnt=0; } // just copy
     else if( cnt==0 ) { *d=' '; ++d; ++ndisp; cnt=1; } // set blank for first
-  *d = '\0'; _
+  *d = '\0';
+  return true; _
 
 void
 copy_to_clipboard(HWND hwnd) __
@@ -251,7 +253,8 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     redraw_window(hwnd);
     break;
   case WM_RBUTTONDOWN: // paste
-    paste_from_clipboard(hwnd);
+    if( paste_from_clipboard(hwnd,true) )
+      InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     break;
   case WM_KEYDOWN:
     if( wParam==VK_F1 ) show_help_file();
@@ -261,8 +264,9 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
         InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _ _
     break;
   case WM_CHAR:
-    if( wParam==22 ) // ctrl+v
-      paste_from_clipboard(hwnd);
+    if( wParam==22 ) __ // ctrl+v
+      if( paste_from_clipboard(hwnd,true) )
+        InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _
     else if( wParam==3 && ndisp!=0 ) // ctrl+c
       copy_to_clipboard(hwnd);
     else if( wParam==20 ) __ // ctrl+t

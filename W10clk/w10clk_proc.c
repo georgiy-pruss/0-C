@@ -55,7 +55,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
         if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
         n = m==0 ? sprintf( s, "%+d", tz_h ) : sprintf( s, "%+d%02u", tz_h, tz_m ); _
       else // 't'
-        n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec ); _
+        n = sprintf( s, "%u", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec ); _
     else __
       if( c=='u' ) __ // unixtime
         // TODO if( strchr( s, '/' ) ) __ // YYYY/MM/DD or MM/DD + HH:MM:SS
@@ -87,9 +87,15 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
             if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
             n = sprintf( s, "%d/%d/%d %s%s", y,m,d, WD[n2wd(x)], diff ); _ _ _
       else if( c=='t' ) __ // time
-        if( strchr( s, ':' ) ) __ // D:H:M:S or H:M:S or M:S
+        //if( strchr( s, ':' ) ) __ // D:H:M:S or H:M:S or M:S
         // cvt time to seconds
-        _ _
+        int dif, new, dd, hh, mm, ss;
+        if( sscanf( s, "%d", &dif )==1 ) __ // [+-]N
+          new = tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec + dif;
+          ss = new%60; new /= 60;
+          mm = new%60; new /= 60;
+          hh = new%24; new /= 24;
+          n = sprintf( s, "%d:%d:%d:%d", new, hh, mm, ss ); _ _
       else if( c=='y' ) // year day
         n = strftime( s, mn, "%j", tmptr );
       else if( c=='z' ) __ // timezone

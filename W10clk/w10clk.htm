@@ -20,7 +20,9 @@ d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
 u      current unix time (for local time)
 <span class=R>N</span>u     unix time to y/m/d_h:m:s wd (with the current tz!), in range 1970/1/1 to 2106/2/7
 
-t      seconds (of day) now, 0 to 86400 (the even 86400 can be the very rare case of leap second)
+t      current time: H:M:S
+<span class=R>N</span>t     convert seconds to [D:]H:M:S
+<span class=R>DHMS</span>t  convert [[D:]H:]M:S to seconds
 
 y      current year day number (1..366)
 
@@ -36,10 +38,10 @@ b      break (don't count the following period, start the break)
 g      go on (continue working or whatever, end of break)
 
 ^c     copy contents of display to clipboard
-^v     paste clipboard into display; the same as the right mouse button
+^v     paste (append!) clipboard into display; the same as the right mouse button
 
+^s     toggle showing second hand (option 'seconds' in ini file)
 ^t     toggle showing time in window caption bar aka title (option 'intitle')
-^s     toggle showing second hand
 
 c      show color dialog (just to have it easily accessible), if display is #..., then
        that rgb color is used; also on OK the color is pasted back in display
