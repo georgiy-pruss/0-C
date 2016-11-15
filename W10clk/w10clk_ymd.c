@@ -51,6 +51,28 @@ n2ymd( uint dn, /* OUT */ uint* yy, uint* mm, uint* dd ) __
   int year = c - (month > 2 ? 4716 : 4715);
   *yy = year; *mm = month; *dd = day; _
 
+int
+gettz( int* h, uint* m ) __
+  // return offset in minutes, also set h to hours (+-12) and m to abs minutes
+  int u_mins,u_date,l_mins,l_date,offset;
+  time_t currtime = time(NULL);
+  struct tm* ptm = gmtime(&currtime);
+  u_mins = ptm->tm_hour*60+ptm->tm_min;
+  u_date = ptm->tm_year*1024+ptm->tm_mon*32+ptm->tm_mday; // artificial date number
+  ptm = localtime(&currtime);                             // we use such "dates" just
+  l_mins = ptm->tm_hour*60+ptm->tm_min;                   // to see if they
+  l_date = ptm->tm_year*1024+ptm->tm_mon*32+ptm->tm_mday; // change, then correct
+  offset = l_mins - u_mins;                               // offset accordingly
+  if( u_date < l_date )
+    offset += 24*60;
+  else if( u_date > l_date )
+    offset -= 24*60;
+  int h_o, m_o;
+  if( offset >= 0 ) { h_o = offset/60; m_o = offset - 60*h_o; }
+  else { h_o = (-offset)/60; m_o = (-offset) - 60*h_o; h_o = -h_o; }
+  if( h ) *h = h_o; if( m ) *m = m_o;
+  return offset; _
+
 #ifdef TESTALL
 int
 main() __

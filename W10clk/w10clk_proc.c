@@ -18,12 +18,16 @@ extern uint calculate( char* src, double* res ); // returns 0 if ok
 extern uint ymd2n( uint y, uint m, uint d );
 extern void n2ymd( uint n, /* OUT */ uint* y, uint* m, uint* d );
 extern uint n2wd( uint n );
+extern int gettz( int* h, uint* m );
 
 char WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
+bool tz_is_set = false;
+int tz_offset; int tz_h; uint tz_m;
+
 uint
 process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
-  time_t t; struct tm* tmptr;  uint y,m,d, w, x; int k,a,z; L xx; double b; // temp. vars.
+  time_t t; struct tm* tmptr;  uint y,m,d, w, x; int k,h,a,z; L xx; double b; // temp. vars.
   struct timeb tb;
   static time_t t_start;       static int t_start_ms;
   static int    t_idle;        static int t_idle_ms;
@@ -47,8 +51,9 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
         n = strftime( s, mn, "%Y/%m/%d %a", tmptr );
       else if( c=='y' )
         n = strftime( s, mn, "%j", tmptr );
-      else if( c=='z' )
-        n = strftime( s, mn, "%z", tmptr );
+      else if( c=='z' ) __
+        if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
+        n = m==0 ? sprintf( s, "%+d", tz_h ) : sprintf( s, "%+d%02u", tz_h, tz_m ); _
       else // 't'
         n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec ); _
     else __
@@ -69,7 +74,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
           else
             return n; // for now, the only return from inside
           if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
-          n = sprintf( s, "%d %s%s", x, WD[n2wd(x)], diff ); _
+          n = sprintf( s, "%u %s%s", x, WD[n2wd(x)], diff ); _
         else if( s[0]=='+' || s[0]=='-' ) __ int xd;
           if( sscanf( s, "%d", &xd )==1 && -xd<(int)today ) __
             x = (uint)((int)today + xd);
@@ -83,11 +88,21 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
             n = sprintf( s, "%d/%d/%d %s%s", y,m,d, WD[n2wd(x)], diff ); _ _ _
       else if( c=='t' ) __ // time
         if( strchr( s, ':' ) ) __ // D:H:M:S or H:M:S or M:S
+        // cvt time to seconds
         _ _
       else if( c=='y' ) // year day
         n = strftime( s, mn, "%j", tmptr );
-      else if( c=='z' ) // timezone
-        n = strftime( s, mn, "%z", tmptr );
+      else if( c=='z' ) __ // timezone
+        if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
+        //if( s is ALPHA ) s = replace( tz-dict[ s ] )
+        if( s[0]=='+' || s[0]=='-' ) __
+          k = sscanf( s+1, "%d", &h ); // skip sign
+          if( k==1 ) __
+            if( h<15 ) m=0; else m=h%100, h=h/100; // split into h,m
+            int seconds = 3600*h + 60*m; if( s[0]=='-' ) seconds = -seconds;
+            time_t new_t = t - 60*tz_offset + seconds;
+            tmptr = localtime(&new_t);
+            n = strftime( s, mn, "%H:%M:%S %a %m/%d", tmptr ); _ _ _
       else // 't'
         n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec ); _ _
   else if( c=='f' ) __ // F --> C
