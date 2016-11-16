@@ -18,11 +18,11 @@ d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
 <span class=R>YMD</span>d   convert y/m/d to n wd [diff], e.g. 2016/11/13 --&gt; 736283 Sun
 
 u      current unix time (for local time)
-<span class=R>N</span>u     unix time to y/m/d_h:m:s wd (with the current tz!), in range 1970/1/1 to 2106/2/7
+<span class=R>N</span>u     unix time to y/m/d.h:m:s wd (with the current tz!), in range 1970/1/1 to 2106/2/7
 
-t      current time: H:M:S
-<span class=R>N</span>t     convert seconds to [D:]H:M:S
-<span class=R>DHMS</span>t  convert [[D:]H:]M:S to seconds
+t      current time, H:M:S
+<span class=R>N</span>t     convert seconds to M:S or H:M:S or D:H:M:S (D - days)
+<span class=R>DHMS</span>t  convert D:H:M:S or H:M:S or M:S to seconds
 
 y      current year day number (1..366)
 
@@ -51,9 +51,9 @@ enter  calculate expression
 </pre>
 <h2>Input</h2>
 <pre>
-0-9.   enter number, e.g. 42 or 3.1415
+0-9.   enter number, e.g. 42 or 3.14159265
 +-     can be used for numbers with sign, e.g. +10 (sometimes it's not the same as 10)
-:/_    enter time, dates, e.g. 3/11 or 2:00 or 2016/11/10_23:59:59
+:/     enter time and date, e.g. 3/11 or 2:00 or 2016/11/10.23:59:59 (notice dot)
 ABCDEF hexadecimal digits (uppercase!) for hex. numbers in expression, put # in front
 #      hexadecimal number indicator: #FF #DEADBEEF #100000000
 
@@ -119,6 +119,8 @@ date, time, stopwatch, calculations, etc.
 <!--
 TODO:
 
+time in exprssions!
+
 V:expr assign to variable; v - use variable (not saved between sessions!)
        e.g. P:o1, then R:30; then 2*P*R hm, maybe add there ';' - e1;e2;e3
 
@@ -128,9 +130,6 @@ HHMMa  set alarm; can be also HHMM WWWWWWWa for weekdays 0-6; file w10clk.mp3
        [T]
        alarm=HHMM
 
-Nz     current time in tz UTC+N: H HH HHMM (:)
-+Nz    current time in tz UTC+N
--Nz    current time in tz UTC-N
 NAMEz  current time in named TZ (uppercase!)
        [T]
        tz=NAME1 TZ1 NAME2 TZ2
@@ -146,16 +145,6 @@ dates:
        d1=M/D msg
        d2=M/D msg
        ...
-
-YMDHMSu
-+-DHMSu
-+Nu    advance n seconds
--Nu    decuct n seconds
-
-Nt     h:m:s for given seconds
-DHMSt  d*85400+h*3600+m*60+s
-+Nt    y/m/d h:m:s ahead
--Nt    y/m/d h:m:s ago
 
 |&amp;~&lt;&gt;  64-bit unsigned integers (or and xor (also not) shl shr)
 <     push as 1st argument

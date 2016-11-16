@@ -1,4 +1,4 @@
-// Evaluate expression
+// Part of w10clk -- Evaluate expression
 // Based on Henrik's (http://stackoverflow.com/users/148897/henrik) answer here:
 // http://stackoverflow.com/questions/9329406/evaluating-arithmetic-expressions-from-string-in-c
 // Well, I added some features there too
@@ -7,21 +7,17 @@
 #include <math.h>
 #include "../_.h"
 typedef unsigned int uint;
-static uint err_flag;
-static char* curr_pos;
+
 #define BLANKS " \t\n\r\v\f"
 enum ERRORS {E_OK=0, E_CLOSE,E_ZDIV,E_ZMOD,E_NEGSQRT,E_NEGLOG,E_CIRC,E_BINOP,E_HEXDIGIT};
+static uint err_flag;
+static char* curr_pos;
+// curr_pos += strspn( curr_pos, BLANKS ); // we don't have blanks, so no skip blanks
 
-static uint peek() __
-  curr_pos += strspn( curr_pos, BLANKS ); // skip blanks
-  return *curr_pos; _
+static uint peek() { return *curr_pos; }
+static uint get() { return *curr_pos++; }
 
-static uint get() __
-  curr_pos += strspn( curr_pos, BLANKS ); // skip blanks
-  uint c = *curr_pos++;
-  return c; _
-
-static double expression(); // for recursion
+static double expression(); // declaration for recursion
 
 static double number() __
   double result = get() - '0';
@@ -94,15 +90,13 @@ static double expression() __
     if( get() == '+' ) result += term(); else result -= term();
   return result; _
 
-static void trim( char* s ) __
-  int i;
+static void trim( char* s ) __ int i;
   for( i=strlen(s)-1; i>=0; --i ) if( strchr( BLANKS, s[i] )==NULL ) break;
   s[i+1] = '\0'; _
 
 uint calculate( char* s, double* r ) __
   trim(s); // trim trailing blanks although it's not so neccessary
-  curr_pos = s+strspn( s, BLANKS ); // skip leading blanks
-  err_flag=E_OK;
+  curr_pos = s  +strspn( s, BLANKS ); // skip leading blanks
+  err_flag = E_OK;
   *r = expression();
   return err_flag; _
-

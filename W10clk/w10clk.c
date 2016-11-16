@@ -1,27 +1,26 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
 // compile with cygwin64 (-std=c11 is default):
 // gcc -O2 w10clk*.c w10clk_res.o -lgdi32 -lcomdlg32 -Wl,--subsystem,windows -o w10clk.exe
+// with resource .o made from .rc (and .ico): windres w10clk_res.rc w10clk_res.o
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO t - time calculations, z - timezone conversions, u - unix time
-// TODO draw circle. round window, although it's not so urgent, square is good too
+// TODO alarms; reminders; named timezones; birthdays; time in expressions
+// TODO draw circle? round window?
 
 #define PROGRAM_NAME "Windows 10 Clock"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
-"Version 1.6 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.10 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
-// Trim fat from windows
-#define WIN32_LEAN_AND_MEAN
-#pragma comment(linker, "/subsystem:windows") // for MSVC?
+#define WIN32_LEAN_AND_MEAN // Trim fat from windows
 #include <stdio.h>
 #include <time.h>
-#include <math.h>
+#include <math.h> // M_PI sin cos
 #include <windows.h>
-#include <commdlg.h>
-#include <shellapi.h>
+#include <commdlg.h> // ChooseColor CHOOSECOLOR
+#include <shellapi.h> // ShellExecute
 #include "../_.h"
 typedef unsigned int uint;
 typedef int bool;
@@ -43,15 +42,16 @@ int g_disp_x, g_disp_y; // display position, percents
 char g_timefmt[100];    // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
-char pgmFileName[500]; // last 4 chars can be .ini, .exe, .htm etc
+char pgmFileName[540]; // last 4 chars originally .exe or .scr; can be changed to .ini
 enum ProgramKind { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
 
-void
+bool
 read_ini() __ // all parameter names and default values are here!
-  int n = GetModuleFileName(NULL,pgmFileName,sizeof(pgmFileName)); if( n <= 0 ) return;
-  if( STRIEQ(pgmFileName+n-4,".exe") ) pgmKind=K_EXE;
-  else if( STRIEQ(pgmFileName+n-4,".scr") ) pgmKind=K_SCR;
-  if( pgmKind==K_ERR ) return;
+  int n = GetModuleFileName( NULL, pgmFileName, sizeof(pgmFileName) );
+  if( n <= 0 ) return false;
+  if( STRIEQ(pgmFileName+n-4,".exe") ) pgmKind=K_EXE; // normal executable
+  else if( STRIEQ(pgmFileName+n-4,".scr") ) pgmKind=K_SCR; // screensaver
+  if( pgmKind==K_ERR ) return false;
   strcpy(pgmFileName+n-3,"ini");
   char s[100] = ""; DWORD rc; int x,y,w,h,r,g,b;
   #define READINI(nm,def) rc = GetPrivateProfileString( "window", nm, def, s, sizeof(s), pgmFileName)
@@ -85,7 +85,8 @@ read_ini() __ // all parameter names and default values are here!
   READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
-  READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) { strcpy( g_timefmt, s ); } _
+  READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) strcpy( g_timefmt, s );
+  return true; _
 
 // Const (all upper-case) and global state vars (camel-style names)
 const int ID_TIMER = 1;
@@ -131,7 +132,8 @@ show_help_file() __
 double sind(double x) { return sin(x*M_PI/180); }
 double cosd(double x) { return cos(x*M_PI/180); }
 
-void draw_clock(HDC hdc,int halfw, int halfh) __
+void
+draw_clock(HDC hdc,int halfw, int halfh) __
   if( g_tick_w == 0 ) return;
   int r = min(halfw,halfh); // radius
   for( int i=0; i<12; ++i ) __
@@ -189,8 +191,8 @@ update_title(HWND hwnd, const char* title) __
   strftime( text, sizeof(text), g_timefmt, tmptr );
   SetWindowText(hwnd,text); _
 
-char disp[100] = "";
-uint ndisp = 0;
+char disp[400] = ""; // input field and display
+uint ndisp = 0;      // current length of text in disp
 
 void
 redraw_window(HWND hwnd) __
@@ -312,9 +314,8 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   // Fill out the window class structure
   windowClass.cbSize = sizeof(WNDCLASSEX);
   windowClass.style = CS_HREDRAW | CS_VREDRAW | (pgmKind==K_SCR ? CS_SAVEBITS : 0);
+  windowClass.cbClsExtra = windowClass.cbWndExtra = 0;
   windowClass.lpfnWndProc = WndProc;
-  windowClass.cbClsExtra = 0;
-  windowClass.cbWndExtra = 0;
   windowClass.hInstance = hInstance;
   windowClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
   windowClass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
@@ -322,12 +323,12 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   windowClass.hbrBackground = CreateSolidBrush(g_bgcolor); // see also WM_ERASEBKGND
   if( pgmKind==K_SCR ) windowClass.hbrBackground = GetStockObject(BLACK_BRUSH);
   windowClass.lpszMenuName = NULL;
-  windowClass.lpszClassName = "w10clk";
-  if( pgmKind==K_SCR ) windowClass.lpszClassName = "WindowsScreenSaverClass";
+  windowClass.lpszClassName = pgmKind==K_SCR ? "WindowsScreenSaverClass" : "w10clk";
   // Register window class
   if( !RegisterClassEx(&windowClass) )
-    return 0;
-  read_ini(); // read all parameters from ini file
+    return 1;
+  if( !read_ini() ) // read all parameters from ini file
+    return 1;
   DWORD extstyle = g_ontop ? WS_EX_TOOLWINDOW | WS_EX_TOPMOST : WS_EX_TOOLWINDOW;
   DWORD winstyle = WS_POPUPWINDOW | WS_BORDER | WS_CAPTION;
   int w = g_width+6, h = g_height+29; // Add for border (really non-existing) and caption bar
@@ -354,4 +355,3 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
     TranslateMessage(&msg);
     DispatchMessage(&msg); _
   return msg.wParam; _ // I hope it's zero
-

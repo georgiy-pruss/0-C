@@ -1,5 +1,4 @@
-// Part of w10clk
-
+// Part of w10clk -- day number calculations
 // gcc -O2 -DTESTALL w10clk_ymd.c -o test.exe && test.exe
 
 #include <stdio.h>
@@ -35,9 +34,8 @@ n2wd( uint dn ) { return (dn+5) % 7; }
 void
 n2ymd( uint dn, /* OUT */ uint* yy, uint* mm, uint* dd ) __
   // Convert TJD day number to tuple year, month, day and weekday"
-  // Probably needs some correction for dates before 1.1.1
-  int jdi = dn + 1721422;
-  int b;
+  // Probably needs some correction for dates before 1/1/1
+  int jdi = dn + 1721422; int b;
   if( jdi < 2299160 ) // (1582, 10, 15)
     b = jdi + 1525;
   else __

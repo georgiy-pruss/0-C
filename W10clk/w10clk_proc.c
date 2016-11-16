@@ -1,4 +1,4 @@
-// Part of w10clk
+// Part of w10clk -- process character/command
 
 #include <stdio.h>
 #include <string.h>
@@ -11,7 +11,7 @@ typedef unsigned int uint;
 typedef int bool;
 #define false 0
 #define true 1
-extern bool g_seconds; // show seconds hand
+extern bool g_seconds; // show second hand
 extern bool help_on_error_input(); // true if OK pressed
 extern uint calculate( char* src, double* res ); // returns 0 if ok
 
@@ -27,12 +27,12 @@ int tz_offset; int tz_h; uint tz_m;
 
 uint
 process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
-  time_t t; struct tm* tmptr;  uint y,m,d, w, x; int k,h,a,z; L xx; double b; // temp. vars.
+  time_t t; struct tm* tmptr;  uint y,m,d, w,h, x; int k,a,z; L xx; double b; // temp. vars.
   struct timeb tb;
   static time_t t_start;       static int t_start_ms;
   static int    t_idle;        static int t_idle_ms;
   static time_t t_break_start; static int t_break_start_ms;
-  if( '0'<=c && c<='9' || 'A'<=c && c<='F' || strchr( "+-*/%^o._:()#", c ) ) __
+  if( '0'<=c && c<='9' || 'A'<=c && c<='F' || strchr( "+-*/%^o.:()#", c ) ) __
     s[n]=(char)c; if(n<mn) ++n; s[n]=0; _
   else if( c==32 || c==27 ) __ // space escape
     n=0; s[n]=0; _
@@ -55,14 +55,14 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
         if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
         n = m==0 ? sprintf( s, "%+d", tz_h ) : sprintf( s, "%+d%02u", tz_h, tz_m ); _
       else // 't'
-        n = sprintf( s, "%u", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec ); _
+        n = sprintf( s, "%u:%u:%u", tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec ); _
     else __
       if( c=='u' ) __ // unixtime
         // TODO if( strchr( s, '/' ) ) __ // YYYY/MM/DD or MM/DD + HH:MM:SS
         if( sscanf( s, "%llu", &xx )==1 && xx<0x100000000ull ) __ // NNNNNNNu
           time_t t1 = (time_t)xx;
           tmptr = localtime(&t1);
-          n = strftime( s, mn, "%Y/%m/%d %H:%M:%S %a", tmptr ); _ _
+          n = strftime( s, mn, "%Y/%m/%d.%H:%M:%S %a", tmptr ); _ _
       else if( c=='d' ) __ // NNNNNNd or YYYY/MM/DDd
         char diff[20] = "";
         if( strchr( s, '/' ) ) __ // YYYY/MM/DD or MM/DD
@@ -86,16 +86,22 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
             n2ymd( x, &y,&m,&d );
             if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
             n = sprintf( s, "%d/%d/%d %s%s", y,m,d, WD[n2wd(x)], diff ); _ _ _
-      else if( c=='t' ) __ // time
-        //if( strchr( s, ':' ) ) __ // D:H:M:S or H:M:S or M:S
-        // cvt time to seconds
-        int dif, new, dd, hh, mm, ss;
-        if( sscanf( s, "%d", &dif )==1 ) __ // [+-]N
-          new = tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec + dif;
-          ss = new%60; new /= 60;
-          mm = new%60; new /= 60;
-          hh = new%24; new /= 24;
-          n = sprintf( s, "%d:%d:%d:%d", new, hh, mm, ss ); _ _
+      else if( c=='t' ) __ // time conversions
+        const char* s_abs = (s[0]=='+' || s[0]=='-') ? s+1 : s;
+        const char* sign = (s[0]=='-') ? "-" : "";
+        k = sscanf( s_abs, "%u:%u:%u:%u", &d,&h,&m,&x );
+        if( k>1 ) __
+          if( k==2 ) { x=h; m=d; h=0; d=0; }        // M:S
+          else if( k==3 ) { x=m; m=h; h=d; d=0; }   // H:M:S
+          int secs = 86400*d + 3600*h + 60*m + x;   // D:H:M:S
+          n = sprintf( s, "%s%d", sign, secs ); _
+        else if( k==1 ) __ // just one number, seconds --> D:H:M:S
+          x = d%60; d /= 60;
+          m = d%60; d /= 60;
+          h = d%24; d /= 24;
+          if( d != 0 ) n = sprintf( s, "%s%u:%02u:%02u:%02u", sign, d, h, m, x );
+          else if( h != 0 ) n = sprintf( s, "%s%u:%02u:%02u", sign, h, m, x );
+          else n = sprintf( s, "%s%u:%02u", sign, m, x ); _ _
       else if( c=='y' ) // year day
         n = strftime( s, mn, "%j", tmptr );
       else if( c=='z' ) __ // timezone
