@@ -46,20 +46,26 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
     uint today = ymd2n( tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday );
     if( n==0 ) __ // current time in many forms
       if( c=='u' )
-        n = strftime( s, mn, "%s", tmptr );
+        n = strftime( s, mn, "%s", tmptr ); // %s -- unix seconds
       else if( c=='d' )
         n = strftime( s, mn, "%Y/%m/%d %a", tmptr );
       else if( c=='y' )
-        n = strftime( s, mn, "%j", tmptr );
+        n = strftime( s, mn, "%j", tmptr ); // yday
       else if( c=='z' ) __
         if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
-        n = m==0 ? sprintf( s, "%+d", tz_h ) : sprintf( s, "%+d%02u", tz_h, tz_m ); _
+        n = tz_m==0 ? sprintf( s, "%+d", tz_h ) : sprintf( s, "%+d%02u", tz_h, tz_m ); _
       else // 't'
-        n = sprintf( s, "%u:%u:%u", tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec ); _
+        n = sprintf( s, "%u:%02u:%02u", tmptr->tm_hour, tmptr->tm_min, tmptr->tm_sec ); _
     else __
       if( c=='u' ) __ // unixtime
-        // TODO if( strchr( s, '/' ) ) __ // YYYY/MM/DD or MM/DD + HH:MM:SS
-        if( sscanf( s, "%llu", &xx )==1 && xx<0x100000000ull ) __ // NNNNNNNu
+        if( sscanf( s, "%u/%u/%u.%u:%u:%u", &y,&m,&d, &h,&w,&x )==6 ) __ // YYYY/MM/DD.HH:MM:SS
+          if( 1970<=y && 1<=m && m<=12 && 1<=d && d<=31 && h<24 && w<60 && x<60 &&
+              (y<2106 || y==2106 && (m<2 || m==2 && d<=7)) ) __
+            tmptr->tm_year = y-1900; tmptr->tm_mon = m-1; tmptr->tm_mday = d;
+            tmptr->tm_hour = h; tmptr->tm_min = w; tmptr->tm_sec = x;
+            t = mktime( tmptr );
+            if( (int)t != -1 ) n = sprintf( s, "%u", (uint)t ); _ _
+        else if( sscanf( s, "%llu", &xx )==1 && xx<0x100000000ull ) __ // NNNNNNN
           time_t t1 = (time_t)xx;
           tmptr = localtime(&t1);
           n = strftime( s, mn, "%Y/%m/%d.%H:%M:%S %a", tmptr ); _ _
@@ -72,7 +78,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
           else if( k==2 && 1<=y && y<=12 && 1<=m && m<=31 ) // y is m, m is d
             x = ymd2n( tmptr->tm_year+1900, y, m );
           else
-            return n; // for now, the only return from inside
+            return n; // for now, the only return from inside . . . . . . . . . . . . . . .
           if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
           n = sprintf( s, "%u %s%s", x, WD[n2wd(x)], diff ); _
         else if( s[0]=='+' || s[0]=='-' ) __ int xd;
@@ -102,8 +108,19 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
           if( d != 0 ) n = sprintf( s, "%s%u:%02u:%02u:%02u", sign, d, h, m, x );
           else if( h != 0 ) n = sprintf( s, "%s%u:%02u:%02u", sign, h, m, x );
           else n = sprintf( s, "%s%u:%02u", sign, m, x ); _ _
-      else if( c=='y' ) // year day
-        n = strftime( s, mn, "%j", tmptr );
+      else if( c=='y' ) __ // year day -> M/D this year or Y/M/D --> yd
+        k = sscanf( s, "%u/%u/%u", &y, &m, &d );
+        if( k==3 ) __ // Y/M/D
+          n = sprintf( s, "%u/%u", y, ymd2n( y,m,d ) - ymd2n( y,1,1 ) + 1 ); _
+        else if( k==2 && (y<=12 && m<=31) ) __ // M/D current year
+          x = tmptr->tm_year+1900;
+          n = sprintf( s, "%u", ymd2n( x,y,m ) - ymd2n( x,1,1 ) + 1 ); _
+        else if( k==2 && (y>12 || m>31) ) __ // y/yday --> y/m/d
+          n2ymd( ymd2n( y,1,1 ) - 1 + m, &y,&m,&d );
+          n = sprintf( s, "%u/%u/%u", y, m, d ); _
+        else if( k==1 || k==2 && m>31 ) __ // yday (in y) --> m/d
+          n2ymd( ymd2n( tmptr->tm_year+1900,1,1 ) - 1 + y, &y,&m,&d );
+          n = sprintf( s, "%u/%u", m, d ); _ _
       else if( c=='z' ) __ // timezone
         if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
         //if( s is ALPHA ) s = replace( tz-dict[ s ] )

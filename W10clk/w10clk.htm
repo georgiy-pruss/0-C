@@ -5,8 +5,8 @@
 <body>
 <h2>Actions</h2>
 <pre>
-f1     show help
-?      show help
+f1     show help (this text)
+?      show help too
 h      show help (when display is clear)
 
 <span class=R>N</span>h     show number (integer part) in hexadcimal system
@@ -18,13 +18,18 @@ d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
 <span class=R>YMD</span>d   convert y/m/d to n wd [diff], e.g. 2016/11/13 --&gt; 736283 Sun
 
 u      current unix time (for local time)
-<span class=R>N</span>u     unix time to y/m/d.h:m:s wd (with the current tz!), in range 1970/1/1 to 2106/2/7
+<span class=R>N</span>u     unix time to y/m/d.h:m:s wd (with the current tz!), in range 0 to 2^32-1
+<span class=R>D.T</span>u   convert y/m/d.h:m:s local time (current tz!) to unix time, 1970/1/1 to 2106/2/7
 
 t      current time, H:M:S
 <span class=R>N</span>t     convert seconds to M:S or H:M:S or D:H:M:S (D - days)
 <span class=R>DHMS</span>t  convert D:H:M:S or H:M:S or M:S to seconds
 
 y      current year day number (1..366)
+<span class=R>N</span>y     convert year-day to m/d for the current year
+<span class=R>YN</span>y    convert year/year-day to y/m/d
+<span class=R>MD</span>y    convert m/d to year-day for the current year
+<span class=R>YMD</span>y   convert y/m/d to year/year-day
 
 z      current time zone as &plusmn;H or &plusmn;HMM, e.g. -8 or +545 (Nepal); tz can be -12..+14
 <span class=R>&plusmn;N</span>z    show current time in specified time zone (it must follow format &plusmn;H or &plusmn;HMM)
@@ -46,18 +51,18 @@ g      go on (continue working or whatever, end of break)
 c      show color dialog (just to have it easily accessible), if display is #..., then
        that rgb color is used; also on OK the color is pasted back in display
 
-=      calculate expression (see below how to enter them)
+=      calculate expression (see below how to enter it)
 enter  calculate expression
 </pre>
 <h2>Input</h2>
 <pre>
 0-9.   enter number, e.g. 42 or 3.14159265
-+-     can be used for numbers with sign, e.g. +10 (sometimes it's not the same as 10)
++-     can be used for numbers with sign, e.g. +10 or -555555
 :/     enter time and date, e.g. 3/11 or 2:00 or 2016/11/10.23:59:59 (notice dot)
 ABCDEF hexadecimal digits (uppercase!) for hex. numbers in expression, put # in front
 #      hexadecimal number indicator: #FF #DEADBEEF #100000000
 
-       binary and unary operations in math. expression (priority: ^ */%o +-)
+       <e>binary and unary operations in math. expression (priority: ^, */%o, +-)</u>
 +      +x  the same as x           x+y  sum
 -      -x  negate                  x-y  subtract
 *      *x  square, x*x             x*y  multiply
@@ -70,7 +75,7 @@ o      ox  multiply by pi          xoy  circle function (hello APL ;-))
            2ox cos    -2ox acos    20ox cosd    -20ox acosd
            3ox tan    -3ox atan    30ox tand    -30ox atand
 
-()     just usual grouping order of evaluation with ()
+()     just usual grouping order of evaluation: 1+2*3 is not (1+2)*3
 
 bksp   correct input (delete the character at the end of display)
 del    correct input (delete the character at the beginning)
@@ -97,7 +102,7 @@ You can also set up the program as a screensaver. Copy the executable to some ot
 with extension .scr, e.g. w10clkss.scr. Copy or create config file for it, it
 must be named after the scr file, in our case &mdash; w10clkss.ini. For example:</p>
 <pre>[window]
-xywh=0,0,100,100    ; doesn't matter actually, it will be fullscreen
+xywh=0,0,100,100    ; doesn't matter actually, it will be fullscreen anyway
 bg=0,0,0            ; good choice
 ticks=12,80,80,80   ; make ticks and hands thick
 shand=6,80,80,80
@@ -110,9 +115,8 @@ ontop=yes</pre>
 Then right-click on the scr file and choose Install. It will also start at once.
 Press 'q' to stop it. It has no usual config dialog, like other screensavers, all
 the setup is done in the ini file. Sorry for that, maybe some time I'll fix it...
-Anyway, it'll serve as a screensaver. To exit it, press 'q', no other ways work.
-Moreover, the screensaver clock functions with all its features &mdash;
-date, time, stopwatch, calculations, etc.
+Anyway, it'll serve as a screensaver. To exit it, press '<b>q</b>', no other ways work.
+Moreover, all of the clock functions work &mdash; date, time, stopwatch, calculations, etc.
 </p>
 <hr>
 <span style='font-size:90%'>Copyright &copy; Georgiy Pruss 2016</span>
