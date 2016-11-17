@@ -1,17 +1,22 @@
 <html>
 <head>
-<style>h2 {font-size:130%;} .R {color:blue;} body {margin-left:2em;}</style>
+<style>h1 {font-size:130%;background-color:#400080;color:white;padding:10px;}
+h2 {font-size:130%;} .R {color:blue;}
+.B {margin-left:1.5em;background-color:white;color:black;}
+body,html {margin:0;} </style>
 </head>
 <body>
+<h1>W10clk - windows clock and more - v.1.11</h1>
+<div class=B>
 <h2>Actions</h2>
 <pre>
 f1     show help (this text)
 ?      show help too
-h      show help (when display is clear)
+h      show help (only when display is clear, otherwise it's hexadecimal)
 
-<span class=R>N</span>h     show number (integer part) in hexadcimal system
+<span class=R>N</span>h     show number (integer part of it) in hexadcimal system
 
-d      get current date as y/m/d wd (wd - weekday, Mon to Sun)
+d      current date as y/m/d wd (wd - weekday, Mon to Sun)
 <span class=R>N</span>d     convert <a href="#ced">CED</a> as plain number to y/m/d wd diff, e.g. 730122 --&gt; 2000/1/1 Sat
 <span class=R>&plusmn;N</span>d    add or substract days from the current day, giving date in the future or past
 <span class=R>MD</span>d    convert m/d to n wd [diff], meaning the current year
@@ -88,14 +93,29 @@ esc    clear display
 <pre>
 <a name="ced"></a>
 <b>CED</b>    Common Era Day number -- number of a day, counting since January 1st, 1 AD,
-       that was day number 1, then January 2nd was day #2 and so on, using the Julian
-       calendar (years divisable by 4 are all leap), up till 1582/10/4 (CED 577737),
-       when the counting scheme switched to the Gregorian calendar and day 1582/10/15
-       (CED 577738) followed. Such enumeration was chosen to eliminate negative
-       numbers and to have somewhat natural scheme.
-       CED 730122 = Julian Day Number (JDN) 2451545 (the difference is 1721423)
+       that was day 1, then January 2nd was day 2 and so on, using the Julian calendar
+       (years divisable by 4 are all leap), up till 1582/10/4 (CED 577737), when the
+       counting scheme switched to the Gregorian calendar and day 1582/10/15 (CED 577738)
+       followed. Such enumeration was chosen to eliminate negative numbers and to have
+       somewhat natural scheme.
+       1858/11/16 Tue CED 678577 = Julian Day Number (JDN) 2400000 (the difference is 1721423)
 
 </pre>
+<h2>Installation</h2>
+<p>
+Extract files w10clk.exe, w10clk.htm and w10clk.ini from
+<a href="http://mas.orgfree.com/W10clk.zip">w10clk.zip</a> to some directory. For example, to
+C:\Program Files\W10clock. Also w10clk needs cygwin-64 run-time library, cygwin1.dll. If
+you don't have it in your computer, download that file too (from cygwin site or from
+<a href="http://mas.orgfree.com/cygwin1_dll.zip">this archive</a>) and put it together with
+other w10clk files. You can have several clock programs &mdash; in different directories or in
+the same directory with different names. The matter is that the exe file looks for its ini
+file using its name. So for example, you can have the main clock with the files named
+w10clk.* and screensaver with names w10clkss.*. Create a shortcut to the main program (drag-and-drop
+w10clk.exe to your desktop with the right button, choose 'create shortcut', move it to the
+start menu if you wish). You can make it to start automatically when Windows starts, using
+the registry or scheduler (more detail to follow). For setting up the screensaver, continue reading.
+</p>
 <h2>Screensaver</h2>
 <p>
 You can also set up the program as a screensaver. Copy the executable to some other file
@@ -118,8 +138,7 @@ the setup is done in the ini file. Sorry for that, maybe some time I'll fix it..
 Anyway, it'll serve as a screensaver. To exit it, press '<b>q</b>', no other ways work.
 Moreover, all of the clock functions work &mdash; date, time, stopwatch, calculations, etc.
 </p>
-<hr>
-<span style='font-size:90%'>Copyright &copy; Georgiy Pruss 2016</span>
+
 <!--
 TODO:
 
@@ -162,5 +181,9 @@ ctrls move window left/right/up/down/leftmost/rightmost/top/bottom
 // timer: HHMMt - set timer, 0t - reset timer (HHMM can be M, MM, HMM, HHMM)
 // timezone: z - tz info, HHw,HHe - time in another timezone (west, east)
 -->
+
+<hr>
+<p style='font-size:90%'>Copyright &copy; Georgiy Pruss 2016</p>
+</div> <!-- .B -->
 </body>
 </html>
