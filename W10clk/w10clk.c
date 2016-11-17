@@ -264,6 +264,20 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       if( ndisp!=0 ) __
         memmove( disp, disp+1, ndisp-- ); // including '\0'
         InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _ _
+    else if( pgmKind==K_EXE ) __ // change size/pos with arrows keys and Ctrl and Shift
+      RECT r; GetWindowRect( hwnd, &r );
+      #define SWP(x,y,cx,cy,f) SetWindowPos( hwnd, HWND_NOTOPMOST, x,y, cx,cy, f )
+      int a = GetAsyncKeyState( VK_SHIFT )==0 ? 1 : 10;
+      if( GetAsyncKeyState( VK_CONTROL )==0 ) __
+        if( wParam==VK_RIGHT ) SWP( r.left+a, r.top, 0, 0,   SWP_NOSIZE );
+        if( wParam==VK_DOWN )  SWP( r.left,   r.top+a, 0, 0, SWP_NOSIZE );
+        if( wParam==VK_LEFT )  SWP( r.left-a, r.top, 0, 0,   SWP_NOSIZE );
+        if( wParam==VK_UP )    SWP( r.left,   r.top-a, 0, 0, SWP_NOSIZE ); _
+      else __ // with Ctrl+
+        if( wParam==VK_RIGHT ) SWP( 0, 0, r.right-r.left+a, r.bottom-r.top,   SWP_NOMOVE );
+        if( wParam==VK_DOWN )  SWP( 0, 0, r.right-r.left,   r.bottom-r.top+a, SWP_NOMOVE );
+        if( wParam==VK_LEFT )  SWP( 0, 0, r.right-r.left-a, r.bottom-r.top,   SWP_NOMOVE );
+        if( wParam==VK_UP )    SWP( 0, 0, r.right-r.left,   r.bottom-r.top-a, SWP_NOMOVE ); _ _
     break;
   case WM_CHAR:
     if( wParam==22 ) __ // ctrl+v
