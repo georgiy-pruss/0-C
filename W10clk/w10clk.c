@@ -11,7 +11,7 @@
 #define PROGRAM_NAME "Windows 10 Clock"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
-"Version 1.12 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.13 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -292,6 +292,10 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _
     else if( wParam=='?' || wParam=='h' && ndisp==0 )
       show_help_file();
+    else if( wParam=='i' ) __
+      RECT r; GetWindowRect( hwnd, &r );
+      ndisp = sprintf( disp, "Pos: %d,%d Size: %d,%d", (int)r.left, (int)r.top,
+          (int)r.right-(int)r.left, (int)r.bottom-(int)r.top ); _
     else if( wParam=='c' && (ndisp==0 || ndisp!=0 && disp[0]=='#') ) __
       CHOOSECOLOR cc;
       static COLORREF acrCustClr[16]; // array of custom colors
