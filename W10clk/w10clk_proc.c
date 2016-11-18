@@ -135,9 +135,9 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
       else // 't'
         n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec ); _ _
   else if( c=='f' ) __ // F --> C
-    if( sscanf( s, "%lf", &b )==1 ) { b = (b-32.0)/1.8; n = sprintf( s, "%.1f", b ); } _
+    if( sscanf( s, "%lf", &b )==1 ) { b = (b-32.0)/1.8; n = sprintf( s, "%.1f%cC", b, 176 ); } _
   else if( c=='c' ) __ // C --> F
-    if( sscanf( s, "%lf", &b )==1 ) { b = b*1.8+32.0; n = sprintf( s, "%.1f", b ); } _
+    if( sscanf( s, "%lf", &b )==1 ) { b = b*1.8+32.0; n = sprintf( s, "%.1f%cF", b, 176 ); } _
   else if( c=='h' ) __ // help | decimal --> XXXX (hexadecimal)
     if( sscanf( s, "%llu", &xx )==1 ) n = sprintf( s, "#%llX", xx ); _
   else if( c=='=' || c==13 ) __ // = or enter -- calculate expression

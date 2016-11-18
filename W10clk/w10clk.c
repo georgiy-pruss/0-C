@@ -298,7 +298,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       show_help_file();
     else if( wParam=='i' || wParam=='r' ) __
       RECT r; GetWindowRect( hwnd, &r );
-      if( wParam=='r' ) __
+      if( wParam=='r' && pgmKind==K_EXE ) __ // no correction for screensaver
         r.right -= g_resizable ? g_corr_x : g_corrnr_x;
         r.bottom -= g_resizable ? g_corr_y : g_corrnr_y; _
       ndisp = sprintf( disp, "Pos: %d,%d Size: %d,%d", (int)r.left, (int)r.top,
