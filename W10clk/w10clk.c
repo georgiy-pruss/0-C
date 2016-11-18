@@ -98,6 +98,7 @@ RECT rcClient; // clock client area
 HBRUSH hbrBG;    // clock background
 HPEN hsPen, hmPen, hhPen, htPen;     // clock hands (1 pixel narrower than required)
 HPEN hsPen2, hmPen2, hhPen2, htPen2; // half-tone borders of clock hands
+int colorIncr = 1;
 
 COLORREF
 mix_colors( COLORREF c1, COLORREF c2 ) __
@@ -111,16 +112,25 @@ swap_colors( COLORREF c ) __
   return ((c&0xFF)<<16) | (c&0xFF00) | ((c&0xFF0000)>>16); _
 
 void
-init_tools() __
+init_tools(bool for_all) __
   hbrBG = CreateSolidBrush(g_bgcolor);
-  hsPen = CreatePen(PS_SOLID,max(g_shand_w-1,1),g_shand_rgb);
-  hmPen = CreatePen(PS_SOLID,max(g_mhand_w-1,1),g_mhand_rgb);
-  hhPen = CreatePen(PS_SOLID,max(g_hhand_w-1,1),g_hhand_rgb);
-  htPen = CreatePen(PS_SOLID,max(g_tick_w-1,1),g_tick_rgb);
+  if( for_all ) __
+    hsPen = CreatePen(PS_SOLID,max(g_shand_w-1,1),g_shand_rgb);
+    hmPen = CreatePen(PS_SOLID,max(g_mhand_w-1,1),g_mhand_rgb);
+    hhPen = CreatePen(PS_SOLID,max(g_hhand_w-1,1),g_hhand_rgb);
+    htPen = CreatePen(PS_SOLID,max(g_tick_w-1,1),g_tick_rgb); _
   hsPen2 = CreatePen(PS_SOLID,g_shand_w,mix_colors(g_bgcolor,g_shand_rgb));
   hmPen2 = CreatePen(PS_SOLID,g_mhand_w,mix_colors(g_bgcolor,g_mhand_rgb));
   hhPen2 = CreatePen(PS_SOLID,g_hhand_w,mix_colors(g_bgcolor,g_hhand_rgb));
   htPen2 = CreatePen(PS_SOLID,g_tick_w,mix_colors(g_bgcolor,g_tick_rgb)); _
+
+void
+kill_tools(bool for_all) __
+  DeleteObject(hbrBG);
+  if( for_all ) __
+    DeleteObject(hsPen); DeleteObject(hmPen), DeleteObject(hhPen), DeleteObject(htPen); _
+  DeleteObject(hsPen2); DeleteObject(hmPen2), DeleteObject(hhPen2), DeleteObject(htPen2);
+  _
 
 bool
 help_on_error_input() { return MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OKCANCEL )==IDOK; }
@@ -245,7 +255,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
   case WM_CREATE: // Window is being created, good time for init tasks
     if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 ) // tick every second
       MessageBox(hwnd, "Could not set timer!", "Error", MB_OK | MB_ICONEXCLAMATION);
-    init_tools();
+    init_tools(true);
     break;
   case WM_SIZE: // WM_PAINT will be sent as well
     GetClientRect(hwnd, &rcClient); // left = top = 0
@@ -294,15 +304,26 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     else if( wParam==19 ) __ // ctrl+s
       g_seconds = ! g_seconds;
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _
-    else if( wParam=='?' || wParam=='h' && ndisp==0 )
-      show_help_file();
-    else if( wParam=='i' || wParam=='r' ) __
-      RECT r; GetWindowRect( hwnd, &r );
-      if( wParam=='r' && pgmKind==K_EXE ) __ // no correction for screensaver
-        r.right -= g_resizable ? g_corr_x : g_corrnr_x;
-        r.bottom -= g_resizable ? g_corr_y : g_corrnr_y; _
-      ndisp = sprintf( disp, "Pos: %d,%d Size: %d,%d", (int)r.left, (int)r.top,
-          (int)r.right-(int)r.left, (int)r.bottom-(int)r.top ); _
+    else if( wParam==18 || wParam==7 || wParam==2 ) __ // ctrl+r ctrl+g ctrl+b
+      uint r = g_bgcolor & 0xFF, g = (g_bgcolor & 0xFF00) >> 8, b = (g_bgcolor & 0xFF0000) >> 16;
+      if( wParam==18 && ((colorIncr>0 && r<255) || (colorIncr<0 && r>0)) ) r += colorIncr;
+      else if( wParam==7 && ((colorIncr>0 && g<255) || (colorIncr<0 && g>0)) ) g += colorIncr;
+      else if( wParam==2 && ((colorIncr>0 && b<255) || (colorIncr<0 && b>0)) ) b += colorIncr;
+      g_bgcolor = r|(g<<8)|(b<<16);
+      kill_tools(false);
+      init_tools(false);
+      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), colorIncr>0 ? "^" : "v" ); _
+    else if( wParam==9 ) __ // ctrl+i
+      colorIncr = -colorIncr;
+      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), colorIncr>0 ? "^" : "v" ); _
+    else if( wParam=='k' ) __
+      if( ndisp!=0 && disp[0]=='#' ) __
+        uint rgb; int k = sscanf( disp+1, "%X", &rgb );
+        if( k==1 ) __
+          g_bgcolor = swap_colors(rgb);
+          kill_tools(false);
+          init_tools(false); _ _
+      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), colorIncr>0 ? "^" : "v" ); _
     else if( wParam=='c' && (ndisp==0 || ndisp!=0 && disp[0]=='#') ) __
       CHOOSECOLOR cc;
       static COLORREF acrCustClr[16]; // array of custom colors
@@ -310,10 +331,26 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       cc.hwndOwner = hwnd; cc.lpCustColors = (LPDWORD)acrCustClr;
       cc.Flags = CC_FULLOPEN | CC_RGBINIT; cc.rgbResult = (COLORREF)0;
       if( ndisp!=0 && disp[0]=='#' ) __
-        uint rgb; sscanf( disp+1, "%X", &rgb );
-        cc.rgbResult = swap_colors(rgb); _
+        uint rgb; int k = sscanf( disp+1, "%X", &rgb );
+        if( k==1 ) cc.rgbResult = swap_colors(rgb); _
       if( ChooseColor(&cc)==TRUE )
-        ndisp = sprintf( disp, "#%X", (uint)swap_colors(cc.rgbResult) ); _
+        ndisp = sprintf( disp, "#%06X", (uint)swap_colors(cc.rgbResult) ); _
+    else if( wParam=='?' || wParam=='h' && ndisp==0 )
+      show_help_file();
+    else if( wParam=='i' ) __
+      char msg[200];
+      if( pgmKind==K_SCR )
+        sprintf( msg, "Screensaver size: %d,%d", (int)rcClient.right, (int)rcClient.bottom );
+      else __
+        RECT r; GetWindowRect( hwnd, &r );
+        int w = (int)r.right-(int)r.left;
+        int h = (int)r.bottom-(int)r.top;
+        int w2 = w - (g_resizable ? g_corr_x : g_corrnr_x);
+        int h2 = h - (g_resizable ? g_corr_y : g_corrnr_y);
+        sprintf( msg, "Position: %d,%d\nRaw size: %d,%d\nCorrected size: %d,%d\n"
+          "Clockface size: %d,%d", (int)r.left, (int)r.top, w,h, w2,h2,
+          (int)rcClient.right, (int)rcClient.bottom ); _
+      MessageBox( hwnd, msg, "Window 10 clock -- dimensions", MB_OK ); _
     else if( wParam=='q' ) // quit
       PostMessage(hwnd,WM_CLOSE,0,0);
     else
@@ -325,8 +362,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     break;
   case WM_CLOSE: // Window is closing
     KillTimer(hwnd, ID_TIMER);
-    DeleteObject(hsPen);
-    DeleteObject(hmPen), DeleteObject(hhPen), DeleteObject(htPen);
+    kill_tools(true);
     PostQuitMessage(0);
   default:
     return DefWindowProc(hwnd,message,wParam,lParam); _
@@ -345,8 +381,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   windowClass.hIcon = LoadIcon(NULL, IDI_APPLICATION);
   windowClass.hIconSm = LoadIcon(NULL, IDI_APPLICATION);
   windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
-  windowClass.hbrBackground = CreateSolidBrush(g_bgcolor); // see also WM_ERASEBKGND
-  if( pgmKind==K_SCR ) windowClass.hbrBackground = GetStockObject(BLACK_BRUSH);
+  windowClass.hbrBackground = GetStockObject(BLACK_BRUSH);
   windowClass.lpszMenuName = NULL;
   windowClass.lpszClassName = pgmKind==K_SCR ? "WindowsScreenSaverClass" : "w10clk";
   // Register window class

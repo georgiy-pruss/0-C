@@ -1,7 +1,7 @@
 <html>
 <head>
 <style>h1 {font-size:130%;background-color:#400080;color:white;padding:10px;}
-h2 {font-size:130%;} .R {color:blue;}
+h2 {font-size:130%;} .R {color:blue;} .C {color:magenta;}
 .B {margin-left:1.5em;background-color:white;color:black;}
 body,html {margin:0;} </style>
 </head>
@@ -47,22 +47,30 @@ e      elapsed since start, also can show break time and work time
 b      break (don't count the following period, start the break)
 g      go on (continue working or whatever, end of break)
 
-^c     copy contents of display to clipboard
-^v     paste (append!) clipboard into display; the same as the right mouse button
+<span class=C>^</span>c     copy contents of display to clipboard (<span class=C>^</span> = Ctrl)
+<span class=C>^</span>v     paste (append!) clipboard into display; the same as the right mouse button
 
-^s     toggle showing second hand (option 'seconds' in ini file)
-^t     toggle showing time in window caption bar aka title (option 'intitle')
+<span class=C>^</span>s     toggle showing second hand (option 'seconds' in ini file)
+<span class=C>^</span>t     toggle showing time in window caption bar aka title (option 'intitle')
 
-c      show color dialog (just to have it easily accessible), if display is #..., then
-       that rgb color is used; also on OK the color is pasted back in display
+c      show color dialog (just to have it easily accessible); on OK in the dialog,
+       the choosen color is pasted back into display, on Cancel nothing happens
+<span class=R>N</span>c     if display is #rrggbb, then that color is used to start the color dialog
+k      put the current background color into display field as #rrggbb
+<span class=R>N</span>k     use current display value #rrggbb for background (try k c OK k ;))
+
+<span class=C>^</span>r<span class=C>^</span>g<span class=C>^</span>b change background color component up or down; change direction with <span class=C>^</span>i
+<span class=C>^</span>i     invert direction of color component change
 
 &larr;&rarr;&uarr;&darr;   move window left/right/up/down; hold Shift to move faster
-^&larr;&rarr;&uarr;&darr;  change size of the window; again, hold Shift to change more
+<span class=C>^</span>&larr;&rarr;&uarr;&darr;  change size of the window; again, hold Shift to change more
 
-i      info: show window position and size, at least what Windows thinks about it: for
-       example, my Windows 10 adds 16,8 for resizable window, and 6,3 for "non-resizable"
-r      like i (imaginable), but shows corrected window size (real); you can set your own
-       correction data with this option in .ini: corr=xr,yr,xnr,ynr (mine is 16,8,6,3)
+i      info: show window position and size; note that Windows adds some values to real
+       sizes, e.g. my Windows-10 adds 16,8 for resizable window, and 6,3 for
+       "non-resizable"; you can set up your own correction data with this option in
+       the ini file: corr=xr,yr,xnr,ynr (so, mine would be 16,8,6,3)
+
+q      quit the program; btw it's the only way to exit W10clk screensaver
 
 =      calculate expression (see below how to enter it)
 enter  calculate expression too
@@ -143,18 +151,20 @@ ontop=yes</pre>
 Then right-click on the scr file and choose Install. It will also start at once.
 Press 'q' to stop it. It has no usual config dialog, like other screensavers, all
 the setup is done in the ini file. Sorry for that, maybe some time I'll fix it...
-Anyway, it'll serve as a screensaver. To exit it, press '<b>q</b>', no other ways work.
+Anyway, it'll serve as a screensaver. To exit it, press 'q', no other ways work.
 Moreover, all of the clock functions work there in the screen saving mode &mdash;
 date and time conversions, stopwatch, calculations, etc.
 </p>
 
-<!--
+<!--                        a j lmn p r vwx
 TODO:
 
 time in exprssions!
 
 V:expr assign to variable; v - use variable (not saved between sessions!)
        e.g. P:o1, then R:30; then 2*P*R hm, maybe add there ';' - e1;e2;e3
+
+timer: HHMMt - set timer, 0t - reset timer (HHMM can be M, MM, HMM, HHMM) - no
 
 a      show alarm
 +a -a  turn on/off
@@ -185,8 +195,6 @@ x     exchange 1st argument and display
 ;     sequence of exprs
 l     lap time (time since start or last lap time)
 
-// timer: HHMMt - set timer, 0t - reset timer (HHMM can be M, MM, HMM, HHMM)
-// timezone: z - tz info, HHw,HHe - time in another timezone (west, east)
 -->
 
 <hr>
