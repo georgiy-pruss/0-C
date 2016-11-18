@@ -15,6 +15,7 @@ Now it includes:
 * celsius/whatever awkward temperature scale that starts at 32
 * copy/paste with clipboard
 * color choice dialog always available for your convenience
+* change background color with that dialog or with keys
 * move window, resize window with arrows
 * show window size, i.e. it can serve as a tape measure
 * clock screensaver
@@ -23,4 +24,4 @@ It will include:
 * alarms
 * reminders
 * birthdays/anniversaries
-* ufff maybe it's enough :)
+* ufff maybe that's enough :)
