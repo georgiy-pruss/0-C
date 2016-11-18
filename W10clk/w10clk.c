@@ -11,7 +11,7 @@
 #define PROGRAM_NAME "Windows 10 Clock"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file w10clk.ini\n\n" \
-"Version 1.13 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.14 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -39,6 +39,7 @@ int g_mhand_w; COLORREF g_mhand_rgb;
 int g_hhand_w; COLORREF g_hhand_rgb;
 int g_t_len, g_sh_len, g_mh_len, g_hh_len;
 int g_disp_x, g_disp_y; // display position, percents
+int g_corr_x, g_corr_y, g_corrnr_x, g_corrnr_y; // correction, also for non-resizable
 char g_timefmt[100];    // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
@@ -81,6 +82,9 @@ read_ini() __ // all parameter names and default values are here!
   READINI("disp","20,40");
   if( rc>2 && sscanf( s,"%d,%d", &x,&y )==2 ) { BND(x,0,99); BND(y,0,99);
     g_disp_x = x; g_disp_y = y; }
+  READINI("corr","16,8,6,3");
+  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 )
+    { g_corr_x = x; g_corr_y = y; g_corrnr_x = w; g_corrnr_y = h; }
   READINI("seconds","no");          if( rc>1 ) g_seconds = STRIEQ(s,"yes");
   READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
@@ -292,8 +296,11 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _
     else if( wParam=='?' || wParam=='h' && ndisp==0 )
       show_help_file();
-    else if( wParam=='i' ) __
+    else if( wParam=='i' || wParam=='r' ) __
       RECT r; GetWindowRect( hwnd, &r );
+      if( wParam=='r' ) __
+        r.right -= g_resizable ? g_corr_x : g_corrnr_x;
+        r.bottom -= g_resizable ? g_corr_y : g_corrnr_y; _
       ndisp = sprintf( disp, "Pos: %d,%d Size: %d,%d", (int)r.left, (int)r.top,
           (int)r.right-(int)r.left, (int)r.bottom-(int)r.top ); _
     else if( wParam=='c' && (ndisp==0 || ndisp!=0 && disp[0]=='#') ) __
