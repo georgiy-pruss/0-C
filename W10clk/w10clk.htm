@@ -22,10 +22,6 @@ d      current date as y/m/d wd (wd - weekday, Mon to Sun)
 <span class=R>MD</span>d    convert m/d to n wd [diff], meaning the current year
 <span class=R>YMD</span>d   convert y/m/d to n wd [diff], e.g. 2016/11/13 --&gt; 736283 Sun
 
-u      current unix time (for local time)
-<span class=R>N</span>u     unix time to y/m/d.h:m:s wd (with the current tz!), in range 0 to 2^32-1
-<span class=R>D.T</span>u   convert y/m/d.h:m:s local time (current tz!) to unix time, 1970/1/1 to 2106/2/7
-
 t      current time, H:M:S
 <span class=R>N</span>t     convert seconds to M:S or H:M:S or D:H:M:S (D - days)
 <span class=R>DHMS</span>t  convert D:H:M:S or H:M:S or M:S to seconds
@@ -35,6 +31,10 @@ y      current year day number (1..366)
 <span class=R>YN</span>y    convert year/year-day to y/m/d, e.g. 2016/60 --&gt; 2016/2/29
 <span class=R>MD</span>y    convert m/d to year-day for the current year, e.g. 2/1 --&gt; 32
 <span class=R>YMD</span>y   convert y/m/d to year/year-day, e.g. 1900/12/31 --&gt; 1900/365 (not leap!)
+
+u      current unix time (for local time)
+<span class=R>N</span>u     unix time to y/m/d.h:m:s wd (with the current tz!), in range 0 to 2^32-1
+<span class=R>D.T</span>u   convert y/m/d.h:m:s local time (current tz!) to unix time, 1970/1/1 to 2106/2/7
 
 z      current time zone as &plusmn;H or &plusmn;HMM, e.g. -8 or +545 (Nepal); tz can be -12..+14
 <span class=R>&plusmn;N</span>z    show current time in specified time zone (tz must follow format &plusmn;H or &plusmn;HMM)
@@ -53,8 +53,7 @@ g      go on (continue working or whatever, end of break)
 <span class=C>^</span>s     toggle showing second hand (option 'seconds' in ini file)
 <span class=C>^</span>t     toggle showing time in window caption bar aka title (option 'intitle')
 
-c      show color dialog (just to have it easily accessible); on OK in the dialog,
-       the choosen color is pasted back into display, on Cancel nothing happens
+c      show color dialog; there press OK to paste color code back into display
 <span class=R>N</span>c     if display is #rrggbb, then that color is used to start the color dialog
 k      put the current background color into display field as #rrggbb
 <span class=R>N</span>k     use current display value #rrggbb for background (try k c OK k ;))
