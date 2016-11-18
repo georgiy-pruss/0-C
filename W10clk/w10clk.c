@@ -98,7 +98,7 @@ RECT rcClient; // clock client area
 HBRUSH hbrBG;    // clock background
 HPEN hsPen, hmPen, hhPen, htPen;     // clock hands (1 pixel narrower than required)
 HPEN hsPen2, hmPen2, hhPen2, htPen2; // half-tone borders of clock hands
-int colorIncr = 1;
+int clrIncr = 1;
 
 COLORREF
 mix_colors( COLORREF c1, COLORREF c2 ) __
@@ -129,8 +129,7 @@ kill_tools(bool for_all) __
   DeleteObject(hbrBG);
   if( for_all ) __
     DeleteObject(hsPen); DeleteObject(hmPen), DeleteObject(hhPen), DeleteObject(htPen); _
-  DeleteObject(hsPen2); DeleteObject(hmPen2), DeleteObject(hhPen2), DeleteObject(htPen2);
-  _
+  DeleteObject(hsPen2); DeleteObject(hmPen2), DeleteObject(hhPen2), DeleteObject(htPen2); _
 
 bool
 help_on_error_input() { return MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OKCANCEL )==IDOK; }
@@ -306,16 +305,16 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _
     else if( wParam==18 || wParam==7 || wParam==2 ) __ // ctrl+r ctrl+g ctrl+b
       uint r = g_bgcolor & 0xFF, g = (g_bgcolor & 0xFF00) >> 8, b = (g_bgcolor & 0xFF0000) >> 16;
-      if( wParam==18 && ((colorIncr>0 && r<255) || (colorIncr<0 && r>0)) ) r += colorIncr;
-      else if( wParam==7 && ((colorIncr>0 && g<255) || (colorIncr<0 && g>0)) ) g += colorIncr;
-      else if( wParam==2 && ((colorIncr>0 && b<255) || (colorIncr<0 && b>0)) ) b += colorIncr;
+      if( wParam==18 && ((clrIncr>0 && r<255) || (clrIncr<0 && r>0)) ) r += clrIncr;
+      else if( wParam==7 && ((clrIncr>0 && g<255) || (clrIncr<0 && g>0)) ) g += clrIncr;
+      else if( wParam==2 && ((clrIncr>0 && b<255) || (clrIncr<0 && b>0)) ) b += clrIncr;
       g_bgcolor = r|(g<<8)|(b<<16);
       kill_tools(false);
       init_tools(false);
-      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), colorIncr>0 ? "^" : "v" ); _
+      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), clrIncr>0 ? "^" : "v" ); _
     else if( wParam==9 ) __ // ctrl+i
-      colorIncr = -colorIncr;
-      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), colorIncr>0 ? "^" : "v" ); _
+      clrIncr = -clrIncr;
+      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), clrIncr>0 ? "^" : "v" ); _
     else if( wParam=='k' ) __
       if( ndisp!=0 && disp[0]=='#' ) __
         uint rgb; int k = sscanf( disp+1, "%X", &rgb );
@@ -323,7 +322,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
           g_bgcolor = swap_colors(rgb);
           kill_tools(false);
           init_tools(false); _ _
-      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), colorIncr>0 ? "^" : "v" ); _
+      ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), clrIncr>0 ? "^" : "v" ); _
     else if( wParam=='c' && (ndisp==0 || ndisp!=0 && disp[0]=='#') ) __
       CHOOSECOLOR cc;
       static COLORREF acrCustClr[16]; // array of custom colors
