@@ -13,7 +13,7 @@
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.17 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.18 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -44,7 +44,7 @@ int g_hhand_w; COLORREF g_hhand_rgb;
 int g_t_len, g_sh_len, g_mh_len, g_hh_len;
 int g_disp_x, g_disp_y; // display position, percents
 int g_corr_x, g_corr_y, g_corrnr_x, g_corrnr_y; // correction, also for non-resizable
-bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
+bool g_seconds,g_upd_title, g_resizable, g_ontop, g_circle; // flags
 char* g_timefmt = NULL;    // strftime format of time in title
 char* g_tzlist = NULL;
 
@@ -111,6 +111,7 @@ read_ini_file( const char* fname, const char* divname ) __
   READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
+  READINI("circle","no");           if( rc>1 ) g_circle = STRIEQ(s,"yes");
   READINI("timefmt","%T %a %m/%d"); if( rc>1 ) g_timefmt = strdup( s );
   READINI("tz","Z +0");
   if( rc>2 ) __
@@ -179,6 +180,17 @@ double cosd(double x) { return cos(x*M_PI/180); }
 void
 draw_clock(HDC hdc,int halfw, int halfh) __
   if( g_tick_w == 0 ) return;
+  if( g_circle ) __
+    //HBRUSH hbrBG2 = CreateSolidBrush(mix_colors(g_bgcolor,0));
+    //SelectObject(hdc, hbrBG2);
+    //Ellipse(hdc, 0,0, rcClient.right, rcClient.bottom);
+    //if( rcClient.bottom>=2 && rcClient.bottom>=2 ) __
+    SelectObject(hdc, hbrBG);
+    //  Ellipse(hdc, 1,1, rcClient.right-1, rcClient.bottom-1); _
+    Ellipse(hdc, 0,0, rcClient.right, rcClient.bottom); _
+  else __ // rectangular
+    SetBkMode(hdc, OPAQUE);
+    FillRect(hdc, &rcClient, hbrBG); _ // need to clean old hands, sorry
   int r = min(halfw,halfh); // radius
   for( int i=0; i<12; ++i ) __
     int start_x = halfw + (int)( r * (96-g_t_len) / 100.0 * cosd(30*i) + 0.5 );
@@ -244,8 +256,6 @@ redraw_window(HWND hwnd) __
   struct tm* tmptr = localtime(&t); if( !tmptr ) return;
   PAINTSTRUCT paintStruct;
   HDC hDC = BeginPaint(hwnd,&paintStruct);
-    SetBkMode(hDC, OPAQUE);
-    FillRect(hDC, &rcClient, hbrBG); // need to clean old hands, sorry
     draw_clock( hDC, rcClient.right/2, rcClient.bottom/2 );
     update_clock( hDC, rcClient.right/2, rcClient.bottom/2, tmptr );
     if( ndisp!=0 ) TextOut(hDC,rcClient.right*g_disp_x/100,rcClient.bottom*g_disp_y/100,disp,ndisp);
