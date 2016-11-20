@@ -131,6 +131,7 @@ RECT rcClient; // clock client area
 HBRUSH hbrBG;    // clock background
 HPEN hsPen, hmPen, hhPen, htPen;     // clock hands (1 pixel narrower than required)
 HPEN hsPen2, hmPen2, hhPen2, htPen2; // half-tone borders of clock hands
+HPEN hbgPen, hbgPen2;
 int clrIncr = 1;
 
 COLORREF
@@ -147,6 +148,8 @@ swap_colors( COLORREF c ) __
 void
 init_tools(bool for_all) __
   hbrBG = CreateSolidBrush(g_bgcolor);
+  hbgPen = CreatePen(PS_SOLID,1,g_bgcolor);
+  hbgPen2 = CreatePen(PS_SOLID,1,mix_colors(g_bgcolor,0));
   if( for_all ) __
     hsPen = CreatePen(PS_SOLID,max(g_shand_w-1,1),g_shand_rgb);
     hmPen = CreatePen(PS_SOLID,max(g_mhand_w-1,1),g_mhand_rgb);
@@ -174,6 +177,66 @@ show_help_file() __
   for( char* p=hfn; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
   ShellExecute(NULL, "open", hfn, NULL, NULL, SW_SHOWNORMAL); _
 
+/*
+
+BOOL StretchBlt(
+  _In_ HDC   hdcDest,
+  _In_ int   nXOriginDest,
+  _In_ int   nYOriginDest,
+  _In_ int   nWidthDest,
+  _In_ int   nHeightDest,
+  _In_ HDC   hdcSrc,
+  _In_ int   nXOriginSrc,
+  _In_ int   nYOriginSrc,
+  _In_ int   nWidthSrc,
+  _In_ int   nHeightSrc,
+  _In_ DWORD dwRop
+);
+
+BOOL DrawBitmap (HDC hDC, INT x, INT y, INT width, INT height, HBITMAP hBitmap, DWORD dwROP)
+{
+    HDC       hDCBits;
+    BITMAP    Bitmap;
+    BOOL      bResult;
+
+    if (!hDC || !hBitmap)
+        return FALSE;
+
+    hDCBits = CreateCompatibleDC(hDC);
+    GetObject(hBitmap, sizeof(BITMAP), (LPSTR)&Bitmap);
+    SelectObject(hDCBits, hBitmap);
+    // Replace with StretchBlt call
+    //bResult = BitBlt(hDC, x, y, Bitmap.bmWidth, Bitmap.bmHeight, hDCBits, 0, 0, dwROP);
+    bResult = StretchBlt(hDC, x, y, width, height,
+                         hDCBits, 0, 0, Bitmap.bmWidth, Bitmap.bmHeight, dwROP);
+    DeleteDC(hDCBits);
+
+    return bResult;
+}
+
+You can call this from your WM_PAINT message handler, for example:
+
+case WM_PAINT:
+{
+    PAINTSTRUCT ps = { 0 };
+    HDC hDC = ::BeginPaint( hWnd, &ps );
+    RECT rc = { 0 };
+    ::GetClientRect( hWnd, &rc );
+    DrawBitmap( hDC, 0, 0, rc.right, rc.bottom, hBitmap, SRCCOPY );
+    ::EndPaint( hWnd, &ps );
+}
+break;
+
+https://msdn.microsoft.com/en-us/library/dd162950.aspx
+https://msdn.microsoft.com/en-us/library/windows/desktop/dd162950(v=vs.85).aspx
+
+also http://www.winprog.org/tutorial/bitmaps.html
+
+http://www.winprog.org/tutorial/animation.html hdc buffer, double buffering etc
+
+*/
+
+
 double sind(double x) { return sin(x*M_PI/180); }
 double cosd(double x) { return cos(x*M_PI/180); }
 
@@ -181,13 +244,11 @@ void
 draw_clock(HDC hdc,int halfw, int halfh) __
   if( g_tick_w == 0 ) return;
   if( g_circle ) __
-    //HBRUSH hbrBG2 = CreateSolidBrush(mix_colors(g_bgcolor,0));
-    //SelectObject(hdc, hbrBG2);
-    //Ellipse(hdc, 0,0, rcClient.right, rcClient.bottom);
-    //if( rcClient.bottom>=2 && rcClient.bottom>=2 ) __
     SelectObject(hdc, hbrBG);
-    //  Ellipse(hdc, 1,1, rcClient.right-1, rcClient.bottom-1); _
-    Ellipse(hdc, 0,0, rcClient.right, rcClient.bottom); _
+    SelectObject(hdc, hbgPen2);
+    Ellipse(hdc, 0,0, rcClient.right, rcClient.bottom);
+    SelectObject(hdc, hbgPen);
+    Ellipse(hdc, 1,1, rcClient.right-1, rcClient.bottom-1); _
   else __ // rectangular
     SetBkMode(hdc, OPAQUE);
     FillRect(hdc, &rcClient, hbrBG); _ // need to clean old hands, sorry
