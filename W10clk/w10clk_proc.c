@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <time.h>
 #include <sys/timeb.h>
 #include <unistd.h>
@@ -14,6 +15,8 @@ typedef int bool;
 extern bool g_seconds; // show second hand
 extern bool help_on_error_input(); // true if OK pressed
 extern uint calculate( char* src, double* res ); // returns 0 if ok
+extern char* g_tzlist;
+extern void strcpyupr( char* dst, const char* src );
 
 extern uint ymd2n( uint y, uint m, uint d );
 extern void n2ymd( uint n, /* OUT */ uint* y, uint* m, uint* d );
@@ -32,7 +35,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
   static time_t t_start;       static int t_start_ms;
   static int    t_idle;        static int t_idle_ms;
   static time_t t_break_start; static int t_break_start_ms;
-  if( '0'<=c && c<='9' || 'A'<=c && c<='F' || strchr( "+-*/%^o.:()#", c ) ) __
+  if( '0'<=c && c<='9' || 'A'<=c && c<='Z' || strchr( "+-*/%^o.:()#", c ) ) __
     s[n]=(char)c; if(n<mn) ++n; s[n]=0; _
   else if( c==32 || c==27 ) __ // space escape
     n=0; s[n]=0; _
@@ -123,17 +126,22 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
           n = sprintf( s, "%u/%u", m, d ); _ _
       else if( c=='z' ) __ // timezone
         if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
-        //if( s is ALPHA ) s = replace( tz-dict[ s ] )
-        if( s[0]=='+' || s[0]=='-' ) __
-          k = sscanf( s+1, "%d", &h ); // skip sign
+        if( 'A'<=s[0] && s[0]<='Z' ) __
+          char* tzn = malloc( n+3 );
+          tzn[0] = ' '; strcpyupr( tzn+1, s ); tzn[n+1] = ' '; tzn[n+2]='\0'; // " TZN "
+          char* pos = strstr( g_tzlist, tzn ); int tzv;
+          if( pos && sscanf( pos+n+1, "%d", &tzv )==1 ) n = sprintf( s, "%d", tzv );
+          free( tzn ); _
+        if( s[0]=='+' || s[0]=='-' || '0'<=s[0] && s[0]<='9' ) __ // number N +N -N
+          k = sscanf( s, "%d", &z ); h = (uint)(z>=0 ? z : -z);
           if( k==1 ) __
             if( h<15 ) m=0; else m=h%100, h=h/100; // split into h,m
-            int seconds = 3600*h + 60*m; if( s[0]=='-' ) seconds = -seconds;
+            int seconds = 3600*h + 60*m; if( z<0 ) seconds = -seconds;
             time_t new_t = t - 60*tz_offset + seconds;
             tmptr = localtime(&new_t);
             n = strftime( s, mn, "%H:%M:%S %a %m/%d", tmptr ); _ _ _
-      else // 't'
-        n = sprintf( s, "%d", tmptr->tm_hour*3600 + tmptr->tm_min*60 + tmptr->tm_sec ); _ _
+      else
+        n = sprintf( s, "huh?" ); _ _
   else if( c=='f' ) __ // F --> C
     if( sscanf( s, "%lf", &b )==1 ) { b = (b-32.0)/1.8; n = sprintf( s, "%.1f%cC", b, 176 ); } _
   else if( c=='c' ) __ // C --> F

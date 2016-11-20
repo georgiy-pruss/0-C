@@ -5,7 +5,7 @@
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO alarms; reminders; named timezones; birthdays; time in expressions
+// TODO alarms; reminders; birthdays; time in expressions
 // TODO hourly chime; allow also colors in ini as #rrggbb
 // TODO draw circle? round window?
 
@@ -13,7 +13,7 @@
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.16 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.17 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -30,6 +30,7 @@ typedef int bool;
 #define false 0
 #define true 1
 #define STRIEQ(s,t) (strcasecmp(s,t)==0) // may need to change for MSVC etc
+void strcpyupr( char* d, const char* s ) { if( s && d ) while( *s ) *d++ = toupper( *s++ ); }
 extern uint process_char( uint c, char* s, uint max_len, uint n ); // w10clk_procchar.c
 
 // Parameters; all defaults are in read_int()
@@ -43,12 +44,18 @@ int g_hhand_w; COLORREF g_hhand_rgb;
 int g_t_len, g_sh_len, g_mh_len, g_hh_len;
 int g_disp_x, g_disp_y; // display position, percents
 int g_corr_x, g_corr_y, g_corrnr_x, g_corrnr_y; // correction, also for non-resizable
-char g_timefmt[100];    // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
+char* g_timefmt = NULL;    // strftime format of time in title
+char* g_tzlist = NULL;
 
 enum ProgramKind { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
 char* pgmName = NULL; // short name of executable w/o extension
 char* pgmPath = NULL; // full path to the program, with ending backslash
+
+void
+cleanup() __
+  #define FREE(x) if(x) { free(x); x=NULL; }
+  FREE( g_timefmt ); FREE( g_tzlist ); FREE( pgmName ); FREE( pgmPath ); _
 
 bool
 get_pgm_name() __ // set pgmKind pgmName pgmPath
@@ -69,8 +76,7 @@ get_pgm_name() __ // set pgmKind pgmName pgmPath
 bool
 read_ini_file( const char* fname, const char* divname ) __
   char p_n_e[MAX_PATH]; strcpy(p_n_e,pgmPath); strcat(p_n_e,fname); strcat(p_n_e,".ini");
-  if( access(p_n_e, F_OK)!=0 ) return false;
-  char s[100] = ""; DWORD rc; int x,y,w,h,r,g,b;
+  char s[500] = ""; DWORD rc; int x,y,w,h,r,g,b;
   #define READINI(nm,def) rc = GetPrivateProfileString( divname, nm, def, s, sizeof(s), p_n_e)
   #define BND(x,f,t) if(x<f)x=f;if(x>t)x=t
   READINI("xywh","5,0,200,200");
@@ -105,15 +111,18 @@ read_ini_file( const char* fname, const char* divname ) __
   READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
-  READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) strcpy( g_timefmt, s );
-  return true; _
+  READINI("timefmt","%T %a %m/%d"); if( rc>1 ) g_timefmt = strdup( s );
+  READINI("tz","Z +0");
+  if( rc>2 ) __
+    g_tzlist = (char*)malloc( rc+2 ); g_tzlist[0]=' '; strcpyupr( g_tzlist+1, s ); _
+  return access(p_n_e, F_OK)==0; _
 
 bool
 read_ini() __ // all parameter names and default values are here!
   if( ! get_pgm_name() ) return false; // sets pgmName pgmPath pgmKind
   if( read_ini_file( pgmName, pgmName ) ) return true;
-  if( read_ini_file( PGM_NAME, pgmName ) ) return true;
-  return false; _
+  read_ini_file( PGM_NAME, pgmName ); // if not exist, set default values
+  return true; _
 
 // Const (all upper-case) and global state vars (camel-style names)
 const int ID_TIMER = 1;
@@ -384,6 +393,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
   case WM_CLOSE: // Window is closing
     KillTimer(hwnd, ID_TIMER);
     kill_tools(true);
+    cleanup();
     PostQuitMessage(0);
   default:
     return DefWindowProc(hwnd,message,wParam,lParam); _
