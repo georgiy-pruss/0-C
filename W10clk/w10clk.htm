@@ -6,7 +6,7 @@ h2 {font-size:130%;} .R {color:blue;} .C {color:magenta;}
 body,html {margin:0;} </style>
 </head>
 <body>
-<h1>W10clk - windows clock and more - v.1.15</h1>
+<h1>W10clk - windows clock and more - v.1.16</h1>
 <div class=B>
 <h2>Actions</h2>
 <pre>
@@ -153,6 +153,19 @@ the setup is done in the ini file. Sorry for that, maybe some time I'll fix it..
 Anyway, it'll serve as a screensaver. To exit it, press 'q', no other ways work.
 Moreover, all of the clock functions work there in the screen saving mode &mdash;
 date and time conversions, stopwatch, calculations, etc.
+</p>
+<h2>Configuration</h2>
+<p>
+The program reads all its settings from config files. First it tries to read file with the
+same name as the program has, plus extension '.ini'. That is, if you rename the program to
+w10myclk.exe, it will read from file w10myclk.ini. And the settings section must have the
+same name, that is [w10myclk] (the letter case of file names and names inside the ini files
+doesn't matter). If the program can't find such file, it looks for file with name w10clk.ini.
+So you can have different setting for different programs in one or several files. If the
+ini file or suitable section inside it is not found, all the settings will have defaults.
+</p>
+<p>
+The help file is the only one in its name is w10clk.htm.
 </p>
 
 <!--                        a j lmn p r vwx

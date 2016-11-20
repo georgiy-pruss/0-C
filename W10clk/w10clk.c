@@ -6,18 +6,21 @@
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
 // TODO alarms; reminders; named timezones; birthdays; time in expressions
+// TODO hourly chime; allow also colors in ini as #rrggbb
 // TODO draw circle? round window?
 
 #define PROGRAM_NAME "Windows 10 Clock"
+#define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
-"Configure the clock appearance in file w10clk.ini\n\n" \
-"Version 1.15 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
+"Version 1.16 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
 #include <stdio.h>
 #include <time.h>
 #include <math.h> // M_PI sin cos
+#include <unistd.h> // access
 #include <windows.h>
 #include <commdlg.h> // ChooseColor CHOOSECOLOR
 #include <shellapi.h> // ShellExecute
@@ -43,19 +46,32 @@ int g_corr_x, g_corr_y, g_corrnr_x, g_corrnr_y; // correction, also for non-resi
 char g_timefmt[100];    // strftime format of time in title
 bool g_seconds,g_upd_title, g_resizable, g_ontop; // flags
 
-char pgmFileName[540]; // last 4 chars originally .exe or .scr; can be changed to .ini
 enum ProgramKind { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
+char* pgmName = NULL; // short name of executable w/o extension
+char* pgmPath = NULL; // full path to the program, with ending backslash
 
 bool
-read_ini() __ // all parameter names and default values are here!
-  int n = GetModuleFileName( NULL, pgmFileName, sizeof(pgmFileName) );
+get_pgm_name() __ // set pgmKind pgmName pgmPath
+  char pgm[MAX_PATH];
+  int n = GetModuleFileName( NULL, pgm, sizeof(pgm) );
   if( n <= 0 ) return false;
-  if( STRIEQ(pgmFileName+n-4,".exe") ) pgmKind=K_EXE; // normal executable
-  else if( STRIEQ(pgmFileName+n-4,".scr") ) pgmKind=K_SCR; // screensaver
-  if( pgmKind==K_ERR ) return false;
-  strcpy(pgmFileName+n-3,"ini");
+  if( STRIEQ(pgm+n-4,".exe") ) pgmKind=K_EXE; // normal executable
+  else if( STRIEQ(pgm+n-4,".scr") ) pgmKind=K_SCR; // screensaver
+  else return false; // could not tell, pgmKind==K_ERR
+  char* bkslash = strrchr( pgm, '\\' );
+  if( bkslash==NULL ) return false; // strange case - no path, let's give up
+  bkslash[ strlen(bkslash) - 4 ] = '\0'; // only name w/o extension
+  pgmName = strdup( bkslash+1 );
+  bkslash[ 1 ] = '\0'; // only path and backslash
+  pgmPath = strdup( pgm );
+  return true; _
+
+bool
+read_ini_file( const char* fname, const char* divname ) __
+  char p_n_e[MAX_PATH]; strcpy(p_n_e,pgmPath); strcat(p_n_e,fname); strcat(p_n_e,".ini");
+  if( access(p_n_e, F_OK)!=0 ) return false;
   char s[100] = ""; DWORD rc; int x,y,w,h,r,g,b;
-  #define READINI(nm,def) rc = GetPrivateProfileString( "window", nm, def, s, sizeof(s), pgmFileName)
+  #define READINI(nm,def) rc = GetPrivateProfileString( divname, nm, def, s, sizeof(s), p_n_e)
   #define BND(x,f,t) if(x<f)x=f;if(x>t)x=t
   READINI("xywh","5,0,200,200");
   if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 ) { g_init_x = x; g_init_y = y;
@@ -91,6 +107,13 @@ read_ini() __ // all parameter names and default values are here!
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
   READINI("timefmt","%T %a %m/%d"); if( rc>1 && rc<sizeof(g_timefmt) ) strcpy( g_timefmt, s );
   return true; _
+
+bool
+read_ini() __ // all parameter names and default values are here!
+  if( ! get_pgm_name() ) return false; // sets pgmName pgmPath pgmKind
+  if( read_ini_file( pgmName, pgmName ) ) return true;
+  if( read_ini_file( PGM_NAME, pgmName ) ) return true;
+  return false; _
 
 // Const (all upper-case) and global state vars (camel-style names)
 const int ID_TIMER = 1;
@@ -136,11 +159,10 @@ help_on_error_input() { return MessageBox(NULL, HELP_MSG, PROGRAM_NAME, MB_OKCAN
 
 static void
 show_help_file() __
-  uint n=strlen(pgmFileName);
-  if( n<=4 || pgmFileName[n-4]!='.' ) return;
-  char h[300] = "file:///"; strcat( h, pgmFileName ); strcpy( h+strlen(h)-3, "htm" );
-  for( char* p=h; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
-  ShellExecute(NULL, "open", h, NULL, NULL, SW_SHOWNORMAL); _
+  char hfn[MAX_PATH+16]; strcpy( hfn, "file:///" );
+  strcat( hfn, pgmPath ); strcat( hfn, PGM_NAME ); strcat( hfn, ".htm" );
+  for( char* p=hfn; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
+  ShellExecute(NULL, "open", hfn, NULL, NULL, SW_SHOWNORMAL); _
 
 double sind(double x) { return sin(x*M_PI/180); }
 double cosd(double x) { return cos(x*M_PI/180); }
@@ -382,7 +404,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdS
   windowClass.hCursor = LoadCursor(NULL, IDC_ARROW);
   windowClass.hbrBackground = GetStockObject(BLACK_BRUSH);
   windowClass.lpszMenuName = NULL;
-  windowClass.lpszClassName = pgmKind==K_SCR ? "WindowsScreenSaverClass" : "w10clk";
+  windowClass.lpszClassName = pgmKind==K_SCR ? "WindowsScreenSaverClass" : PGM_NAME;
   // Register window class
   if( !RegisterClassEx(&windowClass) )
     return 1;
