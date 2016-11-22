@@ -14,6 +14,7 @@ typedef int bool;
 #define true 1
 extern bool g_seconds; // show second hand
 extern bool help_on_error_input(); // true if OK pressed
+extern void mb( const char* txt, const char* cap ); // message box
 extern uint calculate( char* src, double* res ); // returns 0 if ok
 extern char* g_tzlist;
 extern void strcpyupr( char* dst, const char* src );
@@ -126,6 +127,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
           n = sprintf( s, "%u/%u", m, d ); _ _
       else if( c=='z' ) __ // timezone
         if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
+        if( s[0]=='.' ) mb( g_tzlist+1, "W10clk - time zones" );
         if( 'A'<=s[0] && s[0]<='Z' ) __
           char* tzn = malloc( n+3 );
           tzn[0] = ' '; strcpyupr( tzn+1, s ); tzn[n+1] = ' '; tzn[n+2]='\0'; // " TZN "
@@ -140,12 +142,14 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
             time_t new_t = t - 60*tz_offset + seconds;
             tmptr = localtime(&new_t);
             n = strftime( s, mn, "%H:%M:%S %a %m/%d", tmptr ); _ _ _
-      else
+      else // it can't be here
         n = sprintf( s, "huh?" ); _ _
   else if( c=='f' ) __ // F --> C
     if( sscanf( s, "%lf", &b )==1 ) { b = (b-32.0)/1.8; n = sprintf( s, "%.1f%cC", b, 176 ); } _
   else if( c=='c' ) __ // C --> F
     if( sscanf( s, "%lf", &b )==1 ) { b = b*1.8+32.0; n = sprintf( s, "%.1f%cF", b, 176 ); } _
+  else if( c=='k' ) __ // Ki --> k
+    if( sscanf( s, "%lf", &b )==1 ) { n = sprintf( s, "%g", b*1.024 ); } _
   else if( c=='h' ) __ // help | decimal --> XXXX (hexadecimal)
     if( sscanf( s, "%llu", &xx )==1 ) n = sprintf( s, "#%llX", xx ); _
   else if( c=='=' || c==13 ) __ // = or enter -- calculate expression
@@ -164,12 +168,12 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
         int w = elapsed - t_idle; int w_ms = elapsed_ms - t_idle_ms;
         if( w_ms<0 ) { w_ms += 1000; w -= 1; }
         n += sprintf( s+n, ", idle:%d.%03d, work:%d.%03d", t_idle, t_idle_ms, w, w_ms ); _ _ _
-  else if( c=='b' ) __ // break, start idle time
+  else if( c=='p' ) __ // pause, start idle time
     if( t_start == 0 ) n = sprintf( s, "%s", "not started" );
     else if( t_break_start == 0 ) __ ftime(&tb);
       t_break_start = tb.time; t_break_start_ms = tb.millitm;
-      n = sprintf( s, "%s", "break" ); _
-    else n = sprintf( s, "%s", "alrady break" ); _
+      n = sprintf( s, "%s", "paused" ); _
+    else n = sprintf( s, "%s", "already paused" ); _
   else if( c=='g' ) __ // go on, stop break, return to action time
     if( t_start == 0 ) n = sprintf( s, "%s", "not started" );
     if( t_break_start != 0 ) __ ftime(&tb);
@@ -178,8 +182,8 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
       t_idle += br; t_idle_ms += br_ms;
       if( t_idle_ms >= 1000 ) { t_idle += 1; t_idle_ms -= 1000; }
       t_break_start = 0;
-      n = sprintf( s, "%d.%03d was on break, idle:%d.%03d", br, br_ms, t_idle, t_idle_ms ); _
-    else n = sprintf( s, "%s", "not on break" ); _
+      n = sprintf( s, "%d.%03d was on pause, idle:%d.%03d", br, br_ms, t_idle, t_idle_ms ); _
+    else n = sprintf( s, "%s", "not paused" ); _
   else __ // unrecognized keypress
     static bool to_show_help = true;
     if( to_show_help )

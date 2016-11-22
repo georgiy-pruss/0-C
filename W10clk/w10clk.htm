@@ -39,13 +39,15 @@ u      current unix time (for local time)
 z      current time zone as &plusmn;H or &plusmn;HMM, e.g. -8 or +545 (Nepal); tz can be -12..+14
 <span class=R>&plusmn;N</span>z    show current time in specified time zone (tz must follow format &plusmn;H or &plusmn;HMM)
 <span class=R>NAME</span>z  show current time in named time zone, defined in ini file; NAME is uppercase
+<span class=R>.</span>z     show defined time zones
 
 <span class=R>N</span>c     convert &deg;Celsius to &deg;Farenheit, e.g. 100c --&gt; 212.0
 <span class=R>N</span>f     convert &deg;Farenheit to &deg;Celsius, e.g. 98f --&gt; 36.7
+<span class=R>N</span>k     convert <a href="https://en.wikipedia.org/wiki/Binary_prefix">KiB</a> to kB (twice, kk &mdash; MiB to MB; kkk &mdash; GiB to GB; etc.)
 
 s      start stopwatch (actually just remember the moment of start)
 e      elapsed since start, also can show break time and work time
-b      break (don't count the following period, start the break)
+p      pause (don't count the following period, start the break)
 g      go on (continue working or whatever, end of break)
 
 <span class=C>^</span>c     copy contents of display to clipboard (<span class=C>^</span> = Ctrl)
@@ -56,8 +58,8 @@ g      go on (continue working or whatever, end of break)
 
 c      show color dialog; there press OK to paste color code back into display
 <span class=R>N</span>c     if display is #rrggbb, then that color is used to start the color dialog
-k      put the current background color into display field as #rrggbb
-<span class=R>N</span>k     use current display value #rrggbb for background (try k c OK k ;))
+b      put the current background color into display field as #rrggbb
+<span class=R>N</span>b     use current display value #rrggbb for background (try b c OK b ;))
 
 <span class=C>^</span>r<span class=C>^</span>g<span class=C>^</span>b change background color component up or down; change direction with <span class=C>^</span>i
 <span class=C>^</span>i     invert direction of color component change
@@ -164,12 +166,15 @@ same name, that is [w10myclk] (the letter case of file names and names inside th
 doesn't matter). If the program can't find such file, it looks for file with name w10clk.ini.
 So you can have different setting for different programs in one or several files. If the
 ini file or suitable section inside it is not found, all the settings will have defaults.
+Colors can be written as three decimal colors r,g,b (values 0 to 255) or as hexadecimal value
+#rrggbb. Time zones are defined in tz setting, e.g.: tz=PST -8 GMT +0 CET +1 (the letter case
+doesn't matter, plus sign can be omitted, all is divided by blanks).
 </p>
 <p>
 The help file is the only one in its name is w10clk.htm.
 </p>
 
-<!--                        a j lmn p r vwx
+<!--                        a j lmn r vwx
 TODO:
 
 time in exprssions!
