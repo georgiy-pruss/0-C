@@ -140,7 +140,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
             time_t new_t = t - 60*tz_offset + seconds;
             tmptr = localtime(&new_t);
             n = strftime( s, mn, "%H:%M:%S %a %m/%d", tmptr ); _ _ _
-      else
+      else // can't be
         n = sprintf( s, "huh?" ); _ _
   else if( c=='f' ) __ // F --> C
     if( sscanf( s, "%lf", &b )==1 ) { b = (b-32.0)/1.8; n = sprintf( s, "%.1f%cC", b, 176 ); } _

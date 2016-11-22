@@ -73,39 +73,68 @@ get_pgm_name() __ // set pgmKind pgmName pgmPath
   pgmPath = strdup( pgm );
   return true; _
 
+COLORREF
+mix_colors( COLORREF c1, COLORREF c2 ) __
+  uint r = ((c1&0xFF)+(c2&0xFF))/2;
+  uint g = (((c1&0xFF00)+(c2&0xFF00))/2) & 0xFF00;
+  uint b = (((c1&0xFF0000)+(c2&0xFF0000))/2) & 0xFF0000;
+  return b|g|r; _
+
+COLORREF
+swap_colors( COLORREF c ) __
+  return ((c&0xFF)<<16) | (c&0xFF00) | ((c&0xFF0000)>>16); _
+
+void
+split_colors( COLORREF c, /* OUT */ uint* r, uint* g, uint* b ) __
+  *r = c&0xFF; *g = (c&0xFF00)>>8; *b = (c&0xFF0000)>>16; _
+
 bool
 read_ini_file( const char* fname, const char* divname ) __
   char p_n_e[MAX_PATH]; strcpy(p_n_e,pgmPath); strcat(p_n_e,fname); strcat(p_n_e,".ini");
-  char s[500] = ""; DWORD rc; int x,y,w,h,r,g,b;
+  char s[500] = ""; DWORD rc; int x,y; uint w,h,r,g,b,c;
   #define READINI(nm,def) rc = GetPrivateProfileString( divname, nm, def, s, sizeof(s), p_n_e)
   #define BND(x,f,t) if(x<f)x=f;if(x>t)x=t
+  #define BNDC(x) if(x>255)x=255
   READINI("xywh","5,0,200,200");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 ) { g_init_x = x; g_init_y = y;
+  if( rc>=7 && sscanf( s,"%d,%d,%u,%u", &x,&y,&w,&h )==4 ) { g_init_x = x; g_init_y = y;
       g_width = w; g_height = h; BND( g_width, 8, 9999 ); BND( g_height, 8, 9999 ); }
   READINI("bg","60,0,120");
-  if( rc>4 && sscanf( s,"%d,%d,%d", &r,&g,&b )==3 ) { BND(r,0,255);BND(g,0,255);BND(b,0,255);
-    g_bgcolor = RGB(r,g,b); }
+  if( rc>=5 )
+    if( sscanf( s,"%u,%u,%u", &r,&g,&b )==3 ) { BNDC(r);BNDC(g);BNDC(b); g_bgcolor = RGB(r,g,b); }
+    else if( sscanf( s,"#%X", &c )==1 ) { BND(c,0,0xFFFFFF); g_bgcolor = swap_colors(c); }
   READINI("ticks","3,210,210,210");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_tick_w = x; BND( g_tick_w, 0,50 );
-    BND(r,0,255);BND(g,0,255);BND(b,0,255); g_tick_rgb = RGB(r,g,b); }
+  if( rc>=7 )
+    if( sscanf( s,"%u,%u,%u,%u", &w,&r,&g,&b)==4 ) { BND( w, 0,90 ); g_tick_w = w;
+      BNDC(r);BNDC(g);BNDC(b); g_tick_rgb = RGB(r,g,b); }
+    else if( sscanf( s,"%u,#%X", &w,&c )==2 } { BND( w, 0,90 ); g_tick_w = w;
+      BND(c,0,0xFFFFFF); g_tick_rgb = swap_colors(c); }
   READINI("shand","2,255,255,255");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_shand_w = x; BND( g_shand_w, 1,50 );
-    BND(r,0,255);BND(g,0,255);BND(b,0,255); g_shand_rgb = RGB(r,g,b); }
+  if( rc>=7 )
+    if( sscanf( s,"%d,%d,%d,%d", &w,&r,&g,&b)==4 ) {  BND( w, 1,90 ); g_shand_w = w;
+      BNDC(r);BNDC(g);BNDC(b); g_shand_rgb = RGB(r,g,b); }
+    else if( sscanf( s,"%u,#%X", &w,&c )==2 } { BND( w, 0,90 ); g_shand_w = w;
+      BND(c,0,0xFFFFFF); g_shand_rgb = swap_colors(c); }
   READINI("mhand","3,255,255,255");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_mhand_w = x; BND( g_mhand_w, 1,50 );
-    BND(r,0,255);BND(g,0,255);BND(b,0,255); g_mhand_rgb = RGB(r,g,b); }
+  if( rc>=7 )
+    if( sscanf( s,"%d,%d,%d,%d", &w,&r,&g,&b)==4 ) { BND( w, 1,90 ); g_mhand_w = w;
+      BNDC(r);BNDC(g);BNDC(b); g_mhand_rgb = RGB(r,g,b); }
+    else if( sscanf( s,"%u,#%X", &w,&c )==2 } { BND( w, 0,90 ); g_mhand_w = w;
+      BND(c,0,0xFFFFFF); g_mhand_rgb = swap_colors(c); }
   READINI("hhand","5,255,255,255");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&r,&g,&b)==4 ) { g_hhand_w = x; BND( g_hhand_w, 1,50 );
-    BND(r,0,255);BND(g,0,255);BND(b,0,255); g_hhand_rgb = RGB(r,g,b); }
+  if( rc>=7 )
+    if( sscanf( s,"%d,%d,%d,%d", &w,&r,&g,&b)==4 ) { BND( w, 1,90 ); g_hhand_w = w;
+      BNDC(r);BNDC(g);BNDC(b); g_hhand_rgb = RGB(r,g,b); }
+    else if( sscanf( s,"%u,#%X", &w,&c )==2 } { BND( w, 0,90 ); g_hhand_w = w;
+      BND(c,0,0xFFFFFF); g_hhand_rgb = swap_colors(c); }
   READINI("lengths","8,84,84,62");
-  if( rc>9 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h)==4 ) { g_t_len = x; BND( g_t_len, 1,96 );
+  if( rc>=10 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h)==4 ) { g_t_len = x; BND( g_t_len, 1,96 );
     g_sh_len = y; g_mh_len = w; g_hh_len = h;
     BND( g_sh_len, 1,99 ); BND( g_mh_len, 1,99 ); BND( g_hh_len, 1,99 ); }
   READINI("disp","20,40");
-  if( rc>2 && sscanf( s,"%d,%d", &x,&y )==2 ) { BND(x,0,99); BND(y,0,99);
+  if( rc>=3 && sscanf( s,"%d,%d", &x,&y )==2 ) { BND(x,0,99); BND(y,0,99);
     g_disp_x = x; g_disp_y = y; }
   READINI("corr","16,8,6,3");
-  if( rc>6 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 )
+  if( rc>=7 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 )
     { g_corr_x = x; g_corr_y = y; g_corrnr_x = w; g_corrnr_y = h; }
   READINI("seconds","no");          if( rc>1 ) g_seconds = STRIEQ(s,"yes");
   READINI("intitle","no");          if( rc>1 ) g_upd_title = STRIEQ(s,"yes");
@@ -113,8 +142,8 @@ read_ini_file( const char* fname, const char* divname ) __
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
   READINI("circle","no");           if( rc>1 ) g_circle = STRIEQ(s,"yes");
   READINI("timefmt","%T %a %m/%d"); if( rc>1 ) g_timefmt = strdup( s );
-  READINI("tz","Z +0");
-  if( rc>2 ) __
+  READINI("tz","");
+  if( rc>=3 ) __
     g_tzlist = (char*)malloc( rc+2 ); g_tzlist[0]=' '; strcpyupr( g_tzlist+1, s ); _
   return access(p_n_e, F_OK)==0; _
 
@@ -133,17 +162,6 @@ HPEN hsPen, hmPen, hhPen, htPen;     // clock hands (1 pixel narrower than requi
 HPEN hsPen2, hmPen2, hhPen2, htPen2; // half-tone borders of clock hands
 HPEN hbgPen, hbgPen2;
 int clrIncr = 1;
-
-COLORREF
-mix_colors( COLORREF c1, COLORREF c2 ) __
-  int r = ((c1&0xFF)+(c2&0xFF))/2;
-  int g = (((c1&0xFF00)+(c2&0xFF00))/2) & 0xFF00;
-  int b = (((c1&0xFF0000)+(c2&0xFF0000))/2) & 0xFF0000;
-  return b|g|r; _
-
-COLORREF
-swap_colors( COLORREF c ) __
-  return ((c&0xFF)<<16) | (c&0xFF00) | ((c&0xFF0000)>>16); _
 
 void
 init_tools(bool for_all) __
