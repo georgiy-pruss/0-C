@@ -42,22 +42,30 @@ static double hexnumber() __
     result = 16*result + hexdigit(get());
   return result; _
 
+static double cubrt( double x ) __
+  if( x<0.0 ) return -cubrt(x);
+  return pow(x,1.0/3.0); _
+
 static double factor() __
-  if( peek()=='#' ) return hexnumber();
-  if( '0'<=peek() && peek() <= '9') return number();
-  if(peek() == '(') __
+  int c = peek();
+  if( c=='#' ) return hexnumber();
+  if( '0'<=c && c <= '9') return number();
+  if(c == '(') __
     get(); // '('
     double result = expression();
     if(peek() != ')') { err_flag=E_CLOSE; return 0; }
     get(); // ')'
     return result; _
-  if(peek() == '-') { get(); return -factor(); }
-  if(peek() == '*') { get(); double x=factor(); return x*x; }
-  if(peek() == '/') { get(); double x=factor(); if(x<0) err_flag=E_NEGSQRT; else x=sqrt(x); return x; }
-  if(peek() == '^') { get(); return exp(factor()); }
-  if(peek() == 'o') { get(); return M_PI*factor(); }
-  if(peek() == '%') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x); return x; }
-  if(peek() == '+') { get(); return factor(); }
+  if(c == '-') { get(); return -factor(); }
+  if(c == '*') { get(); double x=factor(); return x*x; }
+  if(c == '/') { get(); double x=factor(); if(x<0) err_flag=E_NEGSQRT; else x=sqrt(x); return x; }
+  if(c == '\\'){ get(); return cubrt(factor()); }
+  if(c == '^') { get(); return exp(factor()); }
+  if(c == 'o') { get(); return M_PI*factor(); }
+  if(c == '%') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x); return x; }
+  if(c == '|') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log10(x); return x; }
+  if(c == '&') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x)/log(2.0); return x; }
+  if(c == '+') { get(); return factor(); }
   err_flag=E_BINOP;
   return 0; _
 
@@ -68,12 +76,16 @@ static double power() __
 
 static double term() __
   double x = power();
-  while(peek()=='*' || peek()=='/' || peek()=='%' || peek()=='o') __
-    int c = get();
+  int c;
+  while( (c=peek())=='*' || c=='/' || c=='%' || c=='o' || c=='|' || c=='\\' || c=='&' ) __
+    c = get();
     double y = power();
     if(c == '*') x *= y;
     else if(c=='/') { if(y==0.0) err_flag=E_ZDIV; else x /= y; }
     else if(c=='%') { if(y==0.0) err_flag=E_ZMOD; else x -= y*floor(x/y); }
+    else if(c=='|') { if(x+y==0.0) err_flag=E_ZDIV; else x = x*y/(x+y); }
+    else if(c=='\\') { if(x==0.0) err_flag=E_ZDIV; else x = y/x; }
+    else if(c=='&') { x = sqrt(x*x + y*y); }
     else __ // 'o' -- circuit functions
       if( x==1 ) return sin(y);   if( x==10 ) return sin(y*M_PI/180.0);
       if( x==2 ) return cos(y);   if( x==20 ) return cos(y*M_PI/180.0);

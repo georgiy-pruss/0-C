@@ -2,20 +2,20 @@
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <style>h1 {font-size:130%;background-color:#400080;color:white;padding:10px;}
-h2 {font-size:130%;} .R {color:blue;} .C {color:magenta;}
+h2 {font-size:130%; margin-top:2em;} .R {color:blue;} .C {color:magenta;}
 .B {margin-left:1.5em;background-color:white;color:black;}
 body,html {margin:0;}
 td { padding-top: 0px; padding-bottom: 0px; padding-left: 2px; padding-right: 4px; }
-td.sym { color:#000080; background-color:#FFFFC0; text-align:center;
+td.S { color:#000080; background-color:#FFFFC0; text-align:center;
   padding-left: 2px; padding-right: 2px; font-family:Consolas; font-size:110%;
   width:1em; }
-td.uc { color:#000080; background-color:#FFFFC0; text-align:left;
+td.U { color:#000080; background-color:#FFFFC0; text-align:left;
   padding-left: 4px; padding-right: 5px; }
-td.sym:not(:first-child), td.uc:not(:first-child) { border-left: 1px solid gray; }
+td.S:not(:first-child), td.U:not(:first-child) { border-left: 1px solid gray; }
 </style>
 </head>
 <body>
-<h1>W10clk - windows clock and more - v.1.19</h1>
+<h1>W10clk - windows clock and more - v.1.20</h1>
 <div class=B>
 <h2>Actions</h2>
 <pre>
@@ -99,7 +99,10 @@ ABCDEF hexadecimal digits (uppercase!) for hex. numbers in expression, put # in 
 -      -x  negate                  x-y  subtract
 *      *x  square, x*x             x*y  multiply
 /      /x  square root of x        x/y  divide
+\      \x  cubic root of x         x\y  inverse division, y/x
 %      %x  natural logarithm of x  x%y  modulo
+|      |x  decimal logarithm of x  x|y  parallel, (x*y)/(x+y)
+&amp;      &amp;x  binary logarithm of x   x&amp;y  hypotenuse, /(*x+*y)
 ^      ^x  exponent                x^y  power (left to right order, sorry)
 o      ox  multiply by pi          xoy  circle function (hello APL ;-))
 
@@ -180,7 +183,7 @@ Colors can be written as three decimal colors r,g,b (values 0 to 255) or as hexa
 doesn't matter, plus sign can be omitted, all is divided by blanks).
 </p>
 <p>
-The help file is the only one in its name is w10clk.htm.
+The help file is the only one and its name is w10clk.htm.
 </p>
 <h2>Appendix</h2>
 <p>Just for convenience, symbols and units.</p>
@@ -236,12 +239,12 @@ The help file is the only one in its name is w10clk.htm.
       if( symbol.indexOf("*")>0 )
       {
         symbol = symbol.substr( 0, symbol.length-1 );
-        document.writeln( "<td class='sym'>&" + symbol + ";</td>" );
+        document.writeln( "<td class='S'>&" + symbol + ";</td>" );
         document.writeln( "<td><b>&amp;" + symbol + ";</b></td>" );
       }
       else
       {
-        document.writeln( "<td class='sym'>&" + symbol + ";</td>" );
+        document.writeln( "<td class='S'>&" + symbol + ";</td>" );
         document.writeln( "<td>&amp;" + symbol + ";</td>" );
       }
     }
@@ -259,30 +262,30 @@ The help file is the only one in its name is w10clk.htm.
 
 <table style="border: 1px solid gray;" cellspacing=0>
   <tr>
-    <td class='uc'>Inch (in)</td><td>2.54 cm</td>
-    <td class='uc'>Ounce&nbsp;(oz)</td><td>28.3495 g</td>
-    <td class='uc'>Fluid oz&nbsp;(fl.oz)</td><td title="1/16 US pint">29.5735 m<i>l</i></td>
-    <td class='uc'>Horsepower&nbsp;(hp)</td><td
+    <td class='U'>Inch (in)</td><td>2.54 cm</td>
+    <td class='U'>Ounce&nbsp;(oz)</td><td>28.3495 g</td>
+    <td class='U'>Fluid oz&nbsp;(fl.oz)</td><td title="1/16 US pint">29.5735 m&#8467;</td>
+    <td class='U'>Horsepower&nbsp;(hp)</td><td
       title="Mechanical 745.7, Metric 735.5, Electrical 746">735.5/746 kW</td>
   </tr>
   <tr>
-    <td class='uc'>Foot (ft)</td><td>30.48 cm</td>
-    <td class='uc'>Pound&nbsp;(lb)</td><td>0.453592 kg</td>
-    <td class='uc'>Pint&nbsp;(pt)</td><td title="1/2 US quart">0.473176 <i>l</i></td>
-    <td class='uc'>...</td><td>...</td>
+    <td class='U'>Foot (ft)</td><td>30.48 cm</td>
+    <td class='U'>Pound&nbsp;(lb)</td><td>0.453592 kg</td>
+    <td class='U'>Pint&nbsp;(pt)</td><td title="1/2 US quart">0.473176 &#8467;</td>
+    <td class='U'>...</td><td>...</td>
   </tr>
   <tr>
-    <td class='uc'>Yard (yd)</td><td>91.44 cm</td>
-    <td class='uc'>Sq.ft&nbsp;(ft&sup2;)</td><td>0.092903 m&sup2;</td>
-    <td class='uc'>Quart&nbsp;(qt)</td><td title="1/4 US gal">0.946351 <i>l</i></td>
-    <td class='uc'>...</td><td>...</td>
+    <td class='U'>Yard (yd)</td><td>91.44 cm</td>
+    <td class='U'>Sq.ft&nbsp;(ft&sup2;)</td><td>0.092903 m&sup2;</td>
+    <td class='U'>Quart&nbsp;(qt)</td><td title="1/4 US gal">0.946351 &#8467;</td>
+    <td class='U'>...</td><td>...</td>
   </tr>
   <tr>
-    <td class='uc'>Mile&nbsp;(mi)</td><td>1.609344 km</td>
-    <td class='uc'>Naut.mile</td><td>1.852 km</td>
-    <td class='uc'>Gallon&nbsp;(gal)</td><td
-      title="US gal = 231 cubic inches; imperial gal = 4.54609 l">3.785412 <i>l</i></td>
-    <td class='uc'>...</td><td>...</td>
+    <td class='U'>Mile&nbsp;(mi)</td><td>1.609344 km</td>
+    <td class='U'>Naut.mile</td><td>1.852 km</td>
+    <td class='U'>Gallon&nbsp;(gal)</td><td
+      title="US gal = 231 cubic inches; imperial gal = 4.54609 l">3.785412 &#8467;</td>
+    <td class='U'>...</td><td>...</td>
   </tr>
 </table>
 
