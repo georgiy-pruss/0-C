@@ -9,7 +9,7 @@
 typedef unsigned int uint;
 
 #define BLANKS " \t\n\r\v\f"
-enum ERRORS {E_OK=0, E_CLOSE,E_ZDIV,E_ZMOD,E_NEGSQRT,E_NEGLOG,E_CIRC,E_BINOP,E_HEXDIGIT};
+enum ERRORS {E_OK=0, E_CLOSE,E_ZDIV,E_ZMOD,E_NEG,E_NEGLOG,E_CIRC,E_BINOP,E_HEXDIGIT};
 static uint err_flag;
 static char* curr_pos;
 // curr_pos += strspn( curr_pos, BLANKS ); // we don't have blanks, so no skip blanks
@@ -46,6 +46,17 @@ static double cubrt( double x ) __
   if( x<0.0 ) return -cubrt(x);
   return pow(x,1.0/3.0); _
 
+static double factorial( double x ) __
+  if( x<0.0 ) { err_flag=E_NEG; return x; }
+  uint n = (uint)x;
+  x = 1.0; for( uint p=2; p<=n; ++p ) x *= p; return x; _
+
+static double perm( double x, double y ) __
+  if( x<0.0 || y<0.0) { err_flag=E_NEG; return x; }
+  uint n = (uint)x; uint k = (uint)y;
+  if( k>n ) { uint nn = n; n = k; k = nn; } // now k<=n
+  x = 1.0; for( uint p=n-k+1; p<=n; ++p ) x *= p; return x; _
+
 static double factor() __
   int c = peek();
   if( c=='#' ) return hexnumber();
@@ -58,13 +69,14 @@ static double factor() __
     return result; _
   if(c == '-') { get(); return -factor(); }
   if(c == '*') { get(); double x=factor(); return x*x; }
-  if(c == '/') { get(); double x=factor(); if(x<0) err_flag=E_NEGSQRT; else x=sqrt(x); return x; }
+  if(c == '/') { get(); double x=factor(); if(x<0) err_flag=E_NEG; else x=sqrt(x); return x; }
   if(c == '\\'){ get(); return cubrt(factor()); }
   if(c == '^') { get(); return exp(factor()); }
   if(c == 'o') { get(); return M_PI*factor(); }
   if(c == '%') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x); return x; }
   if(c == '|') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log10(x); return x; }
   if(c == '&') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x)/log(2.0); return x; }
+  if(c == '!') { get(); return factorial(factor()); }
   if(c == '+') { get(); return factor(); }
   err_flag=E_BINOP;
   return 0; _
@@ -76,9 +88,8 @@ static double power() __
 
 static double term() __
   double x = power();
-  int c;
-  while( (c=peek())=='*' || c=='/' || c=='%' || c=='o' || c=='|' || c=='\\' || c=='&' ) __
-    c = get();
+  while( memchr( "*/%|\\o&!", peek(), 8 ) ) __
+    int c = get();
     double y = power();
     if(c == '*') x *= y;
     else if(c=='/') { if(y==0.0) err_flag=E_ZDIV; else x /= y; }
@@ -86,6 +97,7 @@ static double term() __
     else if(c=='|') { if(x+y==0.0) err_flag=E_ZDIV; else x = x*y/(x+y); }
     else if(c=='\\') { if(x==0.0) err_flag=E_ZDIV; else x = y/x; }
     else if(c=='&') { x = sqrt(x*x + y*y); }
+    else if(c=='!') { x = perm(x,y); }
     else __ // 'o' -- circuit functions
       if( x==1 ) return sin(y);   if( x==10 ) return sin(y*M_PI/180.0);
       if( x==2 ) return cos(y);   if( x==20 ) return cos(y*M_PI/180.0);

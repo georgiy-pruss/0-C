@@ -13,9 +13,51 @@ td.U { color:#000080; background-color:#FFFFC0; text-align:left;
   padding-left: 4px; padding-right: 5px; }
 td.S:not(:first-child), td.U:not(:first-child) { border-left: 1px solid gray; }
 </style>
+
+<!-- CALENDAR -->
+<!--link rel="stylesheet" type="text/css"
+href="http://yui.yahooapis.com/2.8.0r4/build/fonts/fonts-min.css" /-->
+<link rel="stylesheet" type="text/css"
+href="http://yui.yahooapis.com/2.8.0r4/build/calendar/assets/skins/sam/calendar.css" / >
+<script type="text/javascript"
+src="http://yui.yahooapis.com/2.8.0r4/build/yahoo-dom-event/yahoo-dom-event.js"></script>
+<script type="text/javascript"
+src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
+<style type="text/css">
+  .yui-skin-sam .yui-calendar td.wd0 { background-color:#FAE0FF; } /* sundays */
+  .yui-skin-sam .yui-calendar td.wd0 a { color:magenta; } /* sundays */
+  /* new moon */
+  /* .m1 .d15, .m2 .d13, .m3 .d15, .m4 .d14, .m5 .d13, .m6 .d12, .m7 .d11, .m8 .d9,
+  .m9 .d8, .m10 .d7, .m11 .d5, .m12 .d5 { background-color:#000000 !important; } */
+  /* full moon */
+  /* .m1 .d29, .m2 .d28, .m3 .d29, .m4 .d28, .m5 .d27, .m6 .d26, .m7 .d25, .m8 .d24,
+  .m9 .d23, .m10 .d22, .m11 .d21, .m12 .d21 { background-color:#FFFF80 !important; } */
+</style>
+<script type="text/javascript">
+  var cal1;
+  function cal_init() {
+    cal1 = new YAHOO.widget.Calendar( "cal1", "cal1Container",
+        { START_WEEKDAY:1, MULTI_SELECT:true, navigator:true } );
+    cal1.select("8/5/2016,4/30/2016"); cal1.render(); }
+  YAHOO.util.Event.onDOMReady( cal_init );
+  function totoday() {
+    var t = cal1.today;
+    var y = t.getFullYear(), m = t.getMonth()+1;
+    cal1.cfg.setProperty("PAGEDATE", m+"/"+y); cal1.render(); }
+</script>
+
 </head>
 <body>
-<h1>W10clk - windows clock and more - v.1.20</h1>
+
+<h1>W10clk - windows clock and more - v.1.21</h1>
+
+<!-- Yahoo calendar -->
+<div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
+<div id="cal1Container"></div>
+<div onclick='javascript:totoday()' style='cursor:pointer;'>today</div>
+
+</div>
+
 <div class=B>
 <h2>Actions</h2>
 <pre>
@@ -104,6 +146,7 @@ ABCDEF hexadecimal digits (uppercase!) for hex. numbers in expression, put # in 
 |      |x  decimal logarithm of x  x|y  parallel, (x*y)/(x+y)
 &amp;      &amp;x  binary logarithm of x   x&amp;y  hypotenuse, /(*x+*y)
 ^      ^x  exponent                x^y  power (left to right order, sorry)
+!      !x  factorial (x=0..170)    x!y  permutations (comb = x!y/!min(x,y))
 o      ox  multiply by pi          xoy  circle function (hello APL ;-))
 
            1ox sin    -1ox asin    10ox sind    -10ox asind
@@ -186,7 +229,7 @@ doesn't matter, plus sign can be omitted, all is divided by blanks).
 The help file is the only one and its name is w10clk.htm.
 </p>
 <h2>Appendix</h2>
-<p>Just for convenience, symbols and units.</p>
+<p>Just for convenience, some unicode symbols and unit table.</p>
 <table style="border: 1px solid gray;" cellspacing=0>
 <script language="JavaScript">
   // ==============================================================
@@ -255,8 +298,8 @@ The help file is the only one and its name is w10clk.htm.
 <p>
 ÂâÎîĂăȘșȚț ŞşŢţ  ÁáÉéÓóýú
 <span style="font-family:Tahoma,Verdana,Sans Serif;">А́а́Е́е́И́и́О́о́У́у́Ы́ы́Э́э́Ю́ю́Я́я́</span>
-ЄєІіЇїҐґ • əʃʒÞþ™®©℃℉ ¢€£¥₪₴ ½⅓⅔¼¾⅛⅜⅝⅞<br>
-†‡µΩ…§¶¡¿‼ ′&thinsp;″&thinsp;‴ ‚‘’„“” °ºª ¹²³ⁿ±≤≥≠≈≡×÷⊕⊗∅∀∃∄∏∑∫∞√∂∆∇⊥∠∈∉♀♂↵←↑↓→⇒⇔
+ЄєІіЇїҐґ ⋅∗• əʃʒÞþß™®©℃℉ ¢€£¥₪₴ ½⅓⅔¼¾⅛⅜⅝⅞<br>
+†‡…§¶¡¿‼ αβγµΩ ′&thinsp;″&thinsp;‴ ‹›‚‘’«»„“” °ºª ¹²³ⁿ±≤≥≠≈≡×÷⊕⊗∅∀∃∄∏∑∫∞√∂∆∇⊥∠∈∉ ♀♂ ↵←↑↓→⇒⇔
 ♠♣♥♦♪♫ ◊∎█
 </p>
 

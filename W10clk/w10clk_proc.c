@@ -36,7 +36,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
   static time_t t_start;       static int t_start_ms;
   static int    t_idle;        static int t_idle_ms;
   static time_t t_break_start; static int t_break_start_ms;
-  if( '0'<=c && c<='9' || 'A'<=c && c<='Z' || strchr( "+-*/%^o\\&|.:()#", c ) ) __
+  if( '0'<=c && c<='9' || 'A'<=c && c<='Z' || memchr( "+-*/%^o\\&|!.:()#", c, 16 ) ) __
     s[n]=(char)c; if(n<mn) ++n; s[n]=0; _
   else if( c==32 || c==27 ) __ // space escape
     n=0; s[n]=0; _
