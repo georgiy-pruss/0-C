@@ -6,12 +6,9 @@ h2 {font-size:130%; margin-top:2em;} .R {color:blue;} .C {color:magenta;}
 .B {margin-left:1.5em;background-color:white;color:black;}
 body,html {margin:0;}
 td { padding-top: 0px; padding-bottom: 0px; padding-left: 2px; padding-right: 4px; }
-td.S { color:#000080; background-color:#FFFFC0; text-align:center;
-  padding-left: 2px; padding-right: 2px; font-family:Consolas; font-size:110%;
-  width:1em; }
 td.U { color:#000080; background-color:#FFFFC0; text-align:left;
   padding-left: 4px; padding-right: 5px; }
-td.S:not(:first-child), td.U:not(:first-child) { border-left: 1px solid gray; }
+td.U:not(:first-child) { border-left: 1px solid gray; }
 </style>
 
 <!-- CALENDAR -->
@@ -54,8 +51,8 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
 <div id="cal1Container"></div>
-<div onclick='javascript:totoday()' style='cursor:pointer;'>today</div>
-
+<div onclick='javascript:totoday()'
+  style='text-decoration:underline;cursor:pointer;text-align:right;'>&rarr; today</div>
 </div>
 
 <div class=B>
@@ -229,80 +226,9 @@ doesn't matter, plus sign can be omitted, all is divided by blanks).
 The help file is the only one and its name is w10clk.htm.
 </p>
 <h2>Appendix</h2>
-<p>Just for convenience, some unicode symbols and unit table.</p>
-<table style="border: 1px solid gray;" cellspacing=0>
-<script language="JavaScript">
-  // ==============================================================
-  // Copyright (C) 2004 by Moon aka Sun -- it's me too :)
-  // ==============================================================
+<p>Just for your convenience, some unit table and popular unicode symbols.</p>
 
-  var n_row = 0
-  var table = new Array();
-  function add(x) { table[n_row++] = x; }
-
-  add( "nbsp,   ndash,  minus,   deg,    Delta,  alpha,    Agrave, agrave, #258*,  " );
-  add( "euro,   mdash,  plusmn,  ordm,   Lambda, beta,     Aacute, aacute, #259*,  " );
-  add( "cent,   hellip, radic,   ordf,   Theta,  gamma,    Acirc*, acirc*, Ccedil, " );
-  add( "pound,  sect,   infin,   sup1,   Xi,     delta,    Atilde, atilde, ccedil, " );
-  add( "yen,    para,   prop,    sup2,   Pi,     epsilon,  Auml,   auml,   #536*,  " );
-  add( "curren, dagger, times,   sup3,   Sigma,  zeta,     Aring,  aring,  #537*,  " );
-  add( "fnof,   Dagger, divide,  frac14, Phi,    eta,      AElig,  aelig,  #538*,  " );
-  add( "copy,   iexcl,  sim,     frac12, Psi,    theta,    Egrave, egrave, #539*,  " );
-  add( "reg,    iquest, asymp,   frac34, Omega,  iota,     Eacute, eacute, THORN,  " );
-  add( "trade,  permil, cong,    there4, nabla,  kappa,    Ecirc,  ecirc,  thorn,  " );
-  add( "bull,   middot, equiv,   loz,    int,    lambda,   Euml,   euml,   Ntilde, " );
-  add( "lt,     lsquo,  le ,     cap,    sum,    mu,       Igrave, igrave, ntilde, " );
-  add( "gt,     rsquo,  ge,      cup,    prod,   nu,       Iacute, iacute, szlig,  " );
-  add( "lsaquo, sbquo,  ne ,     and,    sube,   xi,       Icirc*, icirc*, acute,  " ); // cedil
-  add( "rsaquo, ldquo,  prime,   or,     supe,   omicron,  Iuml,   iuml,   uml,    " ); // circ
-  add( "laquo,  rdquo,  Prime,   isin,   sub,    pi,       Ograve, ograve, tilde,  " );
-  add( "raquo,  bdquo,  weierp,  notin,  nsub,   rho,      Oacute, oacute, #1168,  " );
-  add( "quot,   not,    image,   ni,     sup,    sigmaf,   Ocirc,  ocirc,  #1169,  " );
-  add( "amp,    brvbar, real,    ang,    oplus,  sigma,    Otilde, otilde, #1030,  " );
-  add( "micro,  shy,    alefsym, spades, otimes, tau,      Ouml,   ouml,   #1110,  " );
-  add( "oline,  macr,   sdot,    clubs,  lceil,  upsilon,  Oslash, oslash, #1031,  " );
-  add( "frasl,  ensp,   lowast,  diams,  rceil,  phi,      OElig,  oelig,  #1111,  " );
-  add( "part,   emsp,   crarr,   hearts, lfloor, chi,      Ugrave, ugrave, #1028,  " );
-  add( "perp,   thinsp, uarr,    uArr,   rfloor, psi,      Uacute, uacute, #1108,  " );
-  add( "empty,  zwnj,   darr,    dArr,   lang,   omega,    Ucirc,  ucirc,  #8372,  " );
-  add( "forall, zwj,    larr,    lArr,   rang,   thetasym, Uuml,   uuml,   #8362,  " );
-  add( "exist,  #8252,  rarr,    rArr,   #9792,  upsih,    Yacute, yacute, #9786,  " );
-  add( "#8708,  #8470,  harr,    hArr,   #9794,  piv,      Yuml,   yuml,   #9787,  " );
-  // removed: lrm,rlm
-
-  for( var r=0; r<n_row; ++r )
-  {
-    document.writeln( "<tr>" );
-    var row_array = table[r].split(',');
-    for( var c=0; c<row_array.length; ++c )
-    {
-      var symbol = row_array[c].replace(/ /g,'');
-      if( symbol.length == 0 )
-        break;
-      if( symbol.indexOf("*")>0 )
-      {
-        symbol = symbol.substr( 0, symbol.length-1 );
-        document.writeln( "<td class='S'>&" + symbol + ";</td>" );
-        document.writeln( "<td><b>&amp;" + symbol + ";</b></td>" );
-      }
-      else
-      {
-        document.writeln( "<td class='S'>&" + symbol + ";</td>" );
-        document.writeln( "<td>&amp;" + symbol + ";</td>" );
-      }
-    }
-    document.writeln( "</tr>" );
-  }
-</script>
-</table>
 <p>
-ÂâÎîĂăȘșȚț ŞşŢţ  ÁáÉéÓóýú
-<span style="font-family:Tahoma,Verdana,Sans Serif;">А́а́Е́е́И́и́О́о́У́у́Ы́ы́Э́э́Ю́ю́Я́я́</span>
-ЄєІіЇїҐґ ⋅∗• əʃʒÞþß™®©℃℉ ¢€£¥₪₴ ½⅓⅔¼¾⅛⅜⅝⅞<br>
-†‡…§¶¡¿‼ αβγµΩ ′&thinsp;″&thinsp;‴ ‹›‚‘’«»„“” °ºª ¹²³ⁿ±≤≥≠≈≡×÷⊕⊗∅∀∃∄∏∑∫∞√∂∆∇⊥∠∈∉ ♀♂ ↵←↑↓→⇒⇔
-♠♣♥♦♪♫ ◊∎█
-</p>
-
 <table style="border: 1px solid gray;" cellspacing=0>
   <tr>
     <td class='U'>Inch (in)</td><td>2.54 cm</td>
@@ -315,7 +241,7 @@ The help file is the only one and its name is w10clk.htm.
     <td class='U'>Foot (ft)</td><td>30.48 cm</td>
     <td class='U'>Pound&nbsp;(lb)</td><td>0.453592 kg</td>
     <td class='U'>Pint&nbsp;(pt)</td><td title="1/2 US quart">0.473176 &#8467;</td>
-    <td class='U'>...</td><td>...</td>
+    <td class='U'>Light-year&nbsp;(ly)</td><td>9.46073e15 m</td>
   </tr>
   <tr>
     <td class='U'>Yard (yd)</td><td>91.44 cm</td>
@@ -331,10 +257,23 @@ The help file is the only one and its name is w10clk.htm.
     <td class='U'>...</td><td>...</td>
   </tr>
 </table>
-
-<p>See also <a href="http://mas.orgfree.com/symbols.htm">table online</a> |
+</p>
+<p>
+<table style="border: 1px solid gray;" cellspacing=0>
+<tr>
+<td>
+ÂâÎîĂăȘșȚț ŞşŢţ  ÁáÉéÓóýú
+<span style="font-family:Tahoma,Verdana,Sans Serif;">А́а́Е́е́И́и́О́о́У́у́Ы́ы́Э́э́Ю́ю́Я́я́</span>
+ЄєІіЇїҐґ ⋅·∗• əʃʒßÞþ¦°™®©℃℉ ¢€£¥ƒ₪₴¤ ½⅓⅔¼¾⅛⅜⅝⅞<br>
+†‡…§¶¡¿‼–αβγµΩ—′&thinsp;″&thinsp;‴ ‹›‚‘’«»„“” ºª ¹²³ⁿ −±≤≥≠≈≡×÷⊕⊗∅∀∃∄∏∑∫∞√∂∆∇⊥∠∈∉ ♀♂ ↵←↑↓→⇒⇔
+♠♣♥♦♪♫ ◊∎█
+</td>
+</tr>
+</table>
+</p>
+<p>See also <a href="http://mas.orgfree.com/symbols.htm">symbol table online</a> |
 <a href="http://mas.orgfree.com/abc.htm">full unicode set</a> |
-<a href="http://mas.orgfree.com/cvt.htm">units converter</a> |
+<a href="http://mas.orgfree.com/cvt.htm">unit converter</a> |
 <a href="http://mas.orgfree.com/currency.htm">currency converter</a>
 and <a href="http://mas.orgfree.com/">all</a>.
 
