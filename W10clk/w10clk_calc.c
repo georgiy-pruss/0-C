@@ -43,7 +43,7 @@ static double hexnumber() __
   return result; _
 
 static double cubrt( double x ) __
-  if( x<0.0 ) return -cubrt(x);
+  if( x<0.0 ) return -cubrt(-x);
   return pow(x,1.0/3.0); _
 
 static double factorial( double x ) __

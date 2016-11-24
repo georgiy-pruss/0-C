@@ -1,14 +1,15 @@
 <html>
 <head>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-<style>h1 {font-size:130%;background-color:#400080;color:white;padding:10px;}
-h2 {font-size:130%; margin-top:2em;} .R {color:blue;} .C {color:magenta;}
-.B {margin-left:1.5em;background-color:white;color:black;}
-body,html {margin:0;}
-td { padding-top: 0px; padding-bottom: 0px; padding-left: 2px; padding-right: 4px; }
-td.U { color:#000080; background-color:#FFFFC0; text-align:left;
-  padding-left: 4px; padding-right: 5px; }
-td.U:not(:first-child) { border-left: 1px solid gray; }
+
+<style> body,html { margin:0; }
+  h1 { font-size:130%; background-color:#400080; color:white; padding:10px; }
+  h2 { font-size:130%; margin-top:2em; } .R { color:blue; } .C { color:magenta; }
+  .B { margin-left:1.5em; background-color: white;color:black; }
+  td { padding-top: 0px; padding-bottom: 0px; padding-left: 2px; padding-right: 4px; }
+  td.U { color:#000080; background-color:#FFFFC0; text-align:left;
+    padding-left: 4px; padding-right: 5px; }
+  td.U:not(:first-child) { border-left: 1px solid gray; }
 </style>
 
 <!-- CALENDAR -->
@@ -23,36 +24,37 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 <style type="text/css">
   .yui-skin-sam .yui-calendar td.wd0 { background-color:#FAE0FF; } /* sundays */
   .yui-skin-sam .yui-calendar td.wd0 a { color:magenta; } /* sundays */
-  /* new moon */
-  /* .m1 .d15, .m2 .d13, .m3 .d15, .m4 .d14, .m5 .d13, .m6 .d12, .m7 .d11, .m8 .d9,
-  .m9 .d8, .m10 .d7, .m11 .d5, .m12 .d5 { background-color:#000000 !important; } */
-  /* full moon */
-  /* .m1 .d29, .m2 .d28, .m3 .d29, .m4 .d28, .m5 .d27, .m6 .d26, .m7 .d25, .m8 .d24,
-  .m9 .d23, .m10 .d22, .m11 .d21, .m12 .d21 { background-color:#FFFF80 !important; } */
+  .yui-skin-sam .yui-calendar td.wd6 { background-color:#FAE0FF; } /* saturdays */
+  .yui-skin-sam .yui-calendar td.wd6 a { color:magenta; } /* saturdays */
+  div.DS { text-align:right; } div.DS span { text-decoration:underline; cursor:pointer; }
 </style>
 <script type="text/javascript">
-  var cal1;
-  function cal_init() {
-    cal1 = new YAHOO.widget.Calendar( "cal1", "cal1Container",
-        { START_WEEKDAY:1, MULTI_SELECT:true, navigator:true } );
-    cal1.select("8/5/2016,4/30/2016"); cal1.render(); }
+  function ssd(n,v) { document.getElementById(n).style.display = v; }
+  var YWC=YAHOO.widget.Calendar;
+  var cal1; var opts={ START_WEEKDAY:1, navigator:true };
+  function cal_init() { cal1 = new YWC( "cal1", "cal1Container", opts ); cal1.render(); }
   YAHOO.util.Event.onDOMReady( cal_init );
-  function totoday() {
-    var t = cal1.today;
-    var y = t.getFullYear(), m = t.getMonth()+1;
+  function totoday() { var t = cal1.today; var y = t.getFullYear(), m = t.getMonth()+1;
     cal1.cfg.setProperty("PAGEDATE", m+"/"+y); cal1.render(); }
+  function cal1hide() { cal1.hide(); ssd("cal1Ctrl","none"); ssd("cal1Ctrl2","block"); }
+  function cal1show() { cal1.show(); ssd("cal1Ctrl","block"); ssd("cal1Ctrl2","none"); }
 </script>
 
 </head>
 <body>
 
-<h1>W10clk - windows clock and more - v.1.21</h1>
+<h1>W10clk - windows clock and more - v.1.22</h1>
 
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
 <div id="cal1Container"></div>
-<div onclick='javascript:totoday()'
-  style='text-decoration:underline;cursor:pointer;text-align:right;'>&rarr; today</div>
+<div id="cal1Ctrl" class=DS>
+  <span onclick='javascript:totoday()'>&rarr; today</span> |
+  <span onclick='javascript:cal1hide()'>close</span>
+</div>
+<div id="cal1Ctrl2" class=DS style="display:none;">
+  <span onclick='javascript:cal1show()'>show calendar</span>
+</div>
 </div>
 
 <div class=B>
