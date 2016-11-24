@@ -5,14 +5,16 @@
 <style> body,html { margin:0; }
   h1 { font-size:130%; background-color:#400080; color:white; padding:10px; }
   h2 { font-size:130%; margin-top:2em; } .R { color:blue; } .C { color:magenta; }
-  .B { margin-left:1.5em; background-color: white;color:black; }
-  td { padding-top: 0px; padding-bottom: 0px; padding-left: 2px; padding-right: 4px; }
+  .B { margin-left:1.5em; background-color:white; color:black; }
+  td { padding-top:0px; padding-bottom:0px; padding-left:2px; padding-right: 4px; }
   td.U { color:#000080; background-color:#FFFFC0; text-align:left;
     padding-left: 4px; padding-right: 5px; }
   td.U:not(:first-child) { border-left: 1px solid gray; }
+  .X { font-family: Arial,Consolas,Calibri,Lucida Console,Times New Roman,Times; }
 </style>
 
 <!-- CALENDAR -->
+<!-- http://yui.github.io/yui2/docs/yui_2.9.0_full/calendar/ -->
 <!--link rel="stylesheet" type="text/css"
 href="http://yui.yahooapis.com/2.8.0r4/build/fonts/fonts-min.css" /-->
 <link rel="stylesheet" type="text/css"
@@ -43,14 +45,14 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 </head>
 <body>
 
-<h1>W10clk - windows clock and more - v.1.22</h1>
+<h1>W10clk - windows clock and more - v.1.23</h1>
 
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
 <div id="cal1Container"></div>
 <div id="cal1Ctrl" class=DS>
   <span onclick='javascript:totoday()'>&rarr; today</span> |
-  <span onclick='javascript:cal1hide()'>close</span>
+  <span onclick='javascript:cal1hide()'>hide</span>
 </div>
 <div id="cal1Ctrl2" class=DS style="display:none;">
   <span onclick='javascript:cal1show()'>show calendar</span>
@@ -58,6 +60,12 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 </div>
 
 <div class=B>
+<p>
+Left button click &mdash; set focus on window;<br>
+Right button click &mdash; paste clipoard into display;<br>
+Small letters &mdash; immediate <i>actions</i>, often with the display contents;<br>
+Big letters, digits, other symbols &mdash; <i>input</i> in display.<br>
+</p>
 <h2>Actions</h2>
 <pre>
 f1     show help (this text)
@@ -114,14 +122,15 @@ b      put the current background color into display field as #rrggbb
 <span class=C>^</span>r<span class=C>^</span>g<span class=C>^</span>b change background color component up or down; change direction with <span class=C>^</span>i
 <span class=C>^</span>i     invert direction of color component change
 
-&larr;&rarr;&uarr;&darr;   move window left/right/up/down; hold Shift to move faster
-<span class=C>^</span>&larr;&rarr;&uarr;&darr;  change size of the window; again, hold Shift to change more
+&larr;&uarr;&darr;&rarr;   move window with arrows; hold Shift to move faster
+<span class=C>^</span>&larr;&uarr;&darr;&rarr;  change size of the window; again, hold Shift to change more
 
 i      info: show window position and size; note that Windows adds some values to
        real sizes, e.g. my Windows-10 adds 16,8 for resizable window, and 6,3 for
        "non-resizable"; you can set up your own correction data with this option in
        the ini file: corr=xr,yr,xnr,ynr (so, mine would be 16,8,6,3)
 
+m      maximize/restore size
 q      quit the program; btw it's the only way to exit W10clk screensaver
 
 =      calculate expression (see below how to enter it)
@@ -263,11 +272,12 @@ The help file is the only one and its name is w10clk.htm.
 <p>
 <table style="border: 1px solid gray;" cellspacing=0>
 <tr>
-<td>
+<td style="padding:3px 2px;">
 ÂâÎîĂăȘșȚț ŞşŢţ  ÁáÉéÓóýú
 <span style="font-family:Tahoma,Verdana,Sans Serif;">А́а́Е́е́И́и́О́о́У́у́Ы́ы́Э́э́Ю́ю́Я́я́</span>
-ЄєІіЇїҐґ ⋅·∗• əʃʒßÞþ¦°™®©℃℉ ¢€£¥ƒ₪₴¤ ½⅓⅔¼¾⅛⅜⅝⅞<br>
-†‡…§¶¡¿‼–αβγµΩ—′&thinsp;″&thinsp;‴ ‹›‚‘’«»„“” ºª ¹²³ⁿ −±≤≥≠≈≡×÷⊕⊗∅∀∃∄∏∑∫∞√∂∆∇⊥∠∈∉ ♀♂ ↵←↑↓→⇒⇔
+ЄєІіЇїҐґ ⋅·∗•əʃʒßÞþ¦ºª°™®©℃℉ ¢€£¥ƒ₪₴¤ ½⅓⅔¼¾⅛⅜⅝⅞<br>
+†‡…§¶¡¿‼–<span class='X'>αβγδλµπ</span>Ω—′&thinsp;″&thinsp;‴‹›‚‘’«»„“”⟨&thinsp;⟩
+¹²³ⁿ−±≤≥≠≈≡×÷⊕⊗∅∀∃∄∏∑∫∞√∂∆∇∥⊥∠∈∉ ♀♂ ↵←↑↓→⇒⇔
 ♠♣♥♦♪♫ ◊∎█
 </td>
 </tr>
@@ -280,7 +290,7 @@ The help file is the only one and its name is w10clk.htm.
 and <a href="http://mas.orgfree.com/">all</a>.
 
 
-<!--                        a j lmn r vwx
+<!--                        a j ln r vwx
 TODO:
 
 time in exprssions!

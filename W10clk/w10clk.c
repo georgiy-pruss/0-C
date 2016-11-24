@@ -5,15 +5,14 @@
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO alarms; reminders; birthdays; time in expressions
-// TODO hourly chime; allow also colors in ini as #rrggbb
-// TODO draw circle? round window?
+// TODO switch two bg colors; alarms; reminders; birthdays; time in expressions
+// TODO hourly chime; round window?
 
 #define PROGRAM_NAME "Windows 10 Clock"
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.22 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.23 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -336,20 +335,20 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     break;
   case WM_KEYDOWN:
     if( wParam==VK_F1 ) show_help_file();
-    else if( wParam==VK_DELETE ) __
+    else if( wParam==VK_DELETE ) __ // del -- delete char at the beginning
       if( ndisp!=0 ) __
         memmove( disp, disp+1, ndisp-- ); // including '\0'
         InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _ _
     else if( pgmKind==K_EXE ) __ // change size/pos with arrows keys and Ctrl and Shift
       RECT r; GetWindowRect( hwnd, &r );
       #define SWP(x,y,cx,cy,f) SetWindowPos( hwnd, HWND_NOTOPMOST, x,y, cx,cy, f )
-      int a = GetAsyncKeyState( VK_SHIFT )==0 ? 1 : 10;
-      if( GetAsyncKeyState( VK_CONTROL )==0 ) __
-        if( wParam==VK_RIGHT ) SWP( r.left+a, r.top, 0, 0,   SWP_NOSIZE );
+      int a = GetAsyncKeyState( VK_SHIFT )==0 ? 1 : 10; // do more when Shift pressed
+      if( GetAsyncKeyState( VK_CONTROL )==0 ) __ // arrows = move
+        if( wParam==VK_RIGHT ) SWP( r.left+a, r.top,   0, 0, SWP_NOSIZE );
         if( wParam==VK_DOWN )  SWP( r.left,   r.top+a, 0, 0, SWP_NOSIZE );
-        if( wParam==VK_LEFT )  SWP( r.left-a, r.top, 0, 0,   SWP_NOSIZE );
+        if( wParam==VK_LEFT )  SWP( r.left-a, r.top,   0, 0, SWP_NOSIZE );
         if( wParam==VK_UP )    SWP( r.left,   r.top-a, 0, 0, SWP_NOSIZE ); _
-      else __ // with Ctrl+
+      else __ // with Ctrl+arrows = resize
         if( wParam==VK_RIGHT ) SWP( 0, 0, r.right-r.left+a, r.bottom-r.top,   SWP_NOMOVE );
         if( wParam==VK_DOWN )  SWP( 0, 0, r.right-r.left,   r.bottom-r.top+a, SWP_NOMOVE );
         if( wParam==VK_LEFT )  SWP( 0, 0, r.right-r.left-a, r.bottom-r.top,   SWP_NOMOVE );
@@ -378,6 +377,19 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     else if( wParam==9 ) __ // ctrl+i invert color changing direction
       clrIncr = -clrIncr;
       ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), clrIncr>0 ? "^" : "v" ); _
+    else if( wParam=='m' && pgmKind==K_EXE ) __ // maximize
+      static bool maximized = false; // maybe some other vars should be like this too
+      maximized = ! maximized;
+      static RECT r; static LONG style;
+      if( maximized ) __
+         GetWindowRect( hwnd, &r );
+         style = SetWindowLong(hwnd, GWL_STYLE, 0); // returns 0x14CC0000 -- visible, caption
+         ShowWindow(hwnd, SW_SHOWMAXIMIZED); _      //         clipsiblings, sizebox, sysmenu
+      else __ // restored to original size
+         ShowWindow(hwnd, SW_RESTORE);
+         SetWindowLong(hwnd, GWL_STYLE, style);
+         SetWindowPos( hwnd, g_ontop ? HWND_TOPMOST : HWND_NOTOPMOST,
+           r.left, r.top, r.right-r.left, r.bottom-r.top, SWP_FRAMECHANGED ); _ _
     else if( wParam=='b' ) __ // background
       if( ndisp!=0 && disp[0]=='#' ) __
         uint rgb; int k = sscanf( disp+1, "%X", &rgb );
