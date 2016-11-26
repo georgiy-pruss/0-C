@@ -4,27 +4,27 @@ When did it all start, plain win32 api? Without Forms, AFT, MFC... [Petzold](htt
 
 Now it includes:
 * full color and size customization
-* rectangular or cirle clockface
+* rectangular or circular clock face
 * optional second hand
 * optional time in caption (title) bar
-* all possible time and date calculations: operations with dates/days, time/seconds
-* unix time conversions, 1970 up to 2106
-* timezones, time in different timezone
 * stopwatch with breaks
-* calculator (+ - * / modulo power exp log ln lb combinatorics trigonometry etc)
+* time zones, current time in other time zones, your names for time zones
+* unix time conversions, years 1970 up to 2106
+* all possible time and date calculations: operations with dates/days, time/seconds
+* calculator (+ - * / modulo power roots exp log ln lb combinatorics trigonometry etc)
 * decimal/hexadcimal numbers
 * celsius/whatever awkward temperature scale that starts at 32
-* copy/paste with clipboard
-* color choice dialog always available for your convenience
-* change background color with that dialog or with keys
+* copy/paste (append) with clipboard
+* color choice dialog always easily available
+* change background color with the dialog or with keys
 * move window, resize window with arrows
 * maximize/restore size with just one key
-* show window size, i.e. it can serve as a tape measure
-* chime every hour or half-hour
+* show window size, use it as a simple 'tape measure' on screen
+* option to chime every hour or half-hour
 * clock screensaver
-* [detail documentation online](http://georgiy-pruss.github.io/w10clk.htm)
+* documentation on key F1 and [online](http://georgiy-pruss.github.io/w10clk.htm)
 
-It will include:
+It may include:
 * alarms
 * reminders
 * birthdays/anniversaries
