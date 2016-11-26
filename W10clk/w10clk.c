@@ -1,6 +1,6 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
 // compile with cygwin64 (-std=c11 is default):
-// gcc -O2 w10clk*.c w10clk_res.o -lgdi32 -lcomdlg32 -Wl,--subsystem,windows -o w10clk.exe
+// gcc -O2 w10clk*.c w10clk_res.o -lgdi32 -lcomdlg32 -lwinmm -Wl,--subsystem,windows -o w10clk.exe
 // with resource .o made from .rc (and .ico): windres w10clk_res.rc w10clk_res.o
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
@@ -325,11 +325,8 @@ LPCTSTR sV[] = { (LPCTSTR)"", (LPCTSTR)SND_ALIAS_SYSTEMDEFAULT, (LPCTSTR)SND_ALI
 char*
 prepare_sound( const char* s ) __
   if( s==NULL || strlen(s)<4 ) return strdup( "" );
-  char sc[] = ".";
   for( uint i=1; i<sizeof(sK)/sizeof(sK[0]); ++i )
-    if( strcasecmp( sK[i], s ) == 0 ) __
-      sc[0] = (char)i;
-      return strdup( sc ); _
+    if( STRIEQ( sK[i], s ) ) { char sc[2] = "."; sc[0] = (char)i; return strdup( sc ); }
   if( s[1]==':' && s[2]=='\\' ) return strdup( s ); // full path - no check
   char nm[MAX_PATH+20];
   strcpy( nm, pgmPath ); strcat( nm, s );
