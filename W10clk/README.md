@@ -1,14 +1,14 @@
 W10clk -- Windows 10 got rid of the windows gadgets, including the most important and popular of them -- the clock.
-I can't stand that. So I had to write my own program. It was really fun. Going back to the roots.
-When did it all start, plain win32 api? Without Forms, AFT, MFC... [Petzold](https://en.wikipedia.org/wiki/Charles_Petzold)... 20 years ago? 30? Yeah, it's like 25 years ago. But it's such fun now! :)
+I can't stand that. So I had to write my own program. It was real fun. Going back to the roots.
+When did it all start, plain win32 api? Without Forms, AFT, MFC... [Petzold](https://en.wikipedia.org/wiki/Charles_Petzold)... 20 years ago? 30? Yeah, it's like 25 years ago. But it's so much fun now! :)
 
-Now it includes:
+Now the program includes:
 * full color and size customization
 * rectangular or circular clock face
 * optional second hand
 * optional time in caption (title) bar
 * stopwatch with breaks
-* time zones, current time in other time zones, your names for time zones
+* time zones, current time in other time zones, customized names for time zones
 * unix time conversions, years 1970 up to 2106
 * all possible time and date calculations: operations with dates/days, time/seconds
 * calculator (+ - * / modulo power roots exp log ln lb combinatorics trigonometry etc)
