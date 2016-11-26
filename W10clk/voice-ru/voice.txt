@@ -1,0 +1,51 @@
+r00 rchasov rovno
+r01 rchas rovno
+r02 rchasa rovno
+r03 rchasa rovno
+r04 rchasa rovno
+r05 rchasov rovno
+r06 rchasov rovno
+r07 rchasov rovno
+r08 rchasov rovno
+r09 rchasov rovno
+r10 rchasov rovno
+r11 rchasov rovno
+r12 rchasov rovno
+r13 rchasov rovno
+r14 rchasov rovno
+r15 rchasov rovno
+r16 rchasov rovno
+r17 rchasov rovno
+r18 rchasov rovno
+r19 rchasov rovno
+r20 rchasov rovno
+r21 rchas rovno
+r22 rchasa rovno
+r23 rchasa rovno
+r00 rchasov r30 rminut
+r01 rchas r30 rminut
+r02 rchasa r30 rminut
+r03 rchasa r30 rminut
+r04 rchasa r30 rminut
+r05 rchasov r30 rminut
+r06 rchasov r30 rminut
+r07 rchasov r30 rminut
+r08 rchasov r30 rminut
+r09 rchasov r30 rminut
+r10 rchasov r30 rminut
+r11 rchasov r30 rminut
+r12 rchasov r30 rminut
+r13 rchasov r30 rminut
+r14 rchasov r30 rminut
+r15 rchasov r30 rminut
+r16 rchasov r30 rminut
+r17 rchasov r30 rminut
+r18 rchasov r30 rminut
+r19 rchasov r30 rminut
+r20 rchasov r30 rminut
+r21 rchas r30 rminut
+r22 rchasa r30 rminut
+r23 rchasa r30 rminut
+
+_________________
+the source of the files is Bellman-4.2.1.apk

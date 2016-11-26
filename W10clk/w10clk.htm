@@ -47,7 +47,7 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 </head>
 <body>
 
-<h1>W10clk - windows clock and more - v.1.27</h1>
+<h1>W10clk - windows clock and more - v.1.29</h1>
 
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
@@ -171,7 +171,7 @@ del    correct input (delete the character at the beginning)
 spc    clear display
 esc    clear display
 </pre>
-<!--     ^E tEst bEll, ^U tOO :)       a j lmn r vw            -->
+<!--     ^E tEst bEll, ^U tOO :)  ^F say time      a j lmn r vw          -->
 <hr>
 <pre>
 <a name="ced"></a>
@@ -234,8 +234,16 @@ So you can have different setting for different programs in one or several files
 ini file or suitable section inside it is not found, all the settings will have defaults.
 Colors can be written as three decimal colors r,g,b (values 0 to 255) or as hexadecimal value
 #rrggbb. Time zones are defined in tz setting, e.g.: tz=PST -8 GMT +0 CET +1 (the letter case
-doesn't matter, plus sign can be omitted, all is divided by blanks). Please read the ini file
-provided &mdash; it has short explanations for all settings.
+doesn't matter, plus sign can be omitted, all is divided by blanks). To set chime for every
+hour or half-hour, use options bell and halfbell. Their values can be 1) full path to the wav
+sound file (e.g. D:\Users\John\Music\tada.wav), 2) short name, like BigBen.wav -- it'll be
+searched first in the directory where w10clk was installed, and if not found, in directory
+C:\Windows\Media, 3) system sound, specified by one of words: Default, Asterisk, Welcome,
+Start, Exit, Question, Exclamation, Hand (case-insensitive). Also you can specify voice
+files for talking clock: option voice must set a directory with voice files (it's relative
+to the program directory). The voice directory must have file voice.txt, in which the first
+24 lines describe exact hours, the next 24 lines describe half-hours (see example).
+Please read the ini file provided &mdash; it has short explanations for all settings.
 </p>
 <h2>Appendix</h2>
 <p>Just for your convenience, some unit table and popular unicode symbols.</p>

@@ -1,0 +1,51 @@
+enowtime e00 epoint
+enowtime e01 epoint
+enowtime e02 epoint
+enowtime e03 epoint
+enowtime e04 epoint
+enowtime e05 epoint
+enowtime e06 epoint
+enowtime e07 epoint
+enowtime e08 epoint
+enowtime e09 epoint
+enowtime e10 epoint
+enowtime e11 epoint
+enowtime e12 epoint
+enowtime e13 epoint
+enowtime e14 epoint
+enowtime e15 epoint
+enowtime e16 epoint
+enowtime e17 epoint
+enowtime e18 epoint
+enowtime e19 epoint
+enowtime e20 epoint
+enowtime e21 epoint
+enowtime e22 epoint
+enowtime e23 epoint
+enowtime e00 e30
+enowtime e01 e30
+enowtime e02 e30
+enowtime e03 e30
+enowtime e04 e30
+enowtime e05 e30
+enowtime e06 e30
+enowtime e07 e30
+enowtime e08 e30
+enowtime e09 e30
+enowtime e10 e30
+enowtime e11 e30
+enowtime e12 e30
+enowtime e13 e30
+enowtime e14 e30
+enowtime e15 e30
+enowtime e16 e30
+enowtime e17 e30
+enowtime e18 e30
+enowtime e19 e30
+enowtime e20 e30
+enowtime e20 e01 e30
+enowtime e20 e02 e30
+enowtime e20 e03 e30
+
+_________________
+the source of the files is Bellman-4.2.1.apk

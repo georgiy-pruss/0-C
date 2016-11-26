@@ -6,13 +6,13 @@
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
 // TODO switch two bg colors; alarms; reminders; birthdays; time in expressions
-// TODO talking clock; round window; double-buffering; m - moon phase
+// TODO round window; double-buffering; m - moon phase
 
 #define PROGRAM_NAME "Windows 10 Clock"
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.27 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.29 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -44,24 +44,25 @@ int g_hhand_w; COLORREF g_hhand_rgb;
 int g_t_len, g_sh_len, g_mh_len, g_hh_len;
 int g_disp_x, g_disp_y; // display position, percents
 int g_corr_x, g_corr_y, g_corrnr_x, g_corrnr_y; // correction, also for non-resizable
-bool g_seconds,g_upd_title, g_resizable, g_ontop, g_circle, g_voice; // flags
+bool g_seconds,g_upd_title, g_resizable, g_ontop, g_circle; // flags
 char* g_timefmt = NULL; // strftime format of time in title
 char* g_tzlist = NULL;  // list of timezones, all in one string
 char* g_bell = NULL; char* g_hbell = NULL; // bell and halfbell sounds
-#define VOICE_DIR "voice"
-#define VOICE_FILE "voice.txt"
+char* g_voice_dir = NULL;
 
 enum ProgramKind { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
 char* pgmName = NULL; // short name of executable w/o extension
 char* pgmPath = NULL; // full path to the program, with ending backslash
 bool timeAnnounced = false;  // bell hit
-char** voiceLines = NULL; // 48 lines like { "xx.wav xy.wav", ..., "y.wav z.wav", NULL }
+#define VOICE_FILE "voice.txt"
+#define VOICE_LINES 48 // 24 lines for exact hours, then 24 lines for halves
+char** voiceLines = NULL; // from VOICE_FILE: { "xx.wav xy.wav", ..., "y.wav z.wav", NULL }
 
 void
 cleanup() __
   #define FREE(x) if(x) { free(x); x=NULL; }
   FREE( g_timefmt ); FREE( g_tzlist ); FREE( pgmName ); FREE( pgmPath );
-  FREE( g_bell ); FREE( g_hbell ); _
+  FREE( g_bell ); FREE( g_hbell ); FREE( g_voice_dir ); _
 
 bool
 get_pgm_name() __ // set pgmKind pgmName pgmPath
@@ -95,6 +96,7 @@ split_colors( COLORREF c, /* OUT */ uint* r, uint* g, uint* b ) __
   *r = c&0xFF; *g = (c&0xFF00)>>8; *b = (c&0xFF0000)>>16; _
 
 char* prepare_sound( const char* s );
+char** read_lines( const char* dir, const char* filename );
 
 bool
 read_ini_file( const char* fname, const char* divname ) __
@@ -149,13 +151,18 @@ read_ini_file( const char* fname, const char* divname ) __
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
   READINI("circle","no");           if( rc>1 ) g_circle = STRIEQ(s,"yes");
-  READINI("voice","no");            if( rc>1 ) g_voice = STRIEQ(s,"yes");
   READINI("timefmt","%T %a %m/%d"); if( rc>1 ) g_timefmt = strdup( s );
   READINI("tz","GMT +0 CET +1 EET +2"); // it's easier to always have something there
   if( rc>=3 ) __
     g_tzlist = (char*)malloc( rc+2 ); g_tzlist[0]=' '; strcpyupr( g_tzlist+1, s ); _
   READINI("bell","");               if( rc>1 ) g_bell = prepare_sound( s );
   READINI("halfbell","");           if( rc>1 ) g_hbell = prepare_sound( s );
+  READINI("voice","");
+  if( rc>1 ) __ // set g_voice_dir if file VOICE_FILE is readable there (and read it)
+    char* v = (char*)malloc( strlen(pgmPath)+rc+1+1 ); // "...path/voice/"
+    strcpy( v, pgmPath ); strcat( v, s ); strcat( v, "\\" );
+    voiceLines = read_lines( v, VOICE_FILE );
+    if( voiceLines==NULL ) free( v ); else g_voice_dir = v; _
   return access(p_n_e, F_OK)==0; _
 
 bool
@@ -322,15 +329,16 @@ copy_to_clipboard(HWND hwnd) __
     CloseClipboard(); _
 
 char**
-read_lines( const char* fnm ) __
+read_lines( const char* path, const char* nm ) __
+  if( path==NULL || strlen(path)+strlen(nm) > MAX_PATH-1 ) return NULL;
+  char fnm[MAX_PATH]; strcpy(fnm, path), strcat( fnm, nm );
   FILE* f = fopen( fnm, "rt" );
   if( !f ) return NULL;
-  const int LINES = 48;
-  char** a = (char**)malloc( (LINES+1)*sizeof(char*) );
-  for( int i=0; i<LINES+1; ++i )
+  char** a = (char**)malloc( (VOICE_LINES+1)*sizeof(char*) );
+  for( int i=0; i<VOICE_LINES+1; ++i )
     a[i] = NULL;
   char line[200];
-  for( int i=0; i<LINES && fgets(line, sizeof(line), f) != NULL; ++i ) __
+  for( int i=0; i<VOICE_LINES && fgets(line, sizeof(line), f) != NULL; ++i ) __
     int n = strlen(line);
     if( line[n-1] == '\n' )
       line[n-1] = 0;
@@ -340,16 +348,12 @@ read_lines( const char* fnm ) __
   return a; _
 
 void
-free_lines( char** a ) __
- for( int i=0; a[i]; ++i )
-   free( a[i] );
- free( a );  _
+free_lines( char** a ) { for( int i=0; a[i]; ++i ) free( a[i] ); free( a ); }
 
 void
-play_voice_file( const char* p, int l ) __ // file from voice directory
-  char nm[MAX_PATH];
-  strcpy( nm, pgmPath ); strcat( nm, VOICE_DIR "\\" ); int len = strlen(nm);
-  memcpy( nm+len, p, l ); nm[ len+l ] = 0;
+play_voice_file( const char* w, int l ) __ // file from g_voice_dir directory
+  char nm[MAX_PATH]; int gv_len = strlen(g_voice_dir);
+  memcpy( nm, g_voice_dir, gv_len ); memcpy( nm+gv_len, w, l ); memcpy( nm+gv_len+l, ".wav", 5 );
   PlaySound( nm, NULL, SND_FILENAME ); _
 
 void
@@ -358,10 +362,10 @@ play_voice( time_t t ) __ // play all "words" from corresponding line
   struct tm* tmptr = localtime(&t);
   int h = tmptr->tm_hour; // 0..23
   if( tmptr->tm_min >= 30 ) h+=24; // 0..23, 24..47
-  char* v = voiceLines[h];
-  for( int n = strspn( v, " " );; ) __ // first skip leading blanks if any
-    v += n; n = strcspn( v, " " ); play_voice_file( v, n ); // in pgmPath + VOICE_DIR
-    v += n; n = strspn( v, " " ); if( n==0 ) break; _ _
+  char* w = voiceLines[h];
+  for( int n = strspn( w, " " );; ) __ // first skip leading blanks if any
+    w += n; n = strcspn( w, " " ); play_voice_file( w, n ); // in dir g_voice_dir
+    w += n; n = strspn( w, " " ); if( n==0 ) break; _ _
 
 const char* sK[] = {"","Default","Asterisk","Welcome","Start","Exit","Question","Exclamation","Hand"};
 LPCTSTR sV[] = { (LPCTSTR)"", (LPCTSTR)SND_ALIAS_SYSTEMDEFAULT, (LPCTSTR)SND_ALIAS_SYSTEMASTERISK,
@@ -403,8 +407,6 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 ) // tick every second
       MessageBox(hwnd, "Could not set timer!", "Error", MB_OK | MB_ICONEXCLAMATION);
     init_tools(true);
-    if( g_voice ) voiceLines = read_lines( VOICE_DIR "\\" VOICE_FILE );
-    if( voiceLines==NULL ) g_voice = false;
     break;
   case WM_SIZE: // WM_PAINT will be sent as well
     GetClientRect(hwnd, &rcClient); // left = top = 0
@@ -416,7 +418,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     if( g_bell || g_hbell ) __
       if( t%1800<25 ) __ // time to chime?
         if( !timeAnnounced ) __
-          play_sound( t%3600<25 ? g_bell : g_hbell, g_voice ? t : 0 );
+          play_sound( t%3600<25 ? g_bell : g_hbell, g_voice_dir ? t : 0 );
           timeAnnounced = true; _ _
       else timeAnnounced = false; _
     break; _
