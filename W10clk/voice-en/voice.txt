@@ -19,9 +19,9 @@ enowtime e17 epoint
 enowtime e18 epoint
 enowtime e19 epoint
 enowtime e20 epoint
-enowtime e21 epoint
-enowtime e22 epoint
-enowtime e23 epoint
+enowtime e20 e01 epoint
+enowtime e20 e02 epoint
+enowtime e20 e03 epoint
 enowtime e00 e30
 enowtime e01 e30
 enowtime e02 e30

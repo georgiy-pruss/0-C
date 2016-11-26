@@ -1,5 +1,5 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
-// compile with cygwin64 (-std=c11 is default):
+// compile with cygwin64 (-std=c11 is default) (-O gains 1.5kB over -O2):
 // gcc -O w10clk*.c w10clk_res.o -lgdi32 -lcomdlg32 -lwinmm -Wl,--subsystem,windows -o w10clk.exe
 // with resource .o made from .rc (and .ico): windres w10clk_res.rc w10clk_res.o
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
