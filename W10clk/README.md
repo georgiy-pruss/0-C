@@ -21,6 +21,7 @@ Now it includes:
 * maximize/restore size with just one key
 * show window size, use it as a simple 'tape measure' on screen
 * option to chime every hour or half-hour
+* option to say time aloud every hour or half-hour
 * clock screensaver
 * documentation on key F1 and [online](http://georgiy-pruss.github.io/w10clk.htm)
 
