@@ -12,7 +12,7 @@
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.24 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.25 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -91,6 +91,8 @@ void
 split_colors( COLORREF c, /* OUT */ uint* r, uint* g, uint* b ) __
   *r = c&0xFF; *g = (c&0xFF00)>>8; *b = (c&0xFF0000)>>16; _
 
+char* prepare_sound( const char* s );
+
 bool
 read_ini_file( const char* fname, const char* divname ) __
   char p_n_e[MAX_PATH]; strcpy(p_n_e,pgmPath); strcat(p_n_e,fname); strcat(p_n_e,".ini");
@@ -148,8 +150,8 @@ read_ini_file( const char* fname, const char* divname ) __
   READINI("tz","GMT +0 CET +1 EET +2"); // it's easier to always have something there
   if( rc>=3 ) __
     g_tzlist = (char*)malloc( rc+2 ); g_tzlist[0]=' '; strcpyupr( g_tzlist+1, s ); _
-  READINI("bell","");               if( rc>1 ) g_bell = strdup( s );
-  READINI("halfbell","");           if( rc>1 ) g_hbell = strdup( s );
+  READINI("bell","");               if( rc>1 ) g_bell = prepare_sound( s );
+  READINI("halfbell","");           if( rc>1 ) g_hbell = prepare_sound( s );
   return access(p_n_e, F_OK)==0; _
 
 bool
@@ -314,26 +316,36 @@ copy_to_clipboard(HWND hwnd) __
   else
     CloseClipboard(); _
 
-void
-play_sound( const char* s ) __
-  if( s==NULL || strlen(s)<4 ) return;
-  // define, load, play resource
-  // https://msdn.microsoft.com/en-us/library/windows/desktop/dd743679(v=vs.85).aspx
-  const char* sk[] = {"Default","Asterisk","Welcome","Start","Exit", "Question","Exclamation","Hand"};
-  LPCTSTR sv[] = { (LPCTSTR)SND_ALIAS_SYSTEMDEFAULT, (LPCTSTR)SND_ALIAS_SYSTEMASTERISK,
-    (LPCTSTR)SND_ALIAS_SYSTEMWELCOME, (LPCTSTR)SND_ALIAS_SYSTEMSTART, (LPCTSTR)SND_ALIAS_SYSTEMEXIT,
-    (LPCTSTR)SND_ALIAS_SYSTEMQUESTION, (LPCTSTR)SND_ALIAS_SYSTEMEXCLAMATION,
-    (LPCTSTR)SND_ALIAS_SYSTEMHAND };
-  for( uint i=0; i<sizeof(sk)/sizeof(sk[0]); ++i )
-    if( strcasecmp( sk[i], s ) == 0 ) __
-      PlaySound( sv[i], NULL, SND_ASYNC|SND_ALIAS_ID ); return; _
+const char* sK[] = {"","Default","Asterisk","Welcome","Start","Exit","Question","Exclamation","Hand"};
+LPCTSTR sV[] = { (LPCTSTR)"", (LPCTSTR)SND_ALIAS_SYSTEMDEFAULT, (LPCTSTR)SND_ALIAS_SYSTEMASTERISK,
+  (LPCTSTR)SND_ALIAS_SYSTEMWELCOME, (LPCTSTR)SND_ALIAS_SYSTEMSTART, (LPCTSTR)SND_ALIAS_SYSTEMEXIT,
+  (LPCTSTR)SND_ALIAS_SYSTEMQUESTION, (LPCTSTR)SND_ALIAS_SYSTEMEXCLAMATION,
+  (LPCTSTR)SND_ALIAS_SYSTEMHAND };
+
+char*
+prepare_sound( const char* s ) __
+  if( s==NULL || strlen(s)<4 ) return strdup( "" );
+  char sc[] = ".";
+  for( uint i=1; i<sizeof(sK)/sizeof(sK[0]); ++i )
+    if( strcasecmp( sK[i], s ) == 0 ) __
+      sc[0] = (char)i;
+      return strdup( sc ); _
+  if( s[1]==':' && s[2]=='\\' ) return strdup( s ); // full path - no check
   char nm[MAX_PATH+20];
   strcpy( nm, pgmPath ); strcat( nm, s );
-  if( access( nm, F_OK )==0 ) __
-    PlaySound( nm, NULL, SND_ASYNC|SND_FILENAME ); return; _
-  strcpy( nm, getenv("SystemRoot") ); strcat( nm, "\\Media\\" ); strcat( nm, s );
-  if( access( nm, F_OK )==0 ) __
-    PlaySound( nm, NULL, SND_ASYNC|SND_FILENAME ); _ _
+  if( access( nm, F_OK )==0 ) return strdup( nm );
+  strcpy( nm, "C:\\Windows\\Media\\" ); strcat( nm, s );
+  if( access( nm, F_OK )==0 ) return strdup( nm );
+  return strdup( "" ); _
+
+void
+play_sound( const char* s ) __
+  if( 0<s[0] && s[0]<sizeof(sV)/sizeof(sV[0]) )
+    PlaySound( sV[s[0]], NULL, SND_ASYNC|SND_ALIAS_ID );
+  else
+    PlaySound( s, NULL, SND_ASYNC|SND_FILENAME ); _
+  // see also: define, load, play resource
+  // https://msdn.microsoft.com/en-us/library/windows/desktop/dd743679(v=vs.85).aspx
 
 // Main Window Event Handler
 LRESULT CALLBACK
@@ -351,7 +363,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     if( g_upd_title ) update_title(hwnd,NULL,t); // update caption every tick
     if( g_seconds || t%10==0 )   // but window - every 10 s if w/o sec.hand
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
-    if( t%1800<25 ) __ // bell?
+    if( t%1800<25 ) __ // time to chime?
       if( !timeAnnounced ) { play_sound( t%3600<25 ? g_bell : g_hbell ); timeAnnounced = true; } _
     else timeAnnounced = false;
     break; _
@@ -457,6 +469,8 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       MessageBox( hwnd, msg, "Window 10 clock -- dimensions", MB_OK ); _
     else if( wParam=='q' ) // quit
       PostMessage(hwnd,WM_CLOSE,0,0);
+    else if( wParam==5 ) play_sound( g_bell ); // test sound ^E
+    else if( wParam==6 ) play_sound( g_hbell ); // test sound ^F
     else
       ndisp = process_char( (uint)wParam, disp, sizeof(disp)-1, ndisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
