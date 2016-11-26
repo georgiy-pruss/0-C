@@ -47,7 +47,7 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 </head>
 <body>
 
-<h1>W10clk - windows clock and more - v.1.25</h1>
+<h1>W10clk - windows clock and more - v.1.27</h1>
 
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
@@ -290,7 +290,7 @@ provided &mdash; it has short explanations for all settings.
 <a href="http://mas.orgfree.com/cvt.htm">unit converter</a> |
 <a href="http://mas.orgfree.com/currency.htm">currency converter</a>
 and <a href="http://mas.orgfree.com/">all</a>.
-
+</p>
 
 <!--
 TODO:
@@ -298,19 +298,18 @@ TODO:
 time in exprssions!
 
 V:expr assign to variable; v - use variable (not saved between sessions!)
+       or maybe expr:var
        e.g. P:o1, then R:30; then 2*P*R hm, maybe add there ';' - e1;e2;e3
 
 timer: HHMMt - set timer, 0t - reset timer (HHMM can be M, MM, HMM, HHMM) - no
+
+l      lap time (time since start or last lap time)
 
 a      show alarm
 +a -a  turn on/off
 HHMMa  set alarm; can be also HHMM WWWWWWWa for weekdays 0-6; file w10clk.mp3
        [T]
        alarm=HHMM
-
-NAMEz  current time in named TZ (uppercase!)
-       [T]
-       tz=NAME1 TZ1 NAME2 TZ2
 
 reminders:
        [T]
@@ -324,12 +323,9 @@ dates:
        d2=M/D msg
        ...
 
-|&amp;~&lt;&gt;  64-bit unsigned integers (or and xor (also not) shl shr)
-<     push as 1st argument
-x     exchange 1st argument and display
-! @   save value; restore value
-;     sequence of exprs
-l     lap time (time since start or last lap time)
+!     save value (local memory) - interactive
+@     restore value - in expression
+;     sequence of expr[:var] ; ...
 
 -->
 
