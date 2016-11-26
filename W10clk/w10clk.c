@@ -1,6 +1,6 @@
 // Windows 10 Clock - Copyright (C) Georgy Pruss 2016
 // compile with cygwin64 (-std=c11 is default):
-// gcc -O2 w10clk*.c w10clk_res.o -lgdi32 -lcomdlg32 -lwinmm -Wl,--subsystem,windows -o w10clk.exe
+// gcc -O w10clk*.c w10clk_res.o -lgdi32 -lcomdlg32 -lwinmm -Wl,--subsystem,windows -o w10clk.exe
 // with resource .o made from .rc (and .ico): windres w10clk_res.rc w10clk_res.o
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
@@ -44,15 +44,18 @@ int g_hhand_w; COLORREF g_hhand_rgb;
 int g_t_len, g_sh_len, g_mh_len, g_hh_len;
 int g_disp_x, g_disp_y; // display position, percents
 int g_corr_x, g_corr_y, g_corrnr_x, g_corrnr_y; // correction, also for non-resizable
-bool g_seconds,g_upd_title, g_resizable, g_ontop, g_circle; // flags
+bool g_seconds,g_upd_title, g_resizable, g_ontop, g_circle, g_voice; // flags
 char* g_timefmt = NULL; // strftime format of time in title
 char* g_tzlist = NULL;  // list of timezones, all in one string
 char* g_bell = NULL; char* g_hbell = NULL; // bell and halfbell sounds
+#define VOICE_DIR "voice"
+#define VOICE_FILE "voice.txt"
 
 enum ProgramKind { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
 char* pgmName = NULL; // short name of executable w/o extension
 char* pgmPath = NULL; // full path to the program, with ending backslash
 bool timeAnnounced = false;  // bell hit
+char** voiceLines = NULL; // 48 lines like { "xx.wav xy.wav", ..., "y.wav z.wav", NULL }
 
 void
 cleanup() __
@@ -146,6 +149,7 @@ read_ini_file( const char* fname, const char* divname ) __
   READINI("resizable","yes");       if( rc>1 ) g_resizable = STRIEQ(s,"yes");
   READINI("ontop","no");            if( rc>1 ) g_ontop = STRIEQ(s,"yes");
   READINI("circle","no");           if( rc>1 ) g_circle = STRIEQ(s,"yes");
+  READINI("voice","no");            if( rc>1 ) g_voice = STRIEQ(s,"yes");
   READINI("timefmt","%T %a %m/%d"); if( rc>1 ) g_timefmt = strdup( s );
   READINI("tz","GMT +0 CET +1 EET +2"); // it's easier to always have something there
   if( rc>=3 ) __
@@ -317,6 +321,48 @@ copy_to_clipboard(HWND hwnd) __
   else
     CloseClipboard(); _
 
+char**
+read_lines( const char* fnm ) __
+  FILE* f = fopen( fnm, "rt" );
+  if( !f ) return NULL;
+  const int LINES = 48;
+  char** a = (char**)malloc( (LINES+1)*sizeof(char*) );
+  for( int i=0; i<LINES+1; ++i )
+    a[i] = NULL;
+  char line[200];
+  for( int i=0; i<LINES && fgets(line, sizeof(line), f) != NULL; ++i ) __
+    int n = strlen(line);
+    if( line[n-1] == '\n' )
+      line[n-1] = 0;
+    char* s = strdup( line );
+    a[i] = s; _
+  fclose( f );
+  return a; _
+
+void
+free_lines( char** a ) __
+ for( int i=0; a[i]; ++i )
+   free( a[i] );
+ free( a );  _
+
+void
+play_voice_file( const char* p, int l ) __ // file from voice directory
+  char nm[MAX_PATH];
+  strcpy( nm, pgmPath ); strcat( nm, VOICE_DIR "\\" ); int len = strlen(nm);
+  memcpy( nm+len, p, l ); nm[ len+l ] = 0;
+  PlaySound( nm, NULL, SND_FILENAME ); _
+
+void
+play_voice( time_t t ) __ // play all "words" from corresponding line
+  if( !voiceLines ) return;
+  struct tm* tmptr = localtime(&t);
+  int h = tmptr->tm_hour; // 0..23
+  if( tmptr->tm_min >= 30 ) h+=24; // 0..23, 24..47
+  char* v = voiceLines[h];
+  for( int n = strspn( v, " " );; ) __ // first skip leading blanks if any
+    v += n; n = strcspn( v, " " ); play_voice_file( v, n ); // in pgmPath + VOICE_DIR
+    v += n; n = strspn( v, " " ); if( n==0 ) break; _ _
+
 const char* sK[] = {"","Default","Asterisk","Welcome","Start","Exit","Question","Exclamation","Hand"};
 LPCTSTR sV[] = { (LPCTSTR)"", (LPCTSTR)SND_ALIAS_SYSTEMDEFAULT, (LPCTSTR)SND_ALIAS_SYSTEMASTERISK,
   (LPCTSTR)SND_ALIAS_SYSTEMWELCOME, (LPCTSTR)SND_ALIAS_SYSTEMSTART, (LPCTSTR)SND_ALIAS_SYSTEMEXIT,
@@ -337,14 +383,17 @@ prepare_sound( const char* s ) __
   return strdup( "" ); _
 
 void
-play_sound( const char* s ) __
+play_sound( const char* s, time_t t ) __ // if t!=0, say it
   if( s==NULL || s[0]==0 ) return;
+  uint sync = t ? 0 : SND_ASYNC;
   if( s[0] < sizeof(sV)/sizeof(sV[0]) )
-    PlaySound( sV[s[0]], NULL, SND_ASYNC|SND_ALIAS_ID );
+    // see also: define, load, play resource
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/dd743679(v=vs.85).aspx
+    PlaySound( sV[s[0]], NULL, sync|SND_ALIAS_ID );
   else
-    PlaySound( s, NULL, SND_ASYNC|SND_FILENAME ); _
-  // see also: define, load, play resource
-  // https://msdn.microsoft.com/en-us/library/windows/desktop/dd743679(v=vs.85).aspx
+    PlaySound( s, NULL, sync|SND_FILENAME );
+  if( t )
+    play_voice( t ); _
 
 // Main Window Event Handler
 LRESULT CALLBACK
@@ -354,6 +403,8 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 ) // tick every second
       MessageBox(hwnd, "Could not set timer!", "Error", MB_OK | MB_ICONEXCLAMATION);
     init_tools(true);
+    if( g_voice ) voiceLines = read_lines( VOICE_DIR "\\" VOICE_FILE );
+    if( voiceLines==NULL ) g_voice = false;
     break;
   case WM_SIZE: // WM_PAINT will be sent as well
     GetClientRect(hwnd, &rcClient); // left = top = 0
@@ -364,7 +415,9 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
     if( g_bell || g_hbell ) __
       if( t%1800<25 ) __ // time to chime?
-        if( !timeAnnounced ) { play_sound( t%3600<25 ? g_bell : g_hbell ); timeAnnounced = true; } _
+        if( !timeAnnounced ) __
+          play_sound( t%3600<25 ? g_bell : g_hbell, g_voice ? t : 0 );
+          timeAnnounced = true; _ _
       else timeAnnounced = false; _
     break; _
   case WM_PAINT: // Window needs update for whatever reason
@@ -469,8 +522,9 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       MessageBox( hwnd, msg, "Window 10 clock -- dimensions", MB_OK ); _
     else if( wParam=='q' ) // quit
       PostMessage(hwnd,WM_CLOSE,0,0);
-    else if( wParam==5 ) play_sound( g_bell );   // test sound ^E
-    else if( wParam==21 ) play_sound( g_hbell ); // test sound ^U
+    else if( wParam==5 )  play_sound( g_bell, 0 );  // test sound ^E
+    else if( wParam==21 ) play_sound( g_hbell, 0 ); // test sound ^U
+    else if( wParam==6 )  play_voice( time(NULL) ); // test voice ^F
     else
       ndisp = process_char( (uint)wParam, disp, sizeof(disp)-1, ndisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
@@ -482,6 +536,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     KillTimer(hwnd, ID_TIMER);
     kill_tools(true);
     cleanup();
+    free_lines(voiceLines);
     PostQuitMessage(0);
   default:
     return DefWindowProc(hwnd,message,wParam,lParam); _
