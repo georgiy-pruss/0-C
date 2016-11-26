@@ -6,13 +6,13 @@
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
 // TODO switch two bg colors; alarms; reminders; birthdays; time in expressions
-// TODO hourly chime; round window?
+// TODO talking clock; round window; double-buffering
 
 #define PROGRAM_NAME "Windows 10 Clock"
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.25 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.26 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -45,8 +45,8 @@ int g_t_len, g_sh_len, g_mh_len, g_hh_len;
 int g_disp_x, g_disp_y; // display position, percents
 int g_corr_x, g_corr_y, g_corrnr_x, g_corrnr_y; // correction, also for non-resizable
 bool g_seconds,g_upd_title, g_resizable, g_ontop, g_circle; // flags
-char* g_timefmt = NULL;    // strftime format of time in title
-char* g_tzlist = NULL;
+char* g_timefmt = NULL; // strftime format of time in title
+char* g_tzlist = NULL;  // list of timezones, all in one string
 char* g_bell = NULL; char* g_hbell = NULL; // bell and halfbell sounds
 
 enum ProgramKind { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
@@ -210,13 +210,14 @@ double cosd(double x) { return cos(x*M_PI/180); }
 
 void
 draw_clock(HDC hdc,int halfw, int halfh) __
+  // draw clock face and ticks
   if( g_tick_w == 0 ) return;
   if( g_circle ) __
+    int m = min(rcClient.right, rcClient.bottom); // min size
+    int dx = (rcClient.right - m) / 2, dy = (rcClient.bottom - m) / 2;
     SelectObject(hdc, hbrBG);
-    SelectObject(hdc, hbgPen2);
-    Ellipse(hdc, 0,0, rcClient.right, rcClient.bottom);
-    SelectObject(hdc, hbgPen);
-    Ellipse(hdc, 1,1, rcClient.right-1, rcClient.bottom-1); _
+    SelectObject(hdc, hbgPen2); Ellipse(hdc, dx,dy, m+dx,m+dy);
+    SelectObject(hdc, hbgPen);  Ellipse(hdc, dx+1,dy+1, m+dx-1,m+dy-1); _
   else __ // rectangular
     SetBkMode(hdc, OPAQUE);
     FillRect(hdc, &rcClient, hbrBG); _ // need to clean old hands, sorry
@@ -235,10 +236,10 @@ draw_clock(HDC hdc,int halfw, int halfh) __
 
 void
 update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr) __
+  // draw arrows
   int s = tmptr->tm_sec;
   int m = tmptr->tm_min;
-  int h = tmptr->tm_hour;
-  if( h>12 ) h -= 12;
+  int h = tmptr->tm_hour % 12;
 
   double angle_sec = 270.0 + (s*6.0);
   double angle_min = 270.0 + (m*6.0 + s*0.1);
@@ -325,7 +326,7 @@ LPCTSTR sV[] = { (LPCTSTR)"", (LPCTSTR)SND_ALIAS_SYSTEMDEFAULT, (LPCTSTR)SND_ALI
 char*
 prepare_sound( const char* s ) __
   if( s==NULL || strlen(s)<4 ) return strdup( "" );
-  for( uint i=1; i<sizeof(sK)/sizeof(sK[0]); ++i )
+  for( uint i=1; i < sizeof(sK)/sizeof(sK[0]); ++i )
     if( STRIEQ( sK[i], s ) ) { char sc[2] = "."; sc[0] = (char)i; return strdup( sc ); }
   if( s[1]==':' && s[2]=='\\' ) return strdup( s ); // full path - no check
   char nm[MAX_PATH+20];
@@ -337,7 +338,8 @@ prepare_sound( const char* s ) __
 
 void
 play_sound( const char* s ) __
-  if( 0<s[0] && s[0]<sizeof(sV)/sizeof(sV[0]) )
+  if( s==NULL || s[0]==0 ) return;
+  if( s[0] < sizeof(sV)/sizeof(sV[0]) )
     PlaySound( sV[s[0]], NULL, SND_ASYNC|SND_ALIAS_ID );
   else
     PlaySound( s, NULL, SND_ASYNC|SND_FILENAME ); _
@@ -360,9 +362,10 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     if( g_upd_title ) update_title(hwnd,NULL,t); // update caption every tick
     if( g_seconds || t%10==0 )   // but window - every 10 s if w/o sec.hand
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
-    if( t%1800<25 ) __ // time to chime?
-      if( !timeAnnounced ) { play_sound( t%3600<25 ? g_bell : g_hbell ); timeAnnounced = true; } _
-    else timeAnnounced = false;
+    if( g_bell || g_hbell ) __
+      if( t%1800<25 ) __ // time to chime?
+        if( !timeAnnounced ) { play_sound( t%3600<25 ? g_bell : g_hbell ); timeAnnounced = true; } _
+      else timeAnnounced = false; _
     break; _
   case WM_PAINT: // Window needs update for whatever reason
     redraw_window(hwnd);
@@ -416,7 +419,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     else if( wParam==9 ) __ // ctrl+i invert color changing direction
       clrIncr = -clrIncr;
       ndisp = sprintf( disp, "#%06X %s", (uint)swap_colors(g_bgcolor), clrIncr>0 ? "^" : "v" ); _
-    else if( wParam=='m' && pgmKind==K_EXE ) __ // maximize
+    else if( wParam=='x' && pgmKind==K_EXE ) __ // maximize
       static bool maximized = false; // maybe some other vars should be like this too
       maximized = ! maximized;
       static RECT r; static LONG style;
@@ -466,8 +469,8 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       MessageBox( hwnd, msg, "Window 10 clock -- dimensions", MB_OK ); _
     else if( wParam=='q' ) // quit
       PostMessage(hwnd,WM_CLOSE,0,0);
-    else if( wParam==5 ) play_sound( g_bell ); // test sound ^E
-    else if( wParam==6 ) play_sound( g_hbell ); // test sound ^F
+    else if( wParam==5 ) play_sound( g_bell );   // test sound ^E
+    else if( wParam==21 ) play_sound( g_hbell ); // test sound ^U
     else
       ndisp = process_char( (uint)wParam, disp, sizeof(disp)-1, ndisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
