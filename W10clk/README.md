@@ -17,7 +17,9 @@ Now it includes:
 * color choice dialog always available for your convenience
 * change background color with that dialog or with keys
 * move window, resize window with arrows
+* maximize/restore size with just one key
 * show window size, i.e. it can serve as a tape measure
+* chime every hour or half-hour
 * clock screensaver
 
 It will include:
