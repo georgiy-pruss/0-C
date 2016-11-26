@@ -10,7 +10,9 @@
   td.U { color:#000080; background-color:#FFFFC0; text-align:left;
     padding-left: 4px; padding-right: 5px; }
   td.U:not(:first-child) { border-left: 1px solid gray; }
-  .X { font-family: Arial,Consolas,Calibri,Lucida Console,Times New Roman,Times; }
+  .G { font-family: Arial,Consolas,Calibri,Lucida Console,Times New Roman,Times; }
+  .X { font-family: Bell MT,Palatino Linotype,Times New Roman,cursive; font-style: italic;
+    font-size: 120%; }
 </style>
 
 <!-- CALENDAR -->
@@ -45,7 +47,7 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 </head>
 <body>
 
-<h1>W10clk - windows clock and more - v.1.23</h1>
+<h1>W10clk - windows clock and more - v.1.24</h1>
 
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
@@ -101,7 +103,7 @@ z      current time zone as &plusmn;H or &plusmn;HMM, e.g. -8 or +545 (Nepal); t
 
 <span class=R>N</span>c     convert &deg;Celsius to &deg;Farenheit, e.g. 100c --&gt; 212.0
 <span class=R>N</span>f     convert &deg;Farenheit to &deg;Celsius, e.g. 98f --&gt; 36.7
-<span class=R>N</span>k     convert <a href="https://en.wikipedia.org/wiki/Binary_prefix">KiB</a> to kB (twice, kk &mdash; MiB to MB; kkk &mdash; GiB to GB; etc.)
+<span class=R>N</span>k     convert <a href="https://en.wikipedia.org/wiki/Binary_prefix">KiB</a> to kB (twice, i.e. kk &mdash; MiB to MB; kkk &mdash; GiB to GB; etc.)
 
 s      start stopwatch (actually just remember the moment of start)
 e      elapsed since start, also can show break time and work time
@@ -188,13 +190,15 @@ Extract files w10clk.exe, w10clk.htm and w10clk.ini from
 <a href="http://mas.orgfree.com/W10clk.zip">w10clk.zip</a> to some directory. For example, to
 C:\Program Files\W10clock. Also w10clk needs cygwin-64 run-time library, cygwin1.dll. If
 you don't have it in your computer, download that file too (from cygwin site or from
-<a href="http://mas.orgfree.com/cygwin1_dll.zip">this archive</a>) and put it together with
+<a href="http://mas.orgfree.com/cygwin1_dll.zip">this archive</a>) and put it together with the
 other w10clk files. You can have several clock programs &mdash; in different directories or in
 the same directory with different names. The matter is that the exe file looks for its ini
 file using its name. So for example, you can have the main clock with the files named
-w10clk.* and screensaver with names w10clkss.*. Create a shortcut to the main program (drag-and-drop
+w10clk.* and screensaver with names w10clkss.*. Also you can have sections for different
+instances in the same ini file (see below in Configuration).
+Create a shortcut to the main program (e.g. drag-and-drop
 w10clk.exe to your desktop with the right button, choose 'create shortcut', move it to the
-start menu if you wish). You can make it to start automatically when Windows starts, using
+start menu if you wish). You can make it start automatically when the Windows starts, using
 the registry or scheduler (more detail to follow). For setting up the screensaver, continue reading.
 </p>
 <h2>Screensaver</h2>
@@ -203,7 +207,6 @@ You can also set up the program as a screensaver. Copy the executable to some ot
 with extension .scr, e.g. w10clkss.scr. Copy or create config file for it, it
 must be named after the scr file, in our case &mdash; w10clkss.ini. For example:</p>
 <pre>[window]
-xywh=0,0,100,100    ; doesn't matter actually, it will be fullscreen anyway
 bg=0,0,0            ; good choice
 ticks=12,80,80,80   ; make ticks and hands thick
 shand=6,80,80,80
@@ -231,7 +234,8 @@ So you can have different setting for different programs in one or several files
 ini file or suitable section inside it is not found, all the settings will have defaults.
 Colors can be written as three decimal colors r,g,b (values 0 to 255) or as hexadecimal value
 #rrggbb. Time zones are defined in tz setting, e.g.: tz=PST -8 GMT +0 CET +1 (the letter case
-doesn't matter, plus sign can be omitted, all is divided by blanks).
+doesn't matter, plus sign can be omitted, all is divided by blanks). Please read the ini file
+provided &mdash; it has short explanations for all settings.
 </p>
 <p>
 The help file is the only one and its name is w10clk.htm.
@@ -252,20 +256,21 @@ The help file is the only one and its name is w10clk.htm.
     <td class='U'>Foot (ft)</td><td>30.48 cm</td>
     <td class='U'>Pound&nbsp;(lb)</td><td>0.453592 kg</td>
     <td class='U'>Pint&nbsp;(pt)</td><td title="1/2 US quart">0.473176 &#8467;</td>
-    <td class='U'>Light-year&nbsp;(ly)</td><td>9.46073e15 m</td>
+    <td class='U'>Light-year&nbsp;(ly)</td><td>9.46073<i><small>e</small></i>15 m</td>
   </tr>
   <tr>
     <td class='U'>Yard (yd)</td><td>91.44 cm</td>
     <td class='U'>Sq.ft&nbsp;(ft&sup2;)</td><td>0.092903 m&sup2;</td>
     <td class='U'>Quart&nbsp;(qt)</td><td title="1/4 US gal">0.946351 &#8467;</td>
-    <td class='U'>...</td><td>...</td>
+    <td class='U'>Speed of light</td><td>299792458 m/s</td>
   </tr>
   <tr>
     <td class='U'>Mile&nbsp;(mi)</td><td>1.609344 km</td>
-    <td class='U'>Naut.mile</td><td>1.852 km</td>
+    <td class='U'>Naut. mile</td><td>1.852 km</td>
     <td class='U'>Gallon&nbsp;(gal)</td><td
       title="US gal = 231 cubic inches; imperial gal = 4.54609 l">3.785412 &#8467;</td>
-    <td class='U'>...</td><td>...</td>
+    <td class='U'>MpG ↔ &#8467;/100km</td><td>235.21458 /
+      <span class='X'>x</span></td>
   </tr>
 </table>
 </p>
@@ -275,9 +280,9 @@ The help file is the only one and its name is w10clk.htm.
 <td style="padding:3px 2px;">
 ÂâÎîĂăȘșȚț ŞşŢţ  ÁáÉéÓóýú
 <span style="font-family:Tahoma,Verdana,Sans Serif;">А́а́Е́е́И́и́О́о́У́у́Ы́ы́Э́э́Ю́ю́Я́я́</span>
-ЄєІіЇїҐґ ⋅·∗•əʃʒöüßÞþ¦ºª°™®©℃℉Ω ¢€£¥ƒ₪₴¤ ½⅓⅔¼¾⅛⅜⅝⅞<br>
-†‡…§¶¡¿‼–<span class='X'>αβγδλπω</span>µ—′&thinsp;″&thinsp;‴⟨&thinsp;⟩‚‘’‹›„“”«»
-¹²³ⁿ−±≤≥≠≈≡×÷⊕⊗∅∀∃∄∏∑∫∞√∂∆∇∥⊥∠∈∉ ♀♂ ↵←↑↓→⇒⇔
+ЄєІіЇїҐґ ⋅·∗•əʃʒöüßÞþ¦ºª™®©℃℉°Ω ¢€£¥ƒ₪₴¤ ½⅓⅔¼¾⅛⅜⅝⅞<br>
+<span class='G'>αβγδλπω</span>µ—†‡…§¶¡¿‼–‚‘’‹›„“”«»
+′&thinsp;″&thinsp;‴⟨&thinsp;⟩−±≤≥≠≈≡×÷⊕⊗∅∀∃∄∏∑∫∞√∂∆∇∥⊥∠∈∉¹²³ⁿ ♀♂ ↵←↑↓→⇒⇔
 ♠♣♥♦♪♫◊∎█☎☺
 </td>
 </tr>

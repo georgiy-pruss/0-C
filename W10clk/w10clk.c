@@ -12,7 +12,7 @@
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.23 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.24 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -23,6 +23,7 @@
 #include <windows.h>
 #include <commdlg.h> // ChooseColor CHOOSECOLOR
 #include <shellapi.h> // ShellExecute
+#include <Mmsystem.h> // PlaySound
 #include "../_.h"
 typedef unsigned int uint;
 typedef int bool;
@@ -46,15 +47,18 @@ int g_corr_x, g_corr_y, g_corrnr_x, g_corrnr_y; // correction, also for non-resi
 bool g_seconds,g_upd_title, g_resizable, g_ontop, g_circle; // flags
 char* g_timefmt = NULL;    // strftime format of time in title
 char* g_tzlist = NULL;
+char* g_bell = NULL; char* g_hbell = NULL; // bell and halfbell sounds
 
 enum ProgramKind { K_ERR, K_EXE, K_SCR } pgmKind = K_ERR;
 char* pgmName = NULL; // short name of executable w/o extension
 char* pgmPath = NULL; // full path to the program, with ending backslash
+bool timeAnnounced = false;  // bell hit
 
 void
 cleanup() __
   #define FREE(x) if(x) { free(x); x=NULL; }
-  FREE( g_timefmt ); FREE( g_tzlist ); FREE( pgmName ); FREE( pgmPath ); _
+  FREE( g_timefmt ); FREE( g_tzlist ); FREE( pgmName ); FREE( pgmPath );
+  FREE( g_bell ); FREE( g_hbell ); _
 
 bool
 get_pgm_name() __ // set pgmKind pgmName pgmPath
@@ -144,6 +148,8 @@ read_ini_file( const char* fname, const char* divname ) __
   READINI("tz","GMT +0 CET +1 EET +2"); // it's easier to always have something there
   if( rc>=3 ) __
     g_tzlist = (char*)malloc( rc+2 ); g_tzlist[0]=' '; strcpyupr( g_tzlist+1, s ); _
+  READINI("bell","");               if( rc>1 ) g_bell = strdup( s );
+  READINI("halfbell","");           if( rc>1 ) g_hbell = strdup( s );
   return access(p_n_e, F_OK)==0; _
 
 bool
@@ -260,9 +266,8 @@ update_clock(HDC hdc,int halfw, int halfh, struct tm* tmptr) __
     MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + secx, halfh + secy); _ _
 
 void
-update_title(HWND hwnd, const char* title) __
+update_title(HWND hwnd, const char* title, time_t t ) __
   if( title ) { SetWindowText(hwnd,title); return; }
-  time_t t = time(NULL);
   struct tm* tmptr = localtime(&t); if( !tmptr ) return;
   char text[100];
   strftime( text, sizeof(text), g_timefmt, tmptr );
@@ -309,6 +314,27 @@ copy_to_clipboard(HWND hwnd) __
   else
     CloseClipboard(); _
 
+void
+play_sound( const char* s ) __
+  if( s==NULL || strlen(s)<4 ) return;
+  // define, load, play resource
+  // https://msdn.microsoft.com/en-us/library/windows/desktop/dd743679(v=vs.85).aspx
+  const char* sk[] = {"Default","Asterisk","Welcome","Start","Exit", "Question","Exclamation","Hand"};
+  LPCTSTR sv[] = { (LPCTSTR)SND_ALIAS_SYSTEMDEFAULT, (LPCTSTR)SND_ALIAS_SYSTEMASTERISK,
+    (LPCTSTR)SND_ALIAS_SYSTEMWELCOME, (LPCTSTR)SND_ALIAS_SYSTEMSTART, (LPCTSTR)SND_ALIAS_SYSTEMEXIT,
+    (LPCTSTR)SND_ALIAS_SYSTEMQUESTION, (LPCTSTR)SND_ALIAS_SYSTEMEXCLAMATION,
+    (LPCTSTR)SND_ALIAS_SYSTEMHAND };
+  for( uint i=0; i<sizeof(sk)/sizeof(sk[0]); ++i )
+    if( strcasecmp( sk[i], s ) == 0 ) __
+      PlaySound( sv[i], NULL, SND_ASYNC|SND_ALIAS_ID ); return; _
+  char nm[MAX_PATH+20];
+  strcpy( nm, pgmPath ); strcat( nm, s );
+  if( access( nm, F_OK )==0 ) __
+    PlaySound( nm, NULL, SND_ASYNC|SND_FILENAME ); return; _
+  strcpy( nm, getenv("SystemRoot") ); strcat( nm, "\\Media\\" ); strcat( nm, s );
+  if( access( nm, F_OK )==0 ) __
+    PlaySound( nm, NULL, SND_ASYNC|SND_FILENAME ); _ _
+
 // Main Window Event Handler
 LRESULT CALLBACK
 WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
@@ -321,11 +347,14 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
   case WM_SIZE: // WM_PAINT will be sent as well
     GetClientRect(hwnd, &rcClient); // left = top = 0
     break;
-  case WM_TIMER:
-    if( g_upd_title ) update_title(hwnd,NULL); // update caption every tick
-    if( g_seconds || time(NULL)%10==0 )   // but window - every 10 s if w/o sec.hand
+  case WM_TIMER: __ time_t t = time(NULL);
+    if( g_upd_title ) update_title(hwnd,NULL,t); // update caption every tick
+    if( g_seconds || t%10==0 )   // but window - every 10 s if w/o sec.hand
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
-    break;
+    if( t%1800<25 ) __ // bell?
+      if( !timeAnnounced ) { play_sound( t%3600<25 ? g_bell : g_hbell ); timeAnnounced = true; } _
+    else timeAnnounced = false;
+    break; _
   case WM_PAINT: // Window needs update for whatever reason
     redraw_window(hwnd);
     break;
@@ -361,7 +390,8 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     else if( wParam==3 && ndisp!=0 ) // ctrl+c
       copy_to_clipboard(hwnd);
     else if( wParam==20 ) __ // ctrl+t
-      g_upd_title = ! g_upd_title; if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME); _
+      g_upd_title = ! g_upd_title;
+      if( ! g_upd_title ) update_title(hwnd,PROGRAM_NAME,time(NULL)); _
     else if( wParam==19 ) __ // ctrl+s
       g_seconds = ! g_seconds;
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _

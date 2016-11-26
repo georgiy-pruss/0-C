@@ -21,11 +21,11 @@ static double expression(); // declaration for recursion
 
 static double number() __
   double result = get() - '0';
-  while('0'<=peek() && peek() <= '9') result = 10*result + get() - '0';
+  while('0'<=peek() && peek()<='9') result = 10*result + get() - '0';
   if( peek()=='.' ) __
     get();
     double div=1.0;
-    while( '0'<=peek() && peek() <= '9' )
+    while( '0'<=peek() && peek()<='9' )
       result += (get() - '0') / (div *= 10.0); _
   return result; _
 
@@ -38,7 +38,7 @@ static uint hexdigit( int c ) __
 static double hexnumber() __
   get(); // '#'
   double result = hexdigit(get());
-  while('0'<=peek() && peek() <= '9' || 'A'<=peek() && peek() <= 'F')
+  while('0'<=peek() && peek()<='9' || 'A'<=peek() && peek()<='F')
     result = 16*result + hexdigit(get());
   return result; _
 
@@ -60,7 +60,7 @@ static double perm( double x, double y ) __
 static double factor() __
   int c = peek();
   if( c=='#' ) return hexnumber();
-  if( '0'<=c && c <= '9') return number();
+  if( '0'<=c && c<='9') return number();
   if(c == '(') __
     get(); // '('
     double result = expression();
@@ -75,7 +75,7 @@ static double factor() __
   if(c == 'o') { get(); return M_PI*factor(); }
   if(c == '%') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x); return x; }
   if(c == '|') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log10(x); return x; }
-  if(c == '&') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x)/log(2.0); return x; }
+  if(c == '&') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x)/M_LN2; return x; }
   if(c == '!') { get(); return factorial(factor()); }
   if(c == '+') { get(); return factor(); }
   err_flag=E_BINOP;
