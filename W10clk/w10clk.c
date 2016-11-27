@@ -352,7 +352,7 @@ read_lines( const char* path, const char* nm ) __
   return a; _
 
 void
-free_lines( char** a ) { for( int i=0; a[i]; ++i ) free( a[i] ); free( a ); }
+free_lines( char** a ) { if( a ) { for( int i=0; a[i]; ++i ) free( a[i] ); free( a ); } }
 
 void
 play_voice_file( const char* w, int l ) __ // file from g_voice_dir directory
