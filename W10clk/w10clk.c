@@ -7,6 +7,10 @@
 
 // TODO switch two bg colors; alarms; reminders; birthdays; time in expressions
 // TODO round window; double-buffering; m - moon phase
+// http://stackoverflow.com/questions/3970066/creating-a-transparent-window-in-c-win32
+// https://www.codeproject.com/kb/dialog/semitrandlgwithctrls.aspx
+// To create a non-rectangular window, have a look at the SetWindowRgn function:
+// https://msdn.microsoft.com/en-gb/library/windows/desktop/dd145102(v=vs.85).aspx
 
 #define PROGRAM_NAME "Windows 10 Clock"
 #define PGM_NAME "w10clk"
