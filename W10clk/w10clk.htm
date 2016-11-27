@@ -47,7 +47,7 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 </head>
 <body>
 
-<h1>W10clk - windows clock and more - v.1.29</h1>
+<h1>W10clk - windows clock and more - v.1.30</h1>
 
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
@@ -74,11 +74,11 @@ f1     show help (this text)
 ?      show help too
 h      show help (only when display is clear, otherwise it's hexadecimal)
 
-<span class=R>N</span>h     show number (integer part of it) in hexadcimal system
+<span class=R>N</span>h     show number (integer part of it) in hexadecimal system
 
 d      current date as y/m/d wd (wd - weekday, Mon to Sun)
 <span class=R>N</span>d     convert <a href="#ced">CED</a> as plain number to y/m/d wd diff, e.g. 730122 --&gt; 2000/1/1 Sat
-<span class=R>&plusmn;N</span>d    add or substract days from the current day, giving date in the future or past
+<span class=R>&plusmn;N</span>d    add or subtract days from the current day, giving date in the future or past
 <span class=R>MD</span>d    convert m/d to n wd [diff], meaning the current year
 <span class=R>YMD</span>d   convert y/m/d to n wd [diff], e.g. 2016/11/13 --&gt; 736283 Sun
 
@@ -133,7 +133,7 @@ i      info: show window position and size; note that Windows adds some values t
        the ini file: corr=xr,yr,xnr,ynr (so, mine would be 16,8,6,3)
 
 x      maximize/restore size
-q      quit the program; btw it's the only way to exit W10clk screensaver
+q      quit the program; btw it's the only way to exit W10clk screen saver
 
 =      calculate expression (see below how to enter it)
 enter  calculate expression too
@@ -177,7 +177,7 @@ esc    clear display
 <a name="ced"></a>
 <b>CED</b>    Common Era Day number -- number of a day, counting since January 1st, 1 AD,
        that was day 1, then January 2nd was day 2 and so on, using the Julian calendar
-       (years divisable by 4 are all leap), up till 1582/10/4 (CED 577737), when the
+       (years divisible by 4 are all leap), up till 1582/10/4 (CED 577737), when the
        counting scheme switched to the Gregorian calendar and day 1582/10/15 (CED 577738)
        followed. Such enumeration was chosen to eliminate negative numbers and to have
        somewhat natural scheme.
@@ -194,16 +194,16 @@ you don't have it in your computer, download that file too (from cygwin site or 
 other w10clk files. You can have several clock programs &mdash; in different directories or in
 the same directory with different names. The matter is that the exe file looks for its ini
 file using its name. So for example, you can have the main clock with the files named
-w10clk.* and screensaver with names w10clkss.*. Also you can have sections for different
+w10clk.* and screen saver with names w10clkss.*. Also you can have sections for different
 instances in the same ini file (see below in Configuration).
 Create a shortcut to the main program (e.g. drag-and-drop
 w10clk.exe to your desktop with the right button, choose 'create shortcut', move it to the
 start menu if you wish). You can make it start automatically when the Windows starts, using
-the registry or scheduler (more detail to follow). For setting up the screensaver, continue reading.
+the registry or scheduler (more detail to follow). For setting up the screen saver, continue reading.
 </p>
 <h2>Screensaver</h2>
 <p>
-You can also set up the program as a screensaver. Copy the executable to some other file
+You can also set up the program as a screen saver. Copy the executable to some other file
 with extension .scr, e.g. w10clkss.scr. Copy or create config file for it, it
 must be named after the scr file, in our case &mdash; w10clkss.ini. For example:</p>
 <pre>[window]
@@ -217,9 +217,9 @@ resizable=no
 ontop=yes</pre>
 <p>
 Then right-click on the scr file and choose Install. It will also start at once.
-Press 'q' to stop it. It has no usual config dialog, like other screensavers, all
+Press 'q' to stop it. It has no usual config dialog, like other screen savers, all
 the setup is done in the ini file. Sorry for that, maybe some time I'll fix it...
-Anyway, it'll serve as a screensaver. To exit it, press 'q', no other ways work.
+Anyway, it'll serve as a screen saver. To exit it, press 'q', no other ways work.
 Moreover, all of the clock functions work there in the screen saving mode &mdash;
 date and time conversions, stopwatch, calculations, etc.
 </p>
@@ -236,13 +236,14 @@ Colors can be written as three decimal colors r,g,b (values 0 to 255) or as hexa
 #rrggbb. Time zones are defined in tz setting, e.g.: tz=PST -8 GMT +0 CET +1 (the letter case
 doesn't matter, plus sign can be omitted, all is divided by blanks). To set chime for every
 hour or half-hour, use options bell and halfbell. Their values can be 1) full path to the wav
-sound file (e.g. D:\Users\John\Music\tada.wav), 2) short name, like BigBen.wav -- it'll be
+sound file (e.g. D:\Users\John\Music\tada.wav); 2) short name, like BigBen.wav -- it'll be
 searched first in the directory where w10clk was installed, and if not found, in directory
-C:\Windows\Media, 3) system sound, specified by one of words: Default, Asterisk, Welcome,
-Start, Exit, Question, Exclamation, Hand (case-insensitive). Also you can specify voice
-files for talking clock: option voice must set a directory with voice files (it's relative
-to the program directory). The voice directory must have file voice.txt, in which the first
-24 lines describe exact hours, the next 24 lines describe half-hours (see example).
+%SystemRoot%\Media, most often it's C:\Windows\Media; 3) system sound, specified by one of
+words: Default, Asterisk, Welcome, Start, Exit, Question, Exclamation, Hand (case-insensitive).
+Also you can specify voice files for talking clock: option voice must set a directory with
+voice files (it's relative to the program directory). The voice directory must have file
+voice.txt, in which the first 24 lines describe exact hours, the next 24 lines describe
+half-hours (better see examples that are provided with the program).
 Please read the ini file provided &mdash; it has short explanations for all settings.
 </p>
 <h2>Appendix</h2>

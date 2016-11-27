@@ -16,7 +16,7 @@
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.29 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.30 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
@@ -386,8 +386,10 @@ prepare_sound( const char* s ) __
   char nm[MAX_PATH+20];
   strcpy( nm, pgmPath ); strcat( nm, s );
   if( access( nm, F_OK )==0 ) return strdup( nm );
-  strcpy( nm, "C:\\Windows\\Media\\" ); strcat( nm, s );
-  if( access( nm, F_OK )==0 ) return strdup( nm );
+  int rc = GetEnvironmentVariable("SystemRoot",nm,sizeof(nm));
+  if( 3<rc && rc<sizeof(nm) ) __
+    strcat( nm, "\\Media\\" ); strcat( nm, s );
+    if( access( nm, F_OK )==0 ) return strdup( nm ); _
   return strdup( "" ); _
 
 void
