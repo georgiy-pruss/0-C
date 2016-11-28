@@ -19,7 +19,7 @@ E S g_tzlist;
 E V strcpyupr( S dst, KS src );
 
 E U ymd2n( U y, U m, U d );
-E V n2ymd( U n, /* OUT */ U* y, U* m, U* d );
+E V n2ymd( U n, OUT U* y, U* m, U* d );
 E U n2wd( U n );
 E I gettz( I* h, U* m );
 

@@ -19,7 +19,7 @@ typedef double D;
 
 #define R return
 #define CASE break; case
-#define DO(i,n) for(I i=0;i<(n);++i)
+#define DO(_i,_n) for(I _i=0;_i<(_n);++_i)
 // changes in ...\Vim\vim80\syntax\c.vim as well
 
 #endif

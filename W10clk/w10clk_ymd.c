@@ -30,7 +30,7 @@ U
 n2wd( U dn ) { R (dn+5) % 7; }
 
 V
-n2ymd( U dn, /* OUT */ U* yy, U* mm, U* dd ) __
+n2ymd( U dn, OUT U* yy, U* mm, U* dd ) __
   // Convert TJD day number to tuple year, month, day and weekday"
   // Probably needs some correction for dates before 1/1/1
   I jdi = dn + 1721422; I b;

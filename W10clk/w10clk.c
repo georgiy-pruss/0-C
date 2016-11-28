@@ -95,7 +95,7 @@ swap_colors( COLORREF c ) __
   R ((c&0xFF)<<16) | (c&0xFF00) | ((c&0xFF0000)>>16); _
 
 V
-split_colors( COLORREF c, /* OUT */ U* r, U* g, U* b ) __
+split_colors( COLORREF c, OUT U* r, U* g, U* b ) __
   *r = c&0xFF; *g = (c&0xFF00)>>8; *b = (c&0xFF0000)>>16; _
 
 S prepare_sound( KS s );
@@ -406,7 +406,7 @@ play_sound( KS s, time_t t ) __ // if t!=0, say it
 
 // Main Window Event Handler
 LRESULT CALLBACK
-WndProc(HWND hwnd, U message, WPARAM wParam, LPARAM lParam) __
+WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
   switch( message ) __
   case WM_CREATE: // Window is being created, good time for init tasks
     if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 ) // tick every second
@@ -431,7 +431,7 @@ WndProc(HWND hwnd, U message, WPARAM wParam, LPARAM lParam) __
       InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);
   CASE WM_KEYDOWN:
     if( wParam==VK_F1 ) show_help_file();
-    else if( wParam==VK_DELETE ) __ // del -- delete C at the beginning
+    else if( wParam==VK_DELETE ) __ // del -- delete char at the beginning
       if( ndisp!=0 ) __
         memmove( disp, disp+1, ndisp-- ); // including '\0'
         InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd); _ _
