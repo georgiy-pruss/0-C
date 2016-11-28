@@ -117,7 +117,7 @@ O V trim( S s ) __ int i;
   for( i=strlen(s)-1; i>=0; --i ) if( strchr( BLANKS, s[i] )==NULL ) break;
   s[i+1] = '\0'; _
 
-U calculate( S s, D* r ) __
+U calculate( S s, OUT D* r ) __
   trim(s); // trim trailing blanks although it's not so neccessary
   curr_pos = s  +strspn( s, BLANKS ); // skip leading blanks
   err_flag = E_OK;

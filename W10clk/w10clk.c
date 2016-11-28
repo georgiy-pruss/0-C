@@ -219,11 +219,11 @@ show_help_file() __
 V
 mb( KS txt, KS cap ) { MessageBox(NULL, txt, cap, MB_OK); }
 
-double sind(double x) { R sin(x*M_PI/180); }
-double cosd(double x) { R cos(x*M_PI/180); }
+D sind( D x ) { R sin(x*M_PI/180); }
+D cosd( D x ) { R cos(x*M_PI/180); }
 
 V
-draw_clock(HDC hdc,I halfw, I halfh) __
+draw_clock(HDC hdc, I halfw, I halfh) __
   // draw clock face and ticks
   if( g_tick_w == 0 ) R;
   if( g_circle ) __
@@ -249,15 +249,15 @@ draw_clock(HDC hdc,I halfw, I halfh) __
     LineTo(hdc,end_x,end_y); _ _
 
 V
-update_clock(HDC hdc,I halfw, I halfh, struct tm* tmptr) __
+update_clock(HDC hdc, I halfw, I halfh, struct tm* tmptr) __
   // draw arrows
   I s = tmptr->tm_sec;
   I m = tmptr->tm_min;
   I h = tmptr->tm_hour % 12;
 
-  double angle_sec = 270.0 + (s*6.0);
-  double angle_min = 270.0 + (m*6.0 + s*0.1);
-  double angle_hour = 270.0 + (h*30 + m*0.5);
+  D angle_sec = 270.0 + (s*6.0);
+  D angle_min = 270.0 + (m*6.0 + s*0.1);
+  D angle_hour = 270.0 + (h*30 + m*0.5);
 
   I r = min(halfw,halfh); // radius
   I secx  = (I)( r * g_sh_len / 100.0 * cosd(angle_sec) + 0.5 );

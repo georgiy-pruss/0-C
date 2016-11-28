@@ -14,7 +14,7 @@ typedef I bool;
 E bool g_seconds; // show second hand
 E bool help_on_error_input(); // true if OK pressed
 E V mb( KS txt, KS cap ); // message box
-E U calculate( S src, D* res ); // returns 0 if ok
+E U calculate( S src, OUT D* res ); // returns 0 if ok
 E S g_tzlist;
 E V strcpyupr( S dst, KS src );
 

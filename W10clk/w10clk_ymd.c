@@ -69,6 +69,18 @@ gettz( I* h, U* m ) __
   if( h ) *h = h_o; if( m ) *m = m_o;
   R offset; _
 
+/*
+Return approx moon phase, in days. Error is +-0.3 day, max +-0.6 day.
+jdn = dn2jdn( current_dn() + hms2d(*current_hms()), current_tz() )
+return (jdn-2449128.59)%DN_MOON   ## DN_MOON = 29.53058867 # lunar synodic month
+mp = jdn2moonphase(j)
+np = DN_MOON-mp
+mph = nph = ""
+if mp<1: mph = "/%.1fh"%(mp*24)
+if np<1: nph = "/%.1fh"%(np*24)
+print("%.1f%% %.2f%s (%.2f%s)"%(mp*100/DN_MOON,mp,mph,np,nph))
+*/
+
 #ifdef TESTALL
 I
 main() __
