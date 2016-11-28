@@ -6,91 +6,90 @@
 #include <string.h>
 #include <math.h>
 #include "../_.h"
-typedef unsigned int uint;
 
 #define BLANKS " \t\n\r\v\f"
 enum ERRORS {E_OK=0, E_CLOSE,E_ZDIV,E_ZMOD,E_NEG,E_NEGLOG,E_CIRC,E_BINOP,E_HEXDIGIT};
-static uint err_flag;
-static char* curr_pos;
+O U err_flag;
+O S curr_pos;
 // curr_pos += strspn( curr_pos, BLANKS ); // we don't have blanks, so no skip blanks
 
-static uint peek() { return *curr_pos; }
-static uint get() { return *curr_pos++; }
+O U peek() { R *curr_pos; }
+O U get() { R *curr_pos++; }
 
-static double expression(); // declaration for recursion
+O D expression(); // declaration for recursion
 
-static double number() __
-  double result = get() - '0';
+O D number() __
+  D result = get() - '0';
   while('0'<=peek() && peek()<='9') result = 10*result + get() - '0';
   if( peek()=='.' ) __
     get();
-    double div=1.0;
+    D div=1.0;
     while( '0'<=peek() && peek()<='9' )
       result += (get() - '0') / (div *= 10.0); _
-  return result; _
+  R result; _
 
-static uint hexdigit( int c ) __
-  if( '0'<=c && c<='9' ) return c-'0';
-  if( 'A'<=c && c<='F' ) return c-'A'+10;
+O U hexdigit( int c ) __
+  if( '0'<=c && c<='9' ) R c-'0';
+  if( 'A'<=c && c<='F' ) R c-'A'+10;
   err_flag=E_HEXDIGIT; // just for a case. e.g. right after '#'
-  return 0; _
+  R 0; _
 
-static double hexnumber() __
+O D hexnumber() __
   get(); // '#'
-  double result = hexdigit(get());
+  D result = hexdigit(get());
   while('0'<=peek() && peek()<='9' || 'A'<=peek() && peek()<='F')
     result = 16*result + hexdigit(get());
-  return result; _
+  R result; _
 
-static double cubrt( double x ) __
-  if( x<0.0 ) return -cubrt(-x);
-  return pow(x,1.0/3.0); _
+O D cubrt( D x ) __
+  if( x<0.0 ) R -cubrt(-x);
+  R pow(x,1.0/3.0); _
 
-static double factorial( double x ) __
-  if( x<0.0 ) { err_flag=E_NEG; return x; }
-  uint n = (uint)x;
-  x = 1.0; for( uint p=2; p<=n; ++p ) x *= p; return x; _
+O D factorial( D x ) __
+  if( x<0.0 ) { err_flag=E_NEG; R x; }
+  U n = (U)x;
+  x = 1.0; for( U p=2; p<=n; ++p ) x *= p; R x; _
 
-static double perm( double x, double y ) __
-  if( x<0.0 || y<0.0) { err_flag=E_NEG; return x; }
-  uint n = (uint)x; uint k = (uint)y;
-  if( k>n ) { uint nn = n; n = k; k = nn; } // now k<=n
-  x = 1.0; for( uint p=n-k+1; p<=n; ++p ) x *= p; return x; _
+O D perm( D x, D y ) __
+  if( x<0.0 || y<0.0) { err_flag=E_NEG; R x; }
+  U n = (U)x; U k = (U)y;
+  if( k>n ) { U nn = n; n = k; k = nn; } // now k<=n
+  x = 1.0; for( U p=n-k+1; p<=n; ++p ) x *= p; R x; _
 
-static double factor() __
+O D factor() __
   int c = peek();
-  if( c=='#' ) return hexnumber();
-  if( '0'<=c && c<='9') return number();
+  if( c=='#' ) R hexnumber();
+  if( '0'<=c && c<='9') R number();
   if(c == '(') __
     get(); // '('
-    double result = expression();
-    if(peek() != ')') { err_flag=E_CLOSE; return 0; }
+    D result = expression();
+    if(peek() != ')') { err_flag=E_CLOSE; R 0; }
     get(); // ')'
-    return result; _
-  if(c == '-') { get(); return -factor(); }
-  if(c == '*') { get(); double x=factor(); return x*x; }
-  if(c == '/') { get(); double x=factor(); if(x<0) err_flag=E_NEG; else x=sqrt(x); return x; }
-  if(c == '\\'){ get(); return cubrt(factor()); }
-  if(c == '^') { get(); return exp(factor()); }
-  if(c == 'o') { get(); return M_PI*factor(); }
-  if(c == '%') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x); return x; }
-  if(c == '|') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log10(x); return x; }
-  if(c == '&') { get(); double x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x)/M_LN2; return x; }
-  if(c == '!') { get(); return factorial(factor()); }
-  if(c == '+') { get(); return factor(); }
+    R result; _
+  if(c == '-') { get(); R -factor(); }
+  if(c == '*') { get(); D x=factor(); R x*x; }
+  if(c == '/') { get(); D x=factor(); if(x<0) err_flag=E_NEG; else x=sqrt(x); R x; }
+  if(c == '\\'){ get(); R cubrt(factor()); }
+  if(c == '^') { get(); R exp(factor()); }
+  if(c == 'o') { get(); R M_PI*factor(); }
+  if(c == '%') { get(); D x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x); R x; }
+  if(c == '|') { get(); D x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log10(x); R x; }
+  if(c == '&') { get(); D x=factor(); if(x<=0) err_flag=E_NEGLOG; else x=log(x)/M_LN2; R x; }
+  if(c == '!') { get(); R factorial(factor()); }
+  if(c == '+') { get(); R factor(); }
   err_flag=E_BINOP;
-  return 0; _
+  R 0; _
 
-static double power() __
-  double x = factor();
+O D power() __
+  D x = factor();
   while( peek() == '^' ) { get(); x = pow( x, factor() ); }
-  return x; _
+  R x; _
 
-static double term() __
-  double x = power();
+O D term() __
+  D x = power();
   while( memchr( "*/%|\\o&!", peek(), 8 ) ) __
     int c = get();
-    double y = power();
+    D y = power();
     if(c == '*') x *= y;
     else if(c=='/') { if(y==0.0) err_flag=E_ZDIV; else x /= y; }
     else if(c=='%') { if(y==0.0) err_flag=E_ZMOD; else x -= y*floor(x/y); }
@@ -99,28 +98,28 @@ static double term() __
     else if(c=='&') { x = sqrt(x*x + y*y); }
     else if(c=='!') { x = perm(x,y); }
     else __ // 'o' -- circuit functions
-      if( x==1 ) return sin(y);   if( x==10 ) return sin(y*M_PI/180.0);
-      if( x==2 ) return cos(y);   if( x==20 ) return cos(y*M_PI/180.0);
-      if( x==3 ) return tan(y);   if( x==30 ) return tan(y*M_PI/180.0);
-      if( x==-1 ) return asin(y); if( x==-10 ) return asin(y)*180.0/M_PI;
-      if( x==-2 ) return acos(y); if( x==-20 ) return acos(y)*180.0/M_PI;
-      if( x==-3 ) return atan(y); if( x==-30 ) return atan(y)*180.0/M_PI;
+      if( x==1 ) R sin(y);   if( x==10 ) R sin(y*M_PI/180.0);
+      if( x==2 ) R cos(y);   if( x==20 ) R cos(y*M_PI/180.0);
+      if( x==3 ) R tan(y);   if( x==30 ) R tan(y*M_PI/180.0);
+      if( x==-1 ) R asin(y); if( x==-10 ) R asin(y)*180.0/M_PI;
+      if( x==-2 ) R acos(y); if( x==-20 ) R acos(y)*180.0/M_PI;
+      if( x==-3 ) R atan(y); if( x==-30 ) R atan(y)*180.0/M_PI;
       err_flag = E_CIRC; _ _
-  return x; _
+  R x; _
 
-static double expression() __
-  double result = term();
+O D expression() __
+  D result = term();
   while( peek() == '+' || peek() == '-' )
     if( get() == '+' ) result += term(); else result -= term();
-  return result; _
+  R result; _
 
-static void trim( char* s ) __ int i;
+O V trim( S s ) __ int i;
   for( i=strlen(s)-1; i>=0; --i ) if( strchr( BLANKS, s[i] )==NULL ) break;
   s[i+1] = '\0'; _
 
-uint calculate( char* s, double* r ) __
+U calculate( S s, D* r ) __
   trim(s); // trim trailing blanks although it's not so neccessary
   curr_pos = s  +strspn( s, BLANKS ); // skip leading blanks
   err_flag = E_OK;
   *r = expression();
-  return err_flag; _
+  R err_flag; _

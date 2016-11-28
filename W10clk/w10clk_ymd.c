@@ -16,43 +16,41 @@
 // from 1582/10/15 for at least a few thousand years the Gregorian calendar is used.
 // CED 678578 = Modified Julian Day 0 (difference is 678578). And TJD+718578
 
-typedef unsigned int uint;
-
-uint
-ymd2n( uint year, uint month, uint day ) __
+U
+ymd2n( U year, U month, U day ) __
   // Convert date to CED number.
   // Year >= 1. Result is >0, or 0 if there's some error.
-  if( year==0 || month==0 || day==0 ) return 0;
+  if( year==0 || month==0 || day==0 ) R 0;
   if( month > 12 ) { year = year + month/12; month = month%12; }
   if( month < 3 ) { year -= 1; month += 12; }
-  int b = year*10000 + month*100 + day > 15821014 ? 2 - year/100 + year/400 : 0;
-  return 1461*year/4 + 306001*(month + 1)/10000 + day + b - 428; _
+  I b = year*10000 + month*100 + day > 15821014 ? 2 - year/100 + year/400 : 0;
+  R 1461*year/4 + 306001*(month + 1)/10000 + day + b - 428; _
 
-uint
-n2wd( uint dn ) { return (dn+5) % 7; }
+U
+n2wd( U dn ) { R (dn+5) % 7; }
 
-void
-n2ymd( uint dn, /* OUT */ uint* yy, uint* mm, uint* dd ) __
+V
+n2ymd( U dn, /* OUT */ U* yy, U* mm, U* dd ) __
   // Convert TJD day number to tuple year, month, day and weekday"
   // Probably needs some correction for dates before 1/1/1
-  int jdi = dn + 1721422; int b;
+  I jdi = dn + 1721422; I b;
   if( jdi < 2299160 ) // (1582, 10, 15)
     b = jdi + 1525;
   else __
-    int alpha = (4*jdi - 7468861) / 146097;
+    I alpha = (4*jdi - 7468861) / 146097;
     b = jdi + 1526 + alpha - alpha/4; _
-  int c = (20*b - 2442) / 7305;
-  int d = 1461*c/4;
-  int e = 10000*(b - d)/306001;
-  int day = b - d - 306001*e/10000;
-  int month = e - (e < 14 ? 1 : 13);
-  int year = c - (month > 2 ? 4716 : 4715);
+  I c = (20*b - 2442) / 7305;
+  I d = 1461*c/4;
+  I e = 10000*(b - d)/306001;
+  I day = b - d - 306001*e/10000;
+  I month = e - (e < 14 ? 1 : 13);
+  I year = c - (month > 2 ? 4716 : 4715);
   *yy = year; *mm = month; *dd = day; _
 
-int
-gettz( int* h, uint* m ) __
+I
+gettz( I* h, U* m ) __
   // return offset in minutes, also set h to hours (+-12) and m to abs minutes
-  int u_mins,u_date,l_mins,l_date,offset;
+  I u_mins,u_date,l_mins,l_date,offset;
   time_t currtime = time(NULL);
   struct tm* ptm = gmtime(&currtime);
   u_mins = ptm->tm_hour*60+ptm->tm_min;
@@ -65,23 +63,23 @@ gettz( int* h, uint* m ) __
     offset += 24*60;
   else if( u_date > l_date )
     offset -= 24*60;
-  int h_o, m_o;
+  I h_o, m_o;
   if( offset >= 0 ) { h_o = offset/60; m_o = offset - 60*h_o; }
   else { h_o = (-offset)/60; m_o = (-offset) - 60*h_o; h_o = -h_o; }
   if( h ) *h = h_o; if( m ) *m = m_o;
-  return offset; _
+  R offset; _
 
 #ifdef TESTALL
-int
+I
 main() __
-  uint y,m,d,ced,cc,xy,xm,xd,w;
+  U y,m,d,ced,cc,xy,xm,xd,w;
   ced = 1;  w = 6; // it all starts with Saturday
   for( y=1; y<=4000; ++y )
     for( m=1; m<=12; ++m )
       for( d=1; d<=31; ++d ) __
         // skip non-existing days
         if( d>30 && (m==4 || m==6 || m==9 || m==11) ) continue;
-        int l = (y<=1582) ? (y%4==0) : ((y%4==0) && (y%100!=0 || y%400==0));
+        I l = (y<=1582) ? (y%4==0) : ((y%4==0) && (y%100!=0 || y%400==0));
         if( m==2 && d>(l?29:28) ) continue;
         if( y==1582 && m==10 && 4<d && d<15 ) continue;
         cc = ymd2n( y, m, d );
@@ -179,5 +177,5 @@ main() __
   PCED( 577737 ); // 1582/10/4
   PCED( 577738 ); // 1582/10/15
   */
-  return 0; _
+  R 0; _
 #endif

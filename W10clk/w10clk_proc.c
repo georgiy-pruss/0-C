@@ -8,36 +8,35 @@
 #include <unistd.h>
 #include "../_.h"
 
-typedef unsigned int uint;
-typedef int bool;
+typedef I bool;
 #define false 0
 #define true 1
-extern bool g_seconds; // show second hand
-extern bool help_on_error_input(); // true if OK pressed
-extern void mb( const char* txt, const char* cap ); // message box
-extern uint calculate( char* src, double* res ); // returns 0 if ok
-extern char* g_tzlist;
-extern void strcpyupr( char* dst, const char* src );
+E bool g_seconds; // show second hand
+E bool help_on_error_input(); // true if OK pressed
+E V mb( KS txt, KS cap ); // message box
+E U calculate( S src, D* res ); // returns 0 if ok
+E S g_tzlist;
+E V strcpyupr( S dst, KS src );
 
-extern uint ymd2n( uint y, uint m, uint d );
-extern void n2ymd( uint n, /* OUT */ uint* y, uint* m, uint* d );
-extern uint n2wd( uint n );
-extern int gettz( int* h, uint* m );
+E U ymd2n( U y, U m, U d );
+E V n2ymd( U n, /* OUT */ U* y, U* m, U* d );
+E U n2wd( U n );
+E I gettz( I* h, U* m );
 
-char WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
+C WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
 bool tz_is_set = false;
-int tz_offset; int tz_h; uint tz_m;
+I tz_offset; I tz_h; U tz_m;
 
-uint
-process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
-  time_t t; struct tm* tmptr;  uint y,m,d, w,h, x; int k,a,z; L xx; double b; // temp. vars.
+U
+process_char( U c, S s, U mn, U n ) __ // mn - max length
+  time_t t; struct tm* tmptr;  U y,m,d, w,h, x; I k,a,z; L xx; D b; // temp. vars.
   struct timeb tb;
-  static time_t t_start;       static int t_start_ms;
-  static int    t_idle;        static int t_idle_ms;
-  static time_t t_break_start; static int t_break_start_ms;
+  O time_t t_start;       O I t_start_ms;
+  O I      t_idle;        O I t_idle_ms;
+  O time_t t_break_start; O I t_break_start_ms;
   if( '0'<=c && c<='9' || 'A'<=c && c<='Z' || memchr( "+-*/%^o\\&|!.:()#", c, 16 ) ) __
-    s[n]=(char)c; if(n<mn) ++n; s[n]=0; _
+    s[n]=(C)c; if(n<mn) ++n; s[n]=0; _
   else if( c==32 || c==27 ) __ // space escape
     n=0; s[n]=0; _
   else if( c=='\b' ) __ // bksp
@@ -47,7 +46,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
   else if( c=='u' || c=='d' || c=='t' || c=='z' || c=='y' ) __
     t = time(NULL);
     tmptr = localtime(&t); // assume it can't be NULL
-    uint today = ymd2n( tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday );
+    U today = ymd2n( tmptr->tm_year+1900, tmptr->tm_mon+1, tmptr->tm_mday );
     if( n==0 ) __ // current time in many forms
       if( c=='u' )
         n = strftime( s, mn, "%s", tmptr ); // %s -- unix seconds
@@ -68,13 +67,13 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
             tmptr->tm_year = y-1900; tmptr->tm_mon = m-1; tmptr->tm_mday = d;
             tmptr->tm_hour = h; tmptr->tm_min = w; tmptr->tm_sec = x;
             t = mktime( tmptr );
-            if( (int)t != -1 ) n = sprintf( s, "%u", (uint)t ); _ _
+            if( (I)t != -1 ) n = sprintf( s, "%u", (U)t ); _ _
         else if( sscanf( s, "%llu", &xx )==1 && xx<0x100000000ull ) __ // NNNNNNN
           time_t t1 = (time_t)xx;
           tmptr = localtime(&t1);
           n = strftime( s, mn, "%Y/%m/%d.%H:%M:%S %a", tmptr ); _ _
       else if( c=='d' ) __ // NNNNNNd or YYYY/MM/DDd
-        char diff[20] = "";
+        C diff[20] = "";
         if( strchr( s, '/' ) ) __ // YYYY/MM/DD or MM/DD
           k = sscanf( s, "%u/%u/%u", &y, &m, &d );
           if( k==3 && 0<y && y<=10000 && 1<=m && m<=12 && 1<=d && d<=31 )
@@ -83,27 +82,27 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
             x = ymd2n( tmptr->tm_year+1900, y, m );
           else
             return n; // for now, the only return from inside . . . . . . . . . . . . . . .
-          if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
+          if( x != today ) sprintf( diff, " %+d", (I)x - (I)today );
           n = sprintf( s, "%u %s%s", x, WD[n2wd(x)], diff ); _
-        else if( s[0]=='+' || s[0]=='-' ) __ int xd;
-          if( sscanf( s, "%d", &xd )==1 && -xd<(int)today ) __
-            x = (uint)((int)today + xd);
+        else if( s[0]=='+' || s[0]=='-' ) __ I xd;
+          if( sscanf( s, "%d", &xd )==1 && -xd<(I)today ) __
+            x = (U)((I)today + xd);
             n2ymd( x, &y,&m,&d );
-            if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
+            if( x != today ) sprintf( diff, " %+d", (I)x - (I)today );
             n = sprintf( s, "%d/%d/%d %s%s", y,m,d, WD[n2wd(x)], diff ); _ _
         else __ // NNNNN
           if( sscanf( s, "%u", &x )==1 && x>0 ) __ // don't do it for 0
             n2ymd( x, &y,&m,&d );
-            if( x != today ) sprintf( diff, " %+d", (int)x - (int)today );
+            if( x != today ) sprintf( diff, " %+d", (I)x - (I)today );
             n = sprintf( s, "%d/%d/%d %s%s", y,m,d, WD[n2wd(x)], diff ); _ _ _
       else if( c=='t' ) __ // time conversions
-        const char* s_abs = (s[0]=='+' || s[0]=='-') ? s+1 : s;
-        const char* sign = (s[0]=='-') ? "-" : "";
+        KS s_abs = (s[0]=='+' || s[0]=='-') ? s+1 : s;
+        KS sign = (s[0]=='-') ? "-" : "";
         k = sscanf( s_abs, "%u:%u:%u:%u", &d,&h,&m,&x );
         if( k>1 ) __
           if( k==2 ) { x=h; m=d; h=0; d=0; }        // M:S
           else if( k==3 ) { x=m; m=h; h=d; d=0; }   // H:M:S
-          int secs = 86400*d + 3600*h + 60*m + x;   // D:H:M:S
+          I secs = 86400*d + 3600*h + 60*m + x;   // D:H:M:S
           n = sprintf( s, "%s%d", sign, secs ); _
         else if( k==1 ) __ // just one number, seconds --> D:H:M:S
           x = d%60; d /= 60;
@@ -129,16 +128,16 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
         if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
         if( s[0]=='.' ) mb( g_tzlist+1, "W10clk - time zones" );
         if( 'A'<=s[0] && s[0]<='Z' ) __
-          char* tzn = malloc( n+3 );
+          S tzn = malloc( n+3 );
           tzn[0] = ' '; strcpyupr( tzn+1, s ); tzn[n+1] = ' '; tzn[n+2]='\0'; // " TZN "
-          char* pos = strstr( g_tzlist, tzn ); int tzv;
+          S pos = strstr( g_tzlist, tzn ); I tzv;
           if( pos && sscanf( pos+n+1, "%d", &tzv )==1 ) n = sprintf( s, "%d", tzv );
           free( tzn ); _
         if( s[0]=='+' || s[0]=='-' || '0'<=s[0] && s[0]<='9' ) __ // number N +N -N
-          k = sscanf( s, "%d", &z ); h = (uint)(z>=0 ? z : -z);
+          k = sscanf( s, "%d", &z ); h = (U)(z>=0 ? z : -z);
           if( k==1 ) __
             if( h<15 ) m=0; else m=h%100, h=h/100; // split into h,m
-            int seconds = 3600*h + 60*m; if( z<0 ) seconds = -seconds;
+            I seconds = 3600*h + 60*m; if( z<0 ) seconds = -seconds;
             time_t new_t = t - 60*tz_offset + seconds;
             tmptr = localtime(&new_t);
             n = strftime( s, mn, "%H:%M:%S %a %m/%d", tmptr ); _ _ _
@@ -155,17 +154,17 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
   else if( c=='=' || c==13 ) __ // = or enter -- calculate expression
     if( calculate( s, &b ) == 0 ) n = sprintf( s, "%.15g", b ); _
   else if( c=='s' ) __ // start stopwatch
-    ftime(&tb); t_start = tb.time; t_start_ms = (int)tb.millitm;
+    ftime(&tb); t_start = tb.time; t_start_ms = (I)tb.millitm;
     t_break_start = 0; t_idle = 0; t_idle_ms = 0;
     n = sprintf( s, "%s", "started" ); _
   else if( c=='e' ) __ // elapsed (can be finish)
     if( t_start == 0 ) n = sprintf( s, "%s", "not started" );
     else __ ftime(&tb);
-      int elapsed = tb.time - t_start; int elapsed_ms = tb.millitm - t_start_ms;
+      I elapsed = tb.time - t_start; I elapsed_ms = tb.millitm - t_start_ms;
       if( elapsed_ms<0 ) { elapsed_ms += 1000; elapsed -= 1; }
       n = sprintf( s, "%d.%03d", elapsed, elapsed_ms );
       if( t_idle > 0 ) __
-        int w = elapsed - t_idle; int w_ms = elapsed_ms - t_idle_ms;
+        I w = elapsed - t_idle; I w_ms = elapsed_ms - t_idle_ms;
         if( w_ms<0 ) { w_ms += 1000; w -= 1; }
         n += sprintf( s+n, ", idle:%d.%03d, work:%d.%03d", t_idle, t_idle_ms, w, w_ms ); _ _ _
   else if( c=='p' ) __ // pause, start idle time
@@ -177,7 +176,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
   else if( c=='g' ) __ // go on, stop break, return to action time
     if( t_start == 0 ) n = sprintf( s, "%s", "not started" );
     if( t_break_start != 0 ) __ ftime(&tb);
-      int br = tb.time - t_break_start; int br_ms = tb.millitm - t_break_start_ms;
+      I br = tb.time - t_break_start; I br_ms = tb.millitm - t_break_start_ms;
       if( br_ms<0 ) { br_ms += 1000; br -= 1; }
       t_idle += br; t_idle_ms += br_ms;
       if( t_idle_ms >= 1000 ) { t_idle += 1; t_idle_ms -= 1000; }
@@ -185,7 +184,7 @@ process_char( uint c, char* s, uint mn, uint n ) __ // mn - max length
       n = sprintf( s, "%d.%03d was on pause, idle:%d.%03d", br, br_ms, t_idle, t_idle_ms ); _
     else n = sprintf( s, "%s", "not paused" ); _
   else __ // unrecognized keypress
-    static bool to_show_help = true;
+    O bool to_show_help = true;
     if( to_show_help )
       if( !help_on_error_input() )
          to_show_help = false; _
