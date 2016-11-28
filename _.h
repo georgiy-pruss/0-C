@@ -20,6 +20,7 @@ typedef double D;
 #define R return
 #define CASE break; case
 #define DO(_i,_n) for(I _i=0;_i<(_n);++_i)
+#define DIM(a) (sizeof(a)/sizeof(a[0]))
 // changes in ...\Vim\vim80\syntax\c.vim as well
 
 #endif

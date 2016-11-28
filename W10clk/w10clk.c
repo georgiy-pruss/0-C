@@ -345,8 +345,7 @@ read_lines( KS path, KS nm ) __
     I n = strlen(line);
     if( line[n-1] == '\n' )
       line[n-1] = 0;
-    S s = strdup( line );
-    a[i] = s; _
+    a[i] = strdup( line ); _
   fclose( f );
   R a; _
 
@@ -379,7 +378,7 @@ LPCTSTR sV[] = { (LPCTSTR)"", (LPCTSTR)SND_ALIAS_SYSTEMDEFAULT, (LPCTSTR)SND_ALI
 S
 prepare_sound( KS s ) __
   if( s==NULL || strlen(s)<4 ) R strdup( "" );
-  for( U i=1; i < sizeof(sK)/sizeof(sK[0]); ++i )
+  for( U i=1; i < DIM(sK); ++i )
     if( STRIEQ( sK[i], s ) ) { C sc[2] = "."; sc[0] = (C)i; R strdup( sc ); }
   if( s[1]==':' && s[2]=='\\' ) R strdup( s ); // full path - no check
   C nm[MAX_PATH+20];
@@ -395,7 +394,7 @@ V
 play_sound( KS s, time_t t ) __ // if t!=0, say it
   if( s==NULL || s[0]==0 ) R;
   U sync = t ? 0 : SND_ASYNC;
-  if( s[0] < sizeof(sV)/sizeof(sV[0]) )
+  if( s[0] < DIM(sV) )
     // see also: define, load, play resource
     // https://msdn.microsoft.com/en-us/library/windows/desktop/dd743679(v=vs.85).aspx
     PlaySound( sV[s[0]], NULL, sync|SND_ALIAS_ID );
@@ -408,6 +407,7 @@ play_sound( KS s, time_t t ) __ // if t!=0, say it
 LRESULT CALLBACK
 WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
   switch( message ) __
+  default: R DefWindowProc(hwnd,message,wParam,lParam);
   case WM_CREATE: // Window is being created, good time for init tasks
     if( SetTimer(hwnd, ID_TIMER, 1000, NULL) == 0 ) // tick every second
       MessageBox(hwnd, "Could not set timer!", "Error", MB_OK | MB_ICONEXCLAMATION);
@@ -523,7 +523,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       MessageBox( hwnd, msg, "Window 10 clock -- dimensions", MB_OK ); _
     else if( wParam=='q' ) // quit
       PostMessage(hwnd,WM_CLOSE,0,0);
-    else if( wParam==5 )  play_sound( g_bell, 0 );  // test sound ^E
+    else if( wParam==5 )  play_sound( g_bell,  0 ); // test sound ^E
     else if( wParam==21 ) play_sound( g_hbell, 0 ); // test sound ^U
     else if( wParam==6 )  play_voice( time(NULL) ); // test voice ^F
     else
@@ -536,10 +536,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
     kill_tools(true);
     cleanup();
     free_lines(voiceLines);
-    PostQuitMessage(0);
-    break;
-  default:
-    R DefWindowProc(hwnd,message,wParam,lParam); _
+    PostQuitMessage(0); _
   R 0; _
 
 // Main function - register window class, create window, start message loop
@@ -559,10 +556,8 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, I nCmdSho
   windowClass.lpszMenuName = NULL;
   windowClass.lpszClassName = pgmKind==K_SCR ? "WindowsScreenSaverClass" : PGM_NAME;
   // Register window class
-  if( !RegisterClassEx(&windowClass) )
-    R 1;
-  if( !read_ini() ) // read all parameters from ini file
-    R 1;
+  if( !RegisterClassEx(&windowClass) ) R 1;
+  if( !read_ini() ) R 1; // read all parameters from ini file
   DWORD extstyle = g_ontop ? WS_EX_TOOLWINDOW | WS_EX_TOPMOST : WS_EX_TOOLWINDOW;
   DWORD winstyle = WS_POPUPWINDOW | WS_BORDER | WS_CAPTION;
   I w = g_width+6, h = g_height+29; // Add for border (really non-existing) and caption bar
@@ -578,8 +573,7 @@ WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, I nCmdSho
     hInstance,   // application instance
     NULL);       // no extra parameters
   if( !hwnd ) __ // can it fail, really?
-    MessageBox( NULL, "Could not create window!", "Error", MB_OK | MB_ICONEXCLAMATION);
-    R 1; _
+    MessageBox( NULL, "Could not create window!", "Error", MB_OK | MB_ICONEXCLAMATION); R 1; _
   if( pgmKind==K_SCR ) SetWindowLong(hwnd, GWL_STYLE, 0);
   ShowWindow(hwnd, pgmKind==K_SCR ? SW_SHOWMAXIMIZED : SW_SHOW);
   UpdateWindow(hwnd); // maybe not really needed
