@@ -123,7 +123,7 @@ read_ini_file( KS fname, KS divname ) __
       BND(c,0,0xFFFFFF); g_tick_rgb = swap_colors(c); }
   READINI("shand","2,255,255,255");
   if( rc>=7 )
-    if( sscanf( s,"%d,%d,%d,%d", &w,&r,&g,&b)==4 ) {  BND( w, 1,90 ); g_shand_w = w;
+    if( sscanf( s,"%d,%d,%d,%d", &w,&r,&g,&b)==4 ) { BND( w, 1,90 ); g_shand_w = w;
       BNDC(r);BNDC(g);BNDC(b); g_shand_rgb = RGB(r,g,b); }
     else if( sscanf( s,"%u,#%X", &w,&c )==2 ) { BND( w, 0,90 ); g_shand_w = w;
       BND(c,0,0xFFFFFF); g_shand_rgb = swap_colors(c); }
@@ -140,11 +140,11 @@ read_ini_file( KS fname, KS divname ) __
     else if( sscanf( s,"%u,#%X", &w,&c )==2 ) { BND( w, 0,90 ); g_hhand_w = w;
       BND(c,0,0xFFFFFF); g_hhand_rgb = swap_colors(c); }
   READINI("lengths","8,84,84,62");
-  if( rc>=10 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h)==4 ) { g_t_len = x; BND( g_t_len, 1,96 );
-    g_sh_len = y; g_mh_len = w; g_hh_len = h;
-    BND( g_sh_len, 1,99 ); BND( g_mh_len, 1,99 ); BND( g_hh_len, 1,99 ); }
+  if( rc>=10 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h)==4 ) { BND( x, 1,96 ); g_t_len = x;
+    BND( y, 1,99 ); BND( w, 1,99 ); BND( h, 1,99 );
+    g_sh_len = y; g_mh_len = w; g_hh_len = h; }
   READINI("disp","20,40");
-  if( rc>=3 && sscanf( s,"%d,%d", &x,&y )==2 ) { BND(x,0,99); BND(y,0,99);
+  if( rc>=3 && sscanf( s,"%d,%d", &x,&y )==2 ) { BND(x, 0,99); BND(y, 0,99);
     g_disp_x = x; g_disp_y = y; }
   READINI("corr","16,8,6,3");
   if( rc>=7 && sscanf( s,"%d,%d,%d,%d", &x,&y,&w,&h )==4 )
@@ -175,14 +175,14 @@ read_ini() __ // all parameter names and default values are here!
   read_ini_file( PGM_NAME, pgmName ); // if not exist, set default values
   R true; _
 
-// K (all upper-case) and global state vars (camel-style names)
+// Constants (all upper-case) and global state vars (camel-style names)
 K I ID_TIMER = 1;
 RECT rcClient; // clock client area
 HBRUSH hbrBG;    // clock background
 HPEN hsPen, hmPen, hhPen, htPen;     // clock hands (1 pixel narrower than required)
 HPEN hsPen2, hmPen2, hhPen2, htPen2; // half-tone borders of clock hands
 HPEN hbgPen, hbgPen2;
-I clrIncr = 1;
+I clrIncr = 1; // 1, 10 - up, -1, -10 - down
 
 V
 init_tools(bool for_all) __
@@ -219,11 +219,12 @@ show_help_file() __
 V
 mb( KS txt, KS cap ) { MessageBox(NULL, txt, cap, MB_OK); }
 
-D sind( D x ) { R sin(x*M_PI/180); }
-D cosd( D x ) { R cos(x*M_PI/180); }
+#define sind(x) (sin((x)*(M_PI/180.0)))
+#define cosd(x) (cos((x)*(M_PI/180.0)))
+
 
 V
-draw_clock(HDC hdc, I halfw, I halfh) __
+draw_clock(HDC hdc, I halfw, I halfh) __ // uses rcClient
   // draw clock face and ticks
   if( g_tick_w == 0 ) R;
   if( g_circle ) __
@@ -234,7 +235,7 @@ draw_clock(HDC hdc, I halfw, I halfh) __
     SelectObject(hdc, hbgPen);  Ellipse(hdc, dx+1,dy+1, m+dx-1,m+dy-1); _
   else __ // rectangular
     SetBkMode(hdc, OPAQUE);
-    FillRect(hdc, &rcClient, hbrBG); _ // need to clean old hands, sorry
+    FillRect(hdc, &rcClient, hbrBG); _ // clean old hands
   I r = min(halfw,halfh); // radius
   for( I i=0; i<12; ++i ) __
     I start_x = halfw + (I)( r * (96-g_t_len) / 100.0 * cosd(30*i) + 0.5 );
@@ -254,11 +255,9 @@ update_clock(HDC hdc, I halfw, I halfh, struct tm* tmptr) __
   I s = tmptr->tm_sec;
   I m = tmptr->tm_min;
   I h = tmptr->tm_hour % 12;
-
   D angle_sec = 270.0 + (s*6.0);
   D angle_min = 270.0 + (m*6.0 + s*0.1);
   D angle_hour = 270.0 + (h*30 + m*0.5);
-
   I r = min(halfw,halfh); // radius
   I secx  = (I)( r * g_sh_len / 100.0 * cosd(angle_sec) + 0.5 );
   I secy  = (I)( r * g_sh_len / 100.0 * sind(angle_sec) + 0.5 );
@@ -266,7 +265,6 @@ update_clock(HDC hdc, I halfw, I halfh, struct tm* tmptr) __
   I miny  = (I)( r * g_mh_len / 100.0 * sind(angle_min) + 0.5 );
   I hourx = (I)( r * g_hh_len / 100.0 * cosd(angle_hour)+ 0.5 );
   I houry = (I)( r * g_hh_len / 100.0 * sind(angle_hour)+ 0.5 );
-
   // right order - hour, minute, second hand on top
   SelectObject(hdc, hhPen2);
   MoveToEx(hdc, halfw, halfh, NULL); LineTo(hdc, halfw + hourx, halfh + houry);
@@ -332,7 +330,7 @@ copy_to_clipboard(HWND hwnd) __
     CloseClipboard(); _
 
 S*
-read_lines( KS path, KS nm ) __
+read_lines( KS path, KS nm ) __ // returns array of S; the last one is NULL
   if( path==NULL || strlen(path)+strlen(nm) > MAX_PATH-1 ) R NULL;
   C fnm[MAX_PATH]; strcpy(fnm, path), strcat( fnm, nm );
   FILE* f = fopen( fnm, "rt" );
@@ -359,7 +357,7 @@ play_voice_file( KS w, I l ) __ // file from g_voice_dir directory
   PlaySound( nm, NULL, SND_FILENAME ); _
 
 V
-play_voice( time_t t ) __ // play all "words" from corresponding line
+play_voice_seq( time_t t ) __ // play all "words" from corresponding line
   if( !voiceLines ) R;
   struct tm* tmptr = localtime(&t);
   I h = tmptr->tm_hour; // 0..23
@@ -401,7 +399,7 @@ play_sound( KS s, time_t t ) __ // if t!=0, say it
   else
     PlaySound( s, NULL, sync|SND_FILENAME );
   if( t )
-    play_voice( t ); _
+    play_voice_seq( t ); _
 
 // Main Window Event Handler
 LRESULT CALLBACK
@@ -525,7 +523,7 @@ WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) __
       PostMessage(hwnd,WM_CLOSE,0,0);
     else if( wParam==5 )  play_sound( g_bell,  0 ); // test sound ^E
     else if( wParam==21 ) play_sound( g_hbell, 0 ); // test sound ^U
-    else if( wParam==6 )  play_voice( time(NULL) ); // test voice ^F
+    else if( wParam==6 )  play_voice_seq( time(NULL) ); // test voice ^F
     else
       ndisp = process_char( (U)wParam, disp, sizeof(disp)-1, ndisp );
     InvalidateRect(hwnd, NULL, FALSE), UpdateWindow(hwnd);

@@ -6,6 +6,7 @@
 #include <time.h>
 #include <sys/timeb.h>
 #include <unistd.h>
+#include <math.h> // floor
 #include "../_.h"
 
 typedef I bool;
@@ -22,11 +23,21 @@ E U ymd2n( U y, U m, U d );
 E V n2ymd( U n, OUT U* y, U* m, U* d );
 E U n2wd( U n );
 E I gettz( I* h, U* m );
+E D moon_phase_date( D myLunation, D phase );
 
 C WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
 bool tz_is_set = false;
 I tz_offset; I tz_h; U tz_m;
+
+#define u2j(t) ((D)(t)/864e2+2440587.5)
+#define j2u(j) (((j)-2440587.5)*864e2)
+
+U
+fmtj( D j, KS fmt, S s, U mn ) __
+  time_t t = (time_t)j2u(j); // through CED: ... b-2400000.5+678578;
+  struct tm* tmptr = localtime(&t); ///////tmptr->tm_year -= 2015;
+  R strftime( s, mn, fmt, tmptr ); _
 
 U
 process_char( U c, S s, U mn, U n ) __ // mn - max length
@@ -143,6 +154,33 @@ process_char( U c, S s, U mn, U n ) __ // mn - max length
             n = strftime( s, mn, "%H:%M:%S %a %m/%d", tmptr ); _ _ _
       else // it can't be here
         n = sprintf( s, "huh?" ); _ _
+  else if( c=='m' ) __ // moon phase
+    if( n==0 ) __
+      D t = (D)time(NULL);
+      D j = u2j(t);
+      D k = floor( (t/(864e2*365.25)+70.0)*12.3685 );
+      D newm = moon_phase_date( k, 0.0 ); // new moon
+      if( j<newm ) { k -= 1.0; newm = moon_phase_date( k, 0.0 ); }
+      D fullm = moon_phase_date( k, 2.0 ); // full moon
+      if( j<=fullm ) __ // between new and full
+        n = fmtj( newm, "%m/%d.%H:%M:%S", s, mn ); strcpy( s+n, " new, " ); n += 6;
+        n += fmtj( fullm, "%m/%d.%H:%M:%S", s+n, mn-n ); strcpy( s+n, " full" ); n += 5; _
+      else __ // between full and new
+        newm = moon_phase_date( k+1.0, 0.0 );
+        n = fmtj( fullm, "%m/%d.%H:%M:%S", s, mn ); strcpy( s+n, " full, " ); n += 7;
+        n += fmtj( newm, "%m/%d.%H:%M:%S", s+n, mn-n ); strcpy( s+n, " new" ); n += 4; _
+      _
+    else __
+      //if( sscanf( s, "%lf", &b )==1 ) { b = (b-32.0)/1.8; n = sprintf( s, "%.1f%cC", b, 176 ); }
+      _
+    _
+  else if( c=='j' ) __
+    if( n==0 )
+      n = sprintf( s, "%12.4f", u2j(time(NULL)) );
+    else __
+      if( sscanf( s, "%lf", &b )==1 ) __ // jd to yyyy/mm/dd.hh:mm:ss
+        n = fmtj( b, "%Y/%m/%d.%H:%M:%S", s, mn ); _ _ _
+      // yyyy/mm/dd.hh:mm:ss to jd
   else if( c=='f' ) __ // F --> C
     if( sscanf( s, "%lf", &b )==1 ) { b = (b-32.0)/1.8; n = sprintf( s, "%.1f%cC", b, 176 ); } _
   else if( c=='c' ) __ // C --> F
