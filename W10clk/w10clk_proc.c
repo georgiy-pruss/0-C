@@ -15,6 +15,7 @@ typedef I bool;
 E bool g_seconds; // show second hand
 E bool help_on_error_input(); // true if OK pressed
 E V mb( KS txt, KS cap ); // message box
+E V mbw( K wchar_t* txt, K wchar_t* cap ); // message box for unicode
 E U calculate( S src, OUT D* res ); // returns 0 if ok
 E S g_tzlist;
 E V strcpyupr( S dst, KS src );
@@ -156,6 +157,34 @@ process_char( U c, S s, U mn, U n ) __ // mn - max length
         n = sprintf( s, "huh?" ); _ _
   else if( c=='m' ) __ // moon phase
     if( n==0 ) __
+    /*
+    mbw( L"n ● ☽ ◐ ◖  ◯  ◗  ◑  ☾  ●",L"moon");
+  o = ""
+  if dn<dn2:
+    o += 'New moon:  %02d/%02d %02d:%02d  - %s\n' % (m0,d0,h0,n0,dh(t-t0))
+    o += 'Full moon: %02d/%02d %02d:%02d  + %s\n' % (m2,d2,h2,n2,dh(t2-t))
+  else:
+    o += 'Full moon: %02d/%02d %02d:%02d  - %s\n' % (m2,d2,h2,n2,dh(t-t2))
+    o += 'New moon:  %02d/%02d %02d:%02d  + %s\n' % (m1,d1,h1,n1,dh(t1-t))
+  z = (t-t0)/(t1-t0)
+  o += '\nPhase now: %.1f%%' % (100.0*z)
+  PN = [("New Moon  ●",0.00,0.02),
+        ("Waxing Crescent   ☽",0.02,0.23),
+        ("First Quarter   ◐",0.23,0.27),
+        ("Waxing Gibbous ◖",0.27,0.48),
+        ("Full Moon   ◯",0.48,0.52),
+        ("Waning Gibbous   ◗",0.52,0.73),
+        ("Last Quarter   ◑",0.73,0.77),
+        ("Waning Crescent   ☾",0.77,0.98),
+        ("New Moon  ●",0.98,1.01)]
+  for mn,m1,m2 in PN:
+    if m1<=z<m2:
+      break
+  o += "      %s      " % mn
+  PP = 3.14159265358979*2
+  vi = 0.5 - 0.5*math.cos( PP*z )
+  o += '\nVisible part: %.1f%%' % (100.0*vi)
+    */
       D t = (D)time(NULL);
       D j = u2j(t);
       D k = floor( (t/(864e2*365.25)+70.0)*12.3685 );
@@ -175,12 +204,20 @@ process_char( U c, S s, U mn, U n ) __ // mn - max length
       _
     _
   else if( c=='j' ) __
+    t = time(NULL);
+    tmptr = localtime(&t); // assume it can't be NULL
     if( n==0 )
       n = sprintf( s, "%12.4f", u2j(time(NULL)) );
-    else __
-      if( sscanf( s, "%lf", &b )==1 ) __ // jd to yyyy/mm/dd.hh:mm:ss
+    else __ // yyyy/mm/dd.hh:mm:ss to jd or back
+      if( sscanf( s, "%u/%u/%u.%u:%u:%u",  &y,&m,&d, &h,&w,&x )==6 ) __
+        if( 1970<=y && 1<=m && m<=12 && 1<=d && d<=31 && h<24 && w<60 && x<60 &&
+            (y<2106 || y==2106 && (m<2 || m==2 && d<=7)) ) __
+          tmptr->tm_year = y-1900; tmptr->tm_mon = m-1; tmptr->tm_mday = d;
+          tmptr->tm_hour = h; tmptr->tm_min = w; tmptr->tm_sec = x;
+          t = mktime( tmptr );
+          if( (I)t != -1 ) n = sprintf( s, "%12.4f", u2j(t) ); _ _
+      else if( sscanf( s, "%lf", &b )==1 ) __ // jd to yyyy/mm/dd.hh:mm:ss
         n = fmtj( b, "%Y/%m/%d.%H:%M:%S", s, mn ); _ _ _
-      // yyyy/mm/dd.hh:mm:ss to jd
   else if( c=='f' ) __ // F --> C
     if( sscanf( s, "%lf", &b )==1 ) { b = (b-32.0)/1.8; n = sprintf( s, "%.1f%cC", b, 176 ); } _
   else if( c=='c' ) __ // C --> F

@@ -216,8 +216,9 @@ show_help_file() __
   for( S p=hfn; *p; ++p ) if(*p=='\\') *p='/'; // not needed actually, but let it be
   ShellExecute(NULL, "open", hfn, NULL, NULL, SW_SHOWNORMAL); _
 
-V
-mb( KS txt, KS cap ) { MessageBox(NULL, txt, cap, MB_OK); }
+V mb( KS txt, KS cap ) { MessageBox(NULL, txt, cap, MB_OK); }
+V mbw( K wchar_t* txt, K wchar_t* cap ) { MessageBoxW(NULL, txt, cap, MB_OK); }
+
 
 #define sind(x) (sin((x)*(M_PI/180.0)))
 #define cosd(x) (cos((x)*(M_PI/180.0)))
