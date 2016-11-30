@@ -27,6 +27,8 @@ E U n2wd( U n );
 E I gettz( I* h, U* m );
 E D moon_phase_date( D myLunation, D phase );
 D t2lunation( D t ) { R floor( (t/(864e2*365.25)+70.0)*12.3685 ); }
+D y2lunation( D y ) { R floor( (y-1900.0)*12.3685 ); }
+D j2n( D j ) { R j-(2400000.5-678578); }
 
 C WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
@@ -44,15 +46,15 @@ fmtj( D j, KS fmt, S s, U mn ) __
 
 K wchar_t*
 moon_phase_name( D x ) __
-  if( 0.00<=x<0.02 ) R L"New Moon  ●";
-  if( 0.02<=x<0.23 ) R L"Waxing Crescent   ☽";
-  if( 0.23<=x<0.27 ) R L"First Quarter   ◐";
-  if( 0.27<=x<0.48 ) R L"Waxing Gibbous ◖";
-  if( 0.48<=x<0.52 ) R L"Full Moon   ◯";
-  if( 0.52<=x<0.73 ) R L"Waning Gibbous   ◗";
-  if( 0.73<=x<0.77 ) R L"Last Quarter   ◑";
-  if( 0.77<=x<0.98 ) R L"Waning Crescent   ☾";
-  if( 0.98<=x<1.01 ) R L"New Moon  ●";
+  if( 0.00<=x && x<0.02 ) R L"New Moon  ●";
+  if( 0.02<=x && x<0.23 ) R L"Waxing Crescent   ☽";
+  if( 0.23<=x && x<0.27 ) R L"First Quarter   ◐";
+  if( 0.27<=x && x<0.48 ) R L"Waxing Gibbous ◖";
+  if( 0.48<=x && x<0.52 ) R L"Full Moon   ◯";
+  if( 0.52<=x && x<0.73 ) R L"Waning Gibbous   ◗";
+  if( 0.73<=x && x<0.77 ) R L"Last Quarter   ◑";
+  if( 0.77<=x && x<0.98 ) R L"Waning Crescent   ☾";
+  if( 0.98<=x && x<1.01 ) R L"New Moon  ●";
   R L"Unknown"; _
 
 U
@@ -83,8 +85,30 @@ current_moon( S s, U mn, D t, U n ) __
   R sprintf( s, "phase %.1f%%  visible %.1f%%  full %+.1f", 100.0*z, 100.0*v, fullm-j ); _
 
 U
-show_moon_phases() __
-  // " ● ☽ ◐ ◖  ◯  ◗  ◑  ☾  ● "
+show_moon_phases( S s, U n ) __
+  U year;
+  if( sscanf( s, "%u", &year )!=1 ) R n;
+  D k = y2lunation( year );
+  D j2 = moon_phase_date( k, 2.0 );
+  U n2 = j2n( j2 );
+  U y2,m2,d2;
+  n2ymd( n2, OUT &y2, &m2, &d2 );
+  while( y2==year ) __
+    k -= 1.0;
+    j2 = moon_phase_date( k, 2.0 );
+    n2 = j2n( j2 );
+    n2ymd( n2, OUT &y2, &m2, &d2 ); _
+  C o[2000]; U len=sprintf( o, "%s\n", "Lun# NewMoonJD FullMoonJD NewMoonDate FullMoonDate" );
+  D j0; U y0,m0,d0;
+  for( ;;) __ U n0;
+    k += 1.0;
+    j0 = moon_phase_date( k, 0.0 ); n0 = j2n( j0 ); n2ymd( n0, OUT &y0, &m0, &d0 );
+    j2 = moon_phase_date( k, 2.0 ); n2 = j2n( j2 ); n2ymd( n2, OUT &y2, &m2, &d2 );
+    if( y0!=year && y2!=year ) break;
+    len += sprintf( o+len, "%d - %.4f %.4f - %u.%02u.%02u  %u.%02u.%02u\n", (int)k,
+        j0, j2, y0,m0,d0, y2,m2,d2 ); _
+  mb( o, "year" );
+  R n;
 _
 
 U
@@ -222,7 +246,7 @@ process_char( U c, S s, U mn, U n ) __ // mn - max length
       else if( c=='t' ) n = cvt_time( s, mn, n );
       else if( c=='y' ) n = cvt_yearday( s, mn, t, n ); // YD -> M/D this year or Y/M/D --> YD
       else if( c=='z' ) n = cvt_time_zone( s, mn, t, n );
-      else if( c=='m' ) n = show_moon_phases();
+      else if( c=='m' ) n = show_moon_phases( s, n );
       else n = cvt_julian_day( s, mn, n ); _ // 'j' -- yyyy/mm/dd.hh:mm:ss to jd or back
   else if( c=='f' ) __ // F --> C
     if( sscanf( s, "%lf", &x )==1 ) { n = sprintf( s, "%.1f%cC", (x-32.0)/1.8, 176 ); } _

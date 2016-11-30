@@ -47,7 +47,7 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 </head>
 <body>
 
-<h1>W10clk - windows clock and more - v.1.31</h1>
+<h1>W10clk - windows clock and more - v.1.34</h1>
 
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
@@ -95,6 +95,13 @@ y      current year day number (1..366)
 u      current unix time (for local time)
 <span class=R>N</span>u     unix time to y/m/d.h:m:s wd (with the current tz!), in range 0 to 2^32-1
 <span class=R>D.T</span>u   convert y/m/d.h:m:s local time (current tz!) to unix time, 1970/1/1 to 2106/2/7
+
+j      current Julian day (for local time); it's also absolute time, like the unix time
+<span class=R>N</span>u     Julian day to y/m/d.h:m:s ()
+<span class=R>D.T</span>u   convert y/m/d.h:m:s local time (current tz!) to Julian day
+
+m      current Moon phase
+<span class=R>N</span>m     Moon phases for year N
 
 z      current time zone as &plusmn;H or &plusmn;HMM, e.g. -8 or +545 (Nepal); tz can be -12..+14
 <span class=R>&plusmn;N</span>z    show current time in specified time zone (tz must follow format &plusmn;H or &plusmn;HMM)
@@ -171,7 +178,7 @@ del    correct input (delete the character at the beginning)
 spc    clear display
 esc    clear display
 </pre>
-<!--     ^E tEst bEll, ^U tOO :)  ^F say time      a j lmn r vw          -->
+<!--     ^E tEst bEll, ^U tOO :)  ^F say time      a ln r vw      -->
 <hr>
 <pre>
 <a name="ced"></a>
