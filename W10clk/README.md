@@ -9,7 +9,9 @@ Now the program includes:
 * optional time in caption (title) bar
 * stopwatch with breaks
 * time zones, current time in other time zones, customized names for time zones
-* unix time conversions, years 1970 up to 2106
+* unix time - current and conversions, years 1970 up to 2106
+* julian day number - current and conversions
+* current moon phase details, table of moon phases for a year
 * all possible time and date calculations: operations with dates/days, time/seconds
 * calculator (+ - * / modulo power roots exp log ln lb combinatorics trigonometry etc)
 * decimal/hexadcimal numbers
