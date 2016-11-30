@@ -29,6 +29,9 @@ E D moon_phase_date( D myLunation, D phase );
 D t2lunation( D t ) { R floor( (t/(864e2*365.25)+70.0)*12.3685 ); }
 D y2lunation( D y ) { R floor( (y-1900.0)*12.3685 ); }
 D j2n( D j ) { R j-(2400000.5-678578); }
+V j2hm( D j, OUT U* h, U* m ) __
+  j -= 0.5; j -= floor(j); j += 0.5/(24.0*60.0); // fraction part
+  j *= 24.0; D ij = floor(j); *h = (U)ij; *m = (U)((j - ij)*60.0); _
 
 C WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
 
@@ -98,16 +101,17 @@ show_moon_phases( S s, U n ) __
     j2 = moon_phase_date( k, 2.0 );
     n2 = j2n( j2 );
     n2ymd( n2, OUT &y2, &m2, &d2 ); _
-  C o[2000]; U len=sprintf( o, "%s\n", "Lun# NewMoonJD FullMoonJD NewMoonDate FullMoonDate" );
-  D j0; U y0,m0,d0;
+  C o[2000]; U len=sprintf( o, "%s\n", "Lun# - NewMoonJD FullMoonJD  -  NewMoonDate  FullMoonDate" );
+  D j0; U y0,m0,d0,hh0,mm0,hh2,mm2;
   for( ;;) __ U n0;
     k += 1.0;
-    j0 = moon_phase_date( k, 0.0 ); n0 = j2n( j0 ); n2ymd( n0, OUT &y0, &m0, &d0 );
-    j2 = moon_phase_date( k, 2.0 ); n2 = j2n( j2 ); n2ymd( n2, OUT &y2, &m2, &d2 );
+    j0 = moon_phase_date( k, 0.0 ); n0 = j2n(j0); n2ymd(n0, OUT &y0,&m0,&d0); j2hm(j0, &hh0,&mm0);
+    j2 = moon_phase_date( k, 2.0 ); n2 = j2n(j2); n2ymd(n2, OUT &y2,&m2,&d2); j2hm(j2, &hh2,&mm2);
     if( y0!=year && y2!=year ) break;
-    len += sprintf( o+len, "%d - %.4f %.4f - %u.%02u.%02u  %u.%02u.%02u\n", (int)k,
-        j0, j2, y0,m0,d0, y2,m2,d2 ); _
-  mb( o, "year" );
+    len += sprintf( o+len, "%d - %.4f %.4f - %u.%02u.%02u %02u:%02u  %u.%02u.%02u %02u:%02u\n",
+      (int)k, j0, j2, y0,m0,d0, hh0,mm0, y2,m2,d2, hh2,mm2 ); _
+  C cap[100]; sprintf( cap, "W10clk - Moon phases for year %u", year );
+  mb( o, cap );
   R n;
 _
 
