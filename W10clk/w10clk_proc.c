@@ -1,5 +1,6 @@
 // Part of w10clk -- process character/command
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,9 +11,6 @@
 #include <math.h> // floor
 #include "../_.h"
 
-typedef I bool;
-#define false 0
-#define true 1
 E bool g_seconds; // show second hand
 E bool help_on_error_input(); // true if OK pressed
 E V mb( KS txt, KS cap ); // message box
@@ -20,17 +18,17 @@ E V mbw( K wchar_t* txt, K wchar_t* cap ); // message box for unicode
 E U calculate( S src, OUT D* res ); // returns 0 if ok
 E S g_tzlist;
 E V strcpyupr( S dst, KS src );
-
 E U ymd2n( U y, U m, U d );
 E V n2ymd( U n, OUT U* y, U* m, U* d );
 E U n2wd( U n );
 E I gettz( I* h, U* m );
 E D moon_phase_date( D myLunation, D phase );
-D t2lunation( D t ) { R floor( (t/(864e2*365.25)+70.0)*12.3685 ); }
-D y2lunation( D y ) { R floor( (y-1900.0)*12.3685 ); }
+E D t2lunation( D t );
+E D y2lunation( D y );
+
 D j2n( D j ) { R j-(2400000.5-678578); }
-V j2hm( D j, OUT U* h, U* m ) __
-  j -= 0.5; j -= floor(j); j += 0.5/(24.0*60.0); // fraction part
+V j2hm( D j, I tzo, OUT U* h, U* m ) __
+  j -= 0.5; j += (D)tzo/(24.0*60.0); j -= floor(j); j += 0.5/(24.0*60.0);
   j *= 24.0; D ij = floor(j); *h = (U)ij; *m = (U)((j - ij)*60.0); _
 
 C WD[7][4] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat"};
@@ -85,12 +83,13 @@ current_moon( S s, U mn, D t, U n ) __
   swprintf( o, 512, L"%S\nPhase now: %.1f days (%.1f%%)\nVisible part: %.1f%%\n%s",
       moon_phase_name(z), j-newm, 100.0*z, 100.0*v, m );
   mbw( o, L"W10clk - Moon phase" );
-  R sprintf( s, "phase %.1f%%  visible %.1f%%  full %+.1f", 100.0*z, 100.0*v, fullm-j ); _
+  R sprintf( s, "%.4f/%.4f", j-newm, nw1m-newm ); _
 
 U
 show_moon_phases( S s, U n ) __
   U year;
   if( sscanf( s, "%u", &year )!=1 ) R n;
+  if( !tz_is_set ) { tz_offset = gettz( &tz_h, &tz_m ); tz_is_set = true; }
   D k = y2lunation( year );
   D j2 = moon_phase_date( k, 2.0 );
   U n2 = j2n( j2 );
@@ -102,18 +101,18 @@ show_moon_phases( S s, U n ) __
     n2 = j2n( j2 );
     n2ymd( n2, OUT &y2, &m2, &d2 ); _
   C o[2000]; U len=sprintf( o, "%s\n", "Lun# - NewMoonJD FullMoonJD  -  NewMoonDate  FullMoonDate" );
-  D j0; U y0,m0,d0,hh0,mm0,hh2,mm2;
-  for( ;;) __ U n0;
+  for(;;) __ D j0; U n0, y0,m0,d0, hh0,mm0, hh2,mm2;
     k += 1.0;
-    j0 = moon_phase_date( k, 0.0 ); n0 = j2n(j0); n2ymd(n0, OUT &y0,&m0,&d0); j2hm(j0, &hh0,&mm0);
-    j2 = moon_phase_date( k, 2.0 ); n2 = j2n(j2); n2ymd(n2, OUT &y2,&m2,&d2); j2hm(j2, &hh2,&mm2);
+    j0 = moon_phase_date( k, 0.0 ); n0 = j2n(j0);
+    n2ymd(n0, OUT &y0,&m0,&d0); j2hm(j0, tz_offset, &hh0,&mm0);
+    j2 = moon_phase_date( k, 2.0 ); n2 = j2n(j2);
+    n2ymd(n2, OUT &y2,&m2,&d2); j2hm(j2, tz_offset, &hh2,&mm2);
     if( y0!=year && y2!=year ) break;
     len += sprintf( o+len, "%d - %.4f %.4f - %u.%02u.%02u %02u:%02u  %u.%02u.%02u %02u:%02u\n",
       (int)k, j0, j2, y0,m0,d0, hh0,mm0, y2,m2,d2, hh2,mm2 ); _
   C cap[100]; sprintf( cap, "W10clk - Moon phases for year %u", year );
   mb( o, cap );
-  R n;
-_
+  R n; _
 
 U
 current_time_in_many_forms( U c, S s, U mn, time_t t, U n ) __

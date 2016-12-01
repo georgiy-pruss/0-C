@@ -6,13 +6,16 @@
 #define sind(x) (sin((x)*(M_PI/180.0)))
 #define cosd(x) (cos((x)*(M_PI/180.0)))
 
+D t2lunation( D t ) { R floor( (t/(864e2*365.25)+70.0)*12.3685-284.0 ); }
+D y2lunation( D y ) { R floor( (y-1900.0)*12.3685-284.0 ); }
+
 D
-moon_phase_date( D myL, D phase ) __ // myL = lunation+284
+moon_phase_date( D lunation, D phase ) __
   /*
   official lunations are counted from 1923 http://en.wikipedia.org/wiki/Lunation_Number
   -- Lunation 1 occurred at approximately 02:41 UTC, January 17, 1923
   so please correct the k argument by 284:
-  Lun myL  new-moon-jd  full-moon-jd
+  Lun   k  new-moon-jd  full-moon-jd
   ...   0  2415021.0767 2415035.2961  1900.01.01-13:50 1900.01.15-19:06
   ...   1  2415050.5567 2415065.0757  1900.01.31-01:22 1900.02.14-13:49
     0 284  2423407.0141 2423422.6071  1922.12.18-12:20 1923.01.03-02:34
@@ -20,7 +23,7 @@ moon_phase_date( D myL, D phase ) __ // myL = lunation+284
   result is +- 2 minutes from http://www.timeanddate.com/calendar/moonphases.html
   */
 
-  D k = myL + phase/4.0;
+  D k = lunation + 284 + phase/4.0; // 284 more than Ernest William Brown lun.nr.
   D t  = k/1236.85; // time in 'century' units
   D t2 = t*t;
   D t3 = t*t*t;
