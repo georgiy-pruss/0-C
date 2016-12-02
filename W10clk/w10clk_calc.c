@@ -8,7 +8,12 @@
 #include "../_.h"
 
 #define BLANKS " \t\n\r\v\f"
-enum ERRORS {E_OK=0, E_CLOSE,E_ZDIV,E_ZMOD,E_NEG,E_NEGLOG,E_CIRC,E_BINOP,E_HEXDIGIT};
+enum ERRORS {E_OK=0, E_CLOSE,E_ZDIV,E_ZMOD,E_NEG,E_NEGLOG,E_CIRC,E_BINOP,E_HEXDIGIT,E_COLON};
+KS error_msg( U e ) __
+  O KS msg[] = { "No error", "No closing parenthesis", "Zero division", "Zero modulo",
+    "Negative argument", "Neg. or zero in log", "Error circular fn", "Invalid binary op",
+    "Error hex. number", "Error colon number"};
+  R msg[e]; _
 O U err_flag;
 O S curr_pos;
 // curr_pos += strspn( curr_pos, BLANKS ); // we don't have blanks, so no skip blanks
@@ -19,13 +24,28 @@ O U get() { R *curr_pos++; }
 O D expression(); // declaration for recursion
 
 O D number() __
-  D result = get() - '0';
-  while('0'<=peek() && peek()<='9') result = 10*result + get() - '0';
-  if( peek()=='.' ) __
-    get();
-    D div=1.0;
-    while( '0'<=peek() && peek()<='9' )
-      result += (get() - '0') / (div *= 10.0); _
+  D parts[3] = {0.0}; // parts before last colon: AA:BB:CC:
+  U nparts = 0;       // count of parts saved
+  D result;
+  for(;;) __ // for up to three colons for AA:BB:CC:DD
+    result = get() - '0';
+    while('0'<=peek() && peek()<='9') result = 10*result + get() - '0';
+    if( peek()=='.' ) __
+      get();
+      D div=1.0;
+      while( '0'<=peek() && peek()<='9' ) result += (get() - '0') / (div *= 10.0);
+      break; _
+    else if( peek()==':' ) __
+      get();
+      if( nparts>=3 ) { err_flag=E_COLON; R 0; } // too many colons xx:xx:xx:xx:
+      if( !('0'<=peek() && peek()<='9') ) { err_flag=E_COLON; R 0; }
+      parts[nparts] = result;
+      ++nparts;
+      result = 0; _
+    else break; _ // not '.' and not ':'
+  if( nparts==1 ) result += parts[0]*60.0;
+  else if( nparts==2 ) result += parts[0]*3600.0 + parts[1]*60.0;
+  else if( nparts==3 ) result += parts[0]*86400.0 + parts[1]*3600.0 + parts[2]*60.0;
   R result; _
 
 O U hexdigit( int c ) __

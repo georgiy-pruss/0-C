@@ -47,7 +47,7 @@ src="http://yui.yahooapis.com/2.8.0r4/build/calendar/calendar-min.js"></script>
 </head>
 <body>
 
-<h1>W10clk - windows clock and more - v.1.37</h1>
+<h1>W10clk - windows clock and more - v.1.38</h1>
 
 <!-- Yahoo calendar -->
 <div class="yui-skin-sam" style='position:absolute;right:5px;top:55px;'>
@@ -153,7 +153,8 @@ enter  calculate expression too
 ABCDEF hexadecimal digits (uppercase!) for hex. numbers in expression, put # in front
 #      hexadecimal number indicator: #FF #DEADBEEF #100000000
 
-       <e>binary and unary operations in math. expression (priority: ^, */%o, +-)</u>
+       binary and unary operations in math. expression (priority: ^, */%\|&amp;o, +-)
+       --------------------------------------------------------------------------
 +      +x  the same as x           x+y  sum
 -      -x  negate                  x-y  subtract
 *      *x  square, x*x             x*y  multiply
@@ -169,6 +170,9 @@ o      ox  multiply by pi          xoy  circle function (hello APL ;-))
            1ox sin    -1ox asin    10ox sind    -10ox asind
            2ox cos    -2ox acos    20ox cosd    -20ox acosd
            3ox tan    -3ox atan    30ox tand    -30ox atand
+
+       expressions can contain integer and fractional decimal numbers, hexadecimal
+       numbers starting with #, time as MM:SS or HH:MM:SS or DD:HH:MM:SS
 
 ()     just usual grouping order of evaluation: 1+2*3 is not (1+2)*3
 

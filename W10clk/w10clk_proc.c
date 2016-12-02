@@ -16,6 +16,7 @@ E bool help_on_error_input(); // true if OK pressed
 E V mb( KS txt, KS cap ); // message box
 E V mbw( K wchar_t* txt, K wchar_t* cap ); // message box for unicode
 E U calculate( S src, OUT D* res ); // returns 0 if ok
+E KS error_msg( U e ); // error message for wrong calculation
 E S g_tzlist;
 E V strcpyupr( S dst, KS src );
 E U ymd2n( U y, U m, U d );
@@ -260,7 +261,9 @@ process_char( U c, S s, U mn, U n ) __ // mn - max length
   else if( c=='h' ) __ // help | decimal --> XXXX (hexadecimal)
     if( sscanf( s, "%llu", &h )==1 ) n = sprintf( s, "#%llX", h ); _
   else if( c=='=' || c==13 ) __ // = or enter -- calculate expression
-    if( calculate( s, &x ) == 0 ) n = sprintf( s, "%.15g", x ); _
+    U err = calculate( s, &x );
+    if( err == 0 ) n = sprintf( s, "%.15g", x );
+    else mb( error_msg( err ), "Error in calculation" ); _
   else if( c=='s' ) __ // start stopwatch
     ftime(&tb); t_start = tb.time; t_start_ms = (I)tb.millitm;
     t_break_start = 0; t_idle = 0; t_idle_ms = 0;

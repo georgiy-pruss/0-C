@@ -5,7 +5,7 @@
 // https://www.cygwin.com/faq.html#faq.programming.win32-no-cygwin
 // http://parallel.vub.ac.be/education/modula2/technology/Win32_tutorial/index.html
 
-// TODO switch two bg colors; alarms; reminders; birthdays; time in expressions
+// TODO switch two bg colors; alarms; reminders; birthdays
 // TODO round window; double-buffering; better icon
 
 // http://stackoverflow.com/questions/3970066/creating-a-transparent-window-in-c-win32
@@ -17,7 +17,7 @@
 #define PGM_NAME "w10clk"
 #define HELP_MSG "Unrecognized key. Press F1 or ? for help.\n\n" \
 "Configure the clock appearance in file " PGM_NAME ".ini\n\n" \
-"Version 1.37 * Copyright (C) Georgiy Pruss 2016\n\n" \
+"Version 1.38 * Copyright (C) Georgiy Pruss 2016\n\n" \
 "[Press Cancel to not receive this message again]"
 
 #define WIN32_LEAN_AND_MEAN // Trim fat from windows
